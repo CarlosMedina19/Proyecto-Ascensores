@@ -24,7 +24,7 @@ services:
       POSTGRES_USER: ascensores_user
       POSTGRES_PASSWORD: ascensores_pass
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     networks:

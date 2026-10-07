@@ -11,13 +11,41 @@ class Client extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'nit', 'address', 'phone', 'email', 'status'];
+    protected $fillable = [
+        'uuid',
+        'type',
+        'name',
+        'document_type',
+        'document_number',
+        'nit',
+        'address',
+        'phone',
+        'email',
+        'tax_regime',
+        'economic_activity',
+        'status',
+        'observations',
+    ];
 
     protected function casts(): array
     {
-        return ['status' => 'boolean'];
+        return [
+            'status' => 'boolean',
+        ];
     }
 
+    
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
+    
     public function contacts(): HasMany
     {
         return $this->hasMany(ClientContact::class);

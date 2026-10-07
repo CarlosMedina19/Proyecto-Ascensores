@@ -10,11 +10,23 @@ class ElectricDoor extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['equipment_id', 'brand', 'model', 'door_type', 'installation_date'];
+    protected $fillable = [
+        'equipment_id',
+        'brand',
+        'model',
+        'door_type',
+        'opening_type',
+        'access_type',
+        'serial_number',
+        'technical_specs',
+        'installation_date',
+    ];
 
     protected function casts(): array
     {
-        return ['installation_date' => 'date'];
+        return [
+            'installation_date' => 'date',
+        ];
     }
 
     public function equipment(): BelongsTo

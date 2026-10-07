@@ -8,12 +8,43 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Equipment extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['building_id', 'code', 'type', 'location', 'status'];
+    protected $fillable = [
+        'uuid',
+        'building_id',
+        'code',
+        'type',
+        'brand',
+        'model',
+        'serial_number',
+        'location',
+        'status',
+        'installation_date',
+        'observations',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'installation_date' => 'date',
+        ];
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = (string) Str::uuid();
+            }
+        });
+    }
 
     public function building(): BelongsTo
     {
