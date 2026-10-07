@@ -13,6 +13,9 @@ services:
       - db
     networks:
       - app_network
+    environment:
+      DOCKER_DB_HOST: db
+      DOCKER_DB_PORT: 5432
     command: sh -c "php artisan serve --host=0.0.0.0 --port=8000"
 
   db:

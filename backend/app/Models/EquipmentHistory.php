@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EquipmentHistory extends Model
 {
+    protected $table = 'equipment_history';
+
     public $timestamps = false; // solo tenemos created_at
 
     protected $fillable = ['equipment_id', 'user_id', 'event', 'description'];
