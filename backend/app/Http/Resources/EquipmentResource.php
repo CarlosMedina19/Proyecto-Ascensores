@@ -24,7 +24,6 @@ class EquipmentResource extends JsonResource
             'installation_date' => $this->installation_date?->format('Y-m-d'),
             'observations' => $this->observations,
             'elevator' => new ElevatorResource($this->whenLoaded('elevator')),
-            'electric_door' => new ElectricDoorResource($this->whenLoaded('electricDoor')),
             'history' => EquipmentHistoryResource::collection($this->whenLoaded('history')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

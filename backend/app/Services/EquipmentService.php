@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\ElectricDoor;
 use App\Models\Elevator;
 use App\Models\Equipment;
 use App\Models\EquipmentHistory;
@@ -52,27 +51,24 @@ class EquipmentService
     public function create(array $data): Equipment
     {
         return DB::transaction(function () use ($data) {
-            $equipmentData = collect($data)->except(['elevator', 'electric_door'])->toArray();
+            $equipmentData = collect($data)->except(['elevator'])->toArray();
             $equipment = Equipment::create($equipmentData);
 
-            if ($equipment->type === 'elevator' && !empty($data['elevator'])) {
+            if (!empty($data['elevator'])) {
                 $elevatorData = array_merge($data['elevator'], ['equipment_id' => $equipment->id]);
                 Elevator::create($elevatorData);
-            } elseif ($equipment->type === 'electric_door' && !empty($data['electric_door'])) {
-                $doorData = array_merge($data['electric_door'], ['equipment_id' => $equipment->id]);
-                ElectricDoor::create($doorData);
             }
 
             // Registrar en historial inicial (RF-010)
             $equipment->history()->create([
                 'user_id' => Auth::id(),
                 'event' => 'alta_equipo',
-                'description' => "Equipo creado con código {$equipment->code} de tipo {$equipment->type}.",
+                'description' => "Ascensor registrado con código {$equipment->code}.",
             ]);
 
             AuditService::log('created', $equipment, $equipment->toArray());
 
-            return $equipment->load(['building.client', 'elevator', 'electricDoor']);
+            return $equipment->load(['building.client', 'elevator']);
         });
     }
 
@@ -82,19 +78,14 @@ class EquipmentService
     public function update(Equipment $equipment, array $data): Equipment
     {
         return DB::transaction(function () use ($equipment, $data) {
-            $equipmentData = collect($data)->except(['elevator', 'electric_door'])->toArray();
+            $equipmentData = collect($data)->except(['elevator'])->toArray();
             $oldStatus = $equipment->status;
             $equipment->update($equipmentData);
 
-            if ($equipment->type === 'elevator' && isset($data['elevator'])) {
+            if (isset($data['elevator'])) {
                 $equipment->elevator()->updateOrCreate(
                     ['equipment_id' => $equipment->id],
                     $data['elevator']
-                );
-            } elseif ($equipment->type === 'electric_door' && isset($data['electric_door'])) {
-                $equipment->electricDoor()->updateOrCreate(
-                    ['equipment_id' => $equipment->id],
-                    $data['electric_door']
                 );
             }
 
@@ -109,7 +100,7 @@ class EquipmentService
 
             AuditService::log('updated', $equipment, $equipment->getChanges());
 
-            return $equipment->fresh(['building.client', 'elevator', 'electricDoor', 'history']);
+            return $equipment->fresh(['building.client', 'elevator', 'history']);
         });
     }
 

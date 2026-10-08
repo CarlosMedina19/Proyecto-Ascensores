@@ -3,20 +3,25 @@ services:
     build:
       context: .
     container_name: ascensores_app
-    restart: always 
+    restart: always
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app_network
     environment:
-      DOCKER_DB_HOST: db
-      DOCKER_DB_PORT: 5432
-    command: sh -c "php artisan serve --host=0.0.0.0 --port=8000"
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: ascensores
+      DB_USERNAME: ascensores_user
+      DB_PASSWORD: ascensores_pass
+      DB_CONNECTION: pgsql
+    command: sh -c "php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=8000"
 
   db:
     image: postgres:16
@@ -32,6 +37,11 @@ services:
       - db_data:/var/lib/postgresql/data
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ascensores_user -d ascensores"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   pgadmin:
     image: dpage/pgadmin4
