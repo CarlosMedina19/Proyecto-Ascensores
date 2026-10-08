@@ -56,11 +56,6 @@ class Equipment extends Model
         return $this->hasOne(Elevator::class);
     }
 
-    public function electricDoor(): HasOne
-    {
-        return $this->hasOne(ElectricDoor::class);
-    }
-
     public function history(): HasMany
     {
         return $this->hasMany(EquipmentHistory::class);
