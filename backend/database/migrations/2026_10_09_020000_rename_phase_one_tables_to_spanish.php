@@ -105,19 +105,23 @@ return new class extends Migration
             $this->renameTable($from, $to);
         }
 
-        foreach ($this->sequences as $from => $to) {
-            $this->renameSequence($from, $to);
-        }
+        if (DB::getDriverName() === 'pgsql') {
+            foreach ($this->sequences as $from => $to) {
+                $this->renameSequence($from, $to);
+            }
 
-        $this->renameConstraints($this->constraints);
+            $this->renameConstraints($this->constraints);
+        }
     }
 
     public function down(): void
     {
-        $this->renameConstraints($this->reverseMap($this->constraints));
+        if (DB::getDriverName() === 'pgsql') {
+            $this->renameConstraints($this->reverseMap($this->constraints));
 
-        foreach (array_reverse($this->sequences, true) as $from => $to) {
-            $this->renameSequence($to, $from);
+            foreach (array_reverse($this->sequences, true) as $from => $to) {
+                $this->renameSequence($to, $from);
+            }
         }
 
         foreach (array_reverse($this->tables, true) as $from => $to) {

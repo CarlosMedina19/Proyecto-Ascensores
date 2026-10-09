@@ -23,7 +23,7 @@ return new class extends Migration
         Schema::table('equipment', function (Blueprint $table) {
             $table->dropColumn([
                 'uuid', 'brand', 'model', 'serial_number',
-                'installation_date', 'observations'
+                'installation_date', 'observations',
             ]);
         });
     }

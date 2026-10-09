@@ -24,6 +24,10 @@ las solicitudes sin permiso responden 403.
 | Método | Ruta | Permiso |
 | --- | --- | --- |
 | GET | `/roles`, `/roles/{role}` | `roles.view` |
+| POST | `/roles` | `roles.create` |
+| PATCH | `/roles/{role}` | `roles.update` |
+| PUT | `/roles/{role}/permissions` | `roles.permissions.update` |
+| GET | `/permissions` | `permissions.view` |
 | GET | `/users`, `/users/{user}` | `users.view` |
 | POST | `/users` | `users.create` |
 | PUT/PATCH | `/users/{user}` | `users.update` |
@@ -32,8 +36,15 @@ las solicitudes sin permiso responden 403.
 
 Los listados admiten paginación y filtros; para usuarios se admiten `search`,
 `role_id`, `is_active`. La desactivación reemplaza el borrado permanente de
-usuarios. La auditoría admite `action`, `model`, `user_id` y limita la página a
-100 registros.
+usuarios. Los permisos disponibles son un catálogo sembrado y no se crean por
+API; el rol `admin` no se puede renombrar ni modificar para evitar bloquear la
+administración. La auditoría admite `action`, `model`, `user_id` y limita la
+página a 100 registros.
+
+Para crear un rol envía `name` y, opcionalmente, `description` a `POST /roles`.
+Para asignarle permisos, envía `PUT /roles/{role}/permissions` con
+`{"permissions":["clients.view","buildings.view"]}`. La lista reemplaza las
+asignaciones actuales y solo acepta permisos existentes en el catálogo.
 
 ## Clientes y edificios
 
@@ -64,6 +75,7 @@ Los filtros son `building_id`, `type`, `status`, `search`.
 ## Permisos sembrados
 
 Capacidades: `dashboard.view`, `roles.view`, `users.view`, `users.create`,
+`roles.create`, `roles.update`, `roles.permissions.update`, `permissions.view`,
 `users.update`, `audit-logs.view`, `clients.view`, `clients.create`,
 `clients.update`, `clients.delete`, `clients.contacts.create`,
 `buildings.view`, `buildings.create`, `buildings.update`, `buildings.delete`,
@@ -95,7 +107,6 @@ columnas persistidas de negocio en fase 1 son:
 | `permisos` | `id`, `nombre`, `descripcion`, `created_at`, `updated_at` |
 | `rol_permisos` | `id`, `rol_id`, `permiso_id`, `created_at`, `updated_at` |
 | `registros_auditoria` | `id`, `usuario_id`, `accion`, `modelo`, `modelo_id`, `cambios`, `created_at` |
-| `puertas_electricas` | `id`, `equipo_id`, `marca`, `modelo`, `tipo_puerta`, `fecha_instalacion`, `tipo_apertura`, `tipo_acceso`, `numero_serie`, `especificaciones_tecnicas`, `created_at`, `updated_at` |
 | `clientes` | `id`, `identificador_uuid`, `tipo`, `nombre`, `tipo_documento`, `numero_documento`, `nit`, `direccion`, `telefono`, `correo`, `regimen_tributario`, `actividad_economica`, `estado`, `observaciones`, `created_at`, `updated_at`, `deleted_at` |
 | `contactos_cliente` | `id`, `cliente_id`, `nombre`, `cargo`, `telefono`, `correo`, `created_at`, `updated_at` |
 | `edificios` | `id`, `identificador_uuid`, `cliente_id`, `nombre`, `direccion`, `ciudad`, `departamento`, `codigo_postal`, `pisos`, `observaciones`, `nombre_contacto`, `telefono_contacto`, `correo_contacto`, `created_at`, `updated_at`, `deleted_at` |
@@ -107,9 +118,10 @@ Se conservan los nombres técnicos que requiere Laravel/Sanctum (`id`,
 `password`, `remember_token`, timestamps y `deleted_at`); la fecha de
 verificación se almacena como `correo_verificado_en`.
 Las llaves foráneas de dominio usan `rol_id`, `permiso_id`, `cliente_id`,
-`edificio_id`, `equipo_id` y `usuario_id`. Los campos de `puertas_electricas`
-se traducen para mantener consistente el esquema, pero la funcionalidad de
-puertas eléctricas queda fuera de la fase 1.
+`edificio_id`, `equipo_id` y `usuario_id`. Las migraciones heredadas aún
+incluyen el esquema de puertas eléctricas por compatibilidad con el historial
+de instalación, pero no hay modelo, endpoint ni funcionalidad de ese módulo en
+el alcance actual.
 
 Se conservan sin renombrar las tablas técnicas Laravel/Sanctum: `migrations`,
 `cache`, `cache_locks`, `sessions`, `personal_access_tokens`, `jobs`,

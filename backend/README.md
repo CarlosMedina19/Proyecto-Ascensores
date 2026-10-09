@@ -48,6 +48,17 @@ php artisan test --compact
 El puerto `5433` es el puerto del host publicado por `docker-compose.yml`; desde
 el contenedor `app`, PostgreSQL se alcanza como `db:5432`.
 
+Para ejecutar pruebas funcionales localmente sin iniciar PostgreSQL, puede
+usarse SQLite en memoria desde PowerShell. Esto verifica los flujos de la API,
+pero no reemplaza la validación de integración específica de PostgreSQL:
+
+```powershell
+$env:DB_CONNECTION = 'sqlite'
+$env:DB_DATABASE = ':memory:'
+$env:DB_URL = ''
+php artisan test
+```
+
 ## Autenticación y permisos
 
 Envía `POST /api/v1/login` con correo y contraseña. Envía el token Sanctum en
