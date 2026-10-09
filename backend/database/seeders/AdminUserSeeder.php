@@ -5,39 +5,44 @@ namespace Database\Seeders;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use RuntimeException;
 
 class AdminUserSeeder extends Seeder
 {
-    /**
-     * Seeder "seguro": la contraseña NUNCA queda hardcodeada en el código.
-     * Se toma de las variables de entorno (.env), con un valor por defecto
-     * solo para ambiente local. En producción, ADMIN_PASSWORD debe venir
-     * definido en el .env del servidor.
-     */
     public function run(): void
     {
-        $adminRole = Role::where('name', 'admin')->first();
+        $adminRole = Role::where('nombre', 'admin')->first();
 
         if (! $adminRole) {
-            $this->command->warn('No existe el rol "admin". Corre primero el RoleSeeder.');
+            throw new RuntimeException('No existe el rol "admin"; ejecuta RoleSeeder antes de AdminUserSeeder.');
+        }
+
+        $email = config('admin.email');
+
+        if (! is_string($email) || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            throw new RuntimeException('Configura ADMIN_EMAIL con una dirección de correo válida.');
+        }
+
+        if (User::where('correo', $email)->exists()) {
             return;
         }
 
-        $email = env('ADMIN_EMAIL', 'admin@ascensores.com');
-        $password = env('ADMIN_PASSWORD', 'CambiarEsteClave123!');
+        $password = config('admin.password');
+
+        if (! is_string($password) || strlen($password) < 12) {
+            throw new RuntimeException(
+                'Configura ADMIN_PASSWORD (mínimo 12 caracteres) antes de crear el administrador.'
+            );
+        }
 
         User::firstOrCreate(
-            ['email' => $email],
+            ['correo' => $email],
             [
-                'name' => 'Administrador',
-                'password' => $password, // el cast 'hashed' del modelo User lo encripta solo
-                'role_id' => $adminRole->id,
-                'is_active' => true,
+                'nombre' => 'Administrador',
+                'password' => $password,
+                'rol_id' => $adminRole->id,
+                'activo' => true,
             ]
         );
-
-        if (env('ADMIN_PASSWORD') === null) {
-            $this->command->warn('ADMIN_PASSWORD no está definido en .env — se usó una contraseña por defecto SOLO para desarrollo local. Cámbiala en .env antes de producción.');
-        }
     }
 }

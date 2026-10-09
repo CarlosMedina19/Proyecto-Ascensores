@@ -13,19 +13,21 @@ class Building extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'edificios';
+
     protected $fillable = [
-        'uuid',
-        'client_id',
-        'name',
-        'address',
-        'city',
-        'department',
-        'postal_code',
-        'floors',
-        'observations',
-        'contact_name',
-        'contact_phone',
-        'contact_email',
+        'identificador_uuid',
+        'cliente_id',
+        'nombre',
+        'direccion',
+        'ciudad',
+        'departamento',
+        'codigo_postal',
+        'pisos',
+        'observaciones',
+        'nombre_contacto',
+        'telefono_contacto',
+        'correo_contacto',
     ];
 
     protected static function boot()
@@ -33,19 +35,19 @@ class Building extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            if (empty($model->uuid)) {
-                $model->uuid = (string) Str::uuid();
+            if (empty($model->identificador_uuid)) {
+                $model->identificador_uuid = (string) Str::uuid();
             }
         });
     }
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Client::class, 'cliente_id');
     }
 
     public function equipment(): HasMany
     {
-        return $this->hasMany(Equipment::class);
+        return $this->hasMany(Equipment::class, 'edificio_id');
     }
 }

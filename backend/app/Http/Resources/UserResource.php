@@ -11,10 +11,10 @@ class UserResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
-            'email' => $this->email,
-            'is_active' => (bool) $this->is_active,
-            'role_id' => $this->role_id,
+            'name' => $this->nombre,
+            'email' => $this->correo,
+            'is_active' => (bool) $this->activo,
+            'role_id' => $this->rol_id,
             'role' => new RoleResource($this->whenLoaded('role')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

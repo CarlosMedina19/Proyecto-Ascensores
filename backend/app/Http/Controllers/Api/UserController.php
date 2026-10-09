@@ -20,13 +20,17 @@ class UserController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
+        $this->authorize('viewAny', User::class);
         $users = $this->userService->list($request->all(), (int) $request->input('per_page', 15));
+
         return UserResource::collection($users);
     }
 
     public function store(StoreUserRequest $request): JsonResponse
     {
+        $this->authorize('create', User::class);
         $user = $this->userService->create($request->validated());
+
         return (new UserResource($user))
             ->response()
             ->setStatusCode(201);
@@ -34,18 +38,24 @@ class UserController extends Controller
 
     public function show(User $user): UserResource
     {
+        $this->authorize('view', $user);
+
         return new UserResource($user->load('role'));
     }
 
     public function update(UpdateUserRequest $request, User $user): UserResource
     {
+        $this->authorize('update', $user);
         $updated = $this->userService->update($user, $request->validated());
+
         return new UserResource($updated);
     }
 
     public function toggleStatus(User $user): UserResource
     {
+        $this->authorize('toggleStatus', $user);
         $updated = $this->userService->toggleStatus($user);
+
         return new UserResource($updated);
     }
 }

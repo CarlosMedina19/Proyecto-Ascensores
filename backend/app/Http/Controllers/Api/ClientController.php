@@ -22,13 +22,17 @@ class ClientController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
+        $this->authorize('viewAny', Client::class);
         $clients = $this->clientService->list($request->all(), (int) $request->input('per_page', 15));
+
         return ClientResource::collection($clients);
     }
 
     public function store(StoreClientRequest $request): JsonResponse
     {
+        $this->authorize('create', Client::class);
         $client = $this->clientService->create($request->validated());
+
         return (new ClientResource($client))
             ->response()
             ->setStatusCode(201);
@@ -36,18 +40,24 @@ class ClientController extends Controller
 
     public function show(Client $client): ClientResource
     {
+        $this->authorize('view', $client);
+
         return new ClientResource($client->load(['contacts', 'buildings.equipment']));
     }
 
     public function update(UpdateClientRequest $request, Client $client): ClientResource
     {
+        $this->authorize('update', $client);
         $updated = $this->clientService->update($client, $request->validated());
+
         return new ClientResource($updated);
     }
 
     public function destroy(Client $client): JsonResponse
     {
+        $this->authorize('delete', $client);
         $this->clientService->delete($client);
+
         return response()->json([
             'success' => true,
             'message' => 'Cliente eliminado correctamente',
@@ -56,7 +66,9 @@ class ClientController extends Controller
 
     public function addContact(StoreClientContactRequest $request, Client $client): JsonResponse
     {
+        $this->authorize('createContact', $client);
         $contact = $this->clientService->addContact($client, $request->validated());
+
         return (new ClientContactResource($contact))
             ->response()
             ->setStatusCode(201);

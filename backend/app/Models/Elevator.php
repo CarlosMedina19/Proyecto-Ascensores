@@ -10,33 +10,35 @@ class Elevator extends Model
 {
     use HasFactory;
 
+    protected $table = 'ascensores';
+
     protected $fillable = [
-        'equipment_id',
-        'brand',
-        'model',
-        'capacity_kg',
-        'speed_mpm',
-        'stops',
-        'drive_type',
+        'equipo_id',
+        'marca',
+        'modelo',
+        'capacidad_kg',
+        'velocidad_mpm',
+        'paradas',
+        'tipo_traccion',
         'motor',
-        'controller',
-        'door_type',
-        'technical_specs',
-        'installation_date',
+        'controlador',
+        'tipo_puerta',
+        'especificaciones_tecnicas',
+        'fecha_instalacion',
     ];
 
     protected function casts(): array
     {
         return [
-            'installation_date' => 'date',
-            'capacity_kg' => 'integer',
-            'speed_mpm' => 'decimal:2',
-            'stops' => 'integer',
+            'fecha_instalacion' => 'date',
+            'capacidad_kg' => 'integer',
+            'velocidad_mpm' => 'decimal:2',
+            'paradas' => 'integer',
         ];
     }
 
     public function equipment(): BelongsTo
     {
-        return $this->belongsTo(Equipment::class);
+        return $this->belongsTo(Equipment::class, 'equipo_id');
     }
 }

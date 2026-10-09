@@ -11,10 +11,10 @@ class EquipmentHistoryResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'equipment_id' => $this->equipment_id,
+            'equipment_id' => $this->equipo_id,
             'user' => new UserResource($this->whenLoaded('user')),
-            'event' => $this->event,
-            'description' => $this->description,
+            'event' => $this->evento,
+            'description' => $this->descripcion,
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

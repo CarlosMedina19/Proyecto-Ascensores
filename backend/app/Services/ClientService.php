@@ -9,62 +9,52 @@ use Illuminate\Support\Facades\DB;
 
 class ClientService
 {
-    /**
-     * Listar clientes con filtros y paginación (RF-005).
-     */
     public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         $query = Client::with(['contacts'])->withCount('buildings');
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $like = DB::getDriverName() === 'pgsql' ? 'ilike' : 'like';
             $query->where(function ($q) use ($search, $like) {
-                $q->where('name', $like, "%{$search}%")
-                  ->orWhere('nit', $like, "%{$search}%")
-                  ->orWhere('document_number', $like, "%{$search}%")
-                  ->orWhere('email', $like, "%{$search}%");
+                $q->where('nombre', $like, "%{$search}%")
+                    ->orWhere('nit', $like, "%{$search}%")
+                    ->orWhere('numero_documento', $like, "%{$search}%")
+                    ->orWhere('correo', $like, "%{$search}%");
             });
         }
 
         if (isset($filters['status'])) {
-            $query->where('status', filter_var($filters['status'], FILTER_VALIDATE_BOOLEAN));
+            $query->where('estado', filter_var($filters['status'], FILTER_VALIDATE_BOOLEAN));
         }
 
-        if (!empty($filters['type'])) {
-            $query->where('type', $filters['type']);
+        if (! empty($filters['type'])) {
+            $query->where('tipo', $filters['type']);
         }
 
         return $query->latest()->paginate($perPage);
     }
 
-    /**
-     * Crear cliente con auditoría.
-     */
     public function create(array $data): Client
     {
         return DB::transaction(function () use ($data) {
             $client = Client::create($data);
             AuditService::log('created', $client, $client->toArray());
+
             return $client->load('contacts');
         });
     }
 
-    /**
-     * Actualizar cliente con auditoría.
-     */
     public function update(Client $client, array $data): Client
     {
         return DB::transaction(function () use ($client, $data) {
             $client->update($data);
             AuditService::log('updated', $client, $client->getChanges());
+
             return $client->fresh(['contacts']);
         });
     }
 
-    /**
-     * Eliminar cliente (soft delete) con auditoría.
-     */
     public function delete(Client $client): void
     {
         DB::transaction(function () use ($client) {
@@ -73,13 +63,13 @@ class ClientService
         });
     }
 
-    /**
-     * Agregar contacto a un cliente.
-     */
     public function addContact(Client $client, array $data): ClientContact
     {
-        $contact = $client->contacts()->create($data);
-        AuditService::log('created', $contact, $contact->toArray());
-        return $contact;
+        return DB::transaction(function () use ($client, $data) {
+            $contact = $client->contacts()->create($data);
+            AuditService::log('created', $contact, $contact->toArray());
+
+            return $contact;
+        });
     }
 }

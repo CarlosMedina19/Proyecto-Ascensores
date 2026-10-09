@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\User;
 
+use App\Http\Requests\Concerns\MapsApiFields;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreUserRequest extends FormRequest
 {
+    use MapsApiFields;
+
     public function authorize(): bool
     {
         return true;
@@ -14,11 +17,21 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'nombre' => ['required', 'string', 'max:255'],
+            'correo' => ['required', 'email', 'max:255', 'unique:usuarios,correo'],
             'password' => ['required', 'string', 'min:8'],
-            'role_id' => ['required', 'exists:roles,id'],
-            'is_active' => ['nullable', 'boolean'],
+            'rol_id' => ['required', 'exists:roles,id'],
+            'activo' => ['nullable', 'boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge($this->mapApiFields([
+            'name' => 'nombre',
+            'email' => 'correo',
+            'role_id' => 'rol_id',
+            'is_active' => 'activo',
+        ], $this->all()));
     }
 }

@@ -10,10 +10,12 @@ class ClientContact extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['client_id', 'name', 'position', 'phone', 'email'];
+    protected $table = 'contactos_cliente';
+
+    protected $fillable = ['cliente_id', 'nombre', 'cargo', 'telefono', 'correo'];
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Client::class, 'cliente_id');
     }
 }

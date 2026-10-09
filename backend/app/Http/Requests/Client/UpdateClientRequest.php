@@ -2,11 +2,15 @@
 
 namespace App\Http\Requests\Client;
 
+use App\Http\Requests\Concerns\MapsApiFields;
+use App\Models\Client;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateClientRequest extends FormRequest
 {
+    use MapsApiFields;
+
     public function authorize(): bool
     {
         return true;
@@ -14,23 +18,40 @@ class UpdateClientRequest extends FormRequest
 
     public function rules(): array
     {
-        $clientId = $this->route('client') instanceof \App\Models\Client 
-            ? $this->route('client')->id 
+        $clientId = $this->route('client') instanceof Client
+            ? $this->route('client')->id
             : $this->route('client');
 
         return [
-            'type' => ['nullable', 'in:natural,juridica'],
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'document_type' => ['nullable', 'string', 'max:50'],
-            'document_number' => ['nullable', 'string', 'max:50'],
-            'nit' => ['nullable', 'string', 'max:50', Rule::unique('clients')->ignore($clientId)],
-            'address' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'tax_regime' => ['nullable', 'string', 'max:100'],
-            'economic_activity' => ['nullable', 'string', 'max:100'],
-            'status' => ['nullable', 'boolean'],
-            'observations' => ['nullable', 'string'],
+            'tipo' => ['nullable', 'in:natural,juridica'],
+            'nombre' => ['sometimes', 'required', 'string', 'max:255'],
+            'tipo_documento' => ['nullable', 'string', 'max:50'],
+            'numero_documento' => ['nullable', 'string', 'max:50'],
+            'nit' => ['nullable', 'string', 'max:50', Rule::unique('clientes')->ignore($clientId)],
+            'direccion' => ['nullable', 'string', 'max:255'],
+            'telefono' => ['nullable', 'string', 'max:50'],
+            'correo' => ['nullable', 'email', 'max:255'],
+            'regimen_tributario' => ['nullable', 'string', 'max:100'],
+            'actividad_economica' => ['nullable', 'string', 'max:100'],
+            'estado' => ['nullable', 'boolean'],
+            'observaciones' => ['nullable', 'string'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge($this->mapApiFields([
+            'type' => 'tipo',
+            'name' => 'nombre',
+            'document_type' => 'tipo_documento',
+            'document_number' => 'numero_documento',
+            'address' => 'direccion',
+            'phone' => 'telefono',
+            'email' => 'correo',
+            'tax_regime' => 'regimen_tributario',
+            'economic_activity' => 'actividad_economica',
+            'status' => 'estado',
+            'observations' => 'observaciones',
+        ], $this->all()));
     }
 }

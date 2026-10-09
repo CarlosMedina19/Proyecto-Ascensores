@@ -6,53 +6,55 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Client extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'clientes';
+
     protected $fillable = [
-        'uuid',
-        'type',
-        'name',
-        'document_type',
-        'document_number',
+        'identificador_uuid',
+        'tipo',
+        'nombre',
+        'tipo_documento',
+        'numero_documento',
         'nit',
-        'address',
-        'phone',
-        'email',
-        'tax_regime',
-        'economic_activity',
-        'status',
-        'observations',
+        'direccion',
+        'telefono',
+        'correo',
+        'regimen_tributario',
+        'actividad_economica',
+        'estado',
+        'observaciones',
     ];
 
     protected function casts(): array
     {
         return [
-            'status' => 'boolean',
+            'estado' => 'boolean',
         ];
     }
 
-    
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($model) {
-            if (empty($model->uuid)) {
-                $model->uuid = (string) \Illuminate\Support\Str::uuid();
+            if (empty($model->identificador_uuid)) {
+                $model->identificador_uuid = (string) Str::uuid();
             }
         });
     }
-    
+
     public function contacts(): HasMany
     {
-        return $this->hasMany(ClientContact::class);
+        return $this->hasMany(ClientContact::class, 'cliente_id');
     }
 
     public function buildings(): HasMany
     {
-        return $this->hasMany(Building::class);
+        return $this->hasMany(Building::class, 'cliente_id');
     }
 }

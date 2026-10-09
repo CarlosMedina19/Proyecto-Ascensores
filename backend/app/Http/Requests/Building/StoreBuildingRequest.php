@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\Building;
 
+use App\Http\Requests\Concerns\MapsApiFields;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreBuildingRequest extends FormRequest
 {
+    use MapsApiFields;
+
     public function authorize(): bool
     {
         return true;
@@ -14,17 +17,34 @@ class StoreBuildingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'client_id' => ['required', 'exists:clients,id'],
-            'name' => ['required', 'string', 'max:255'],
-            'address' => ['required', 'string', 'max:255'],
-            'city' => ['nullable', 'string', 'max:100'],
-            'department' => ['nullable', 'string', 'max:100'],
-            'postal_code' => ['nullable', 'string', 'max:20'],
-            'floors' => ['nullable', 'integer', 'min:1'],
-            'observations' => ['nullable', 'string'],
-            'contact_name' => ['nullable', 'string', 'max:255'],
-            'contact_phone' => ['nullable', 'string', 'max:50'],
-            'contact_email' => ['nullable', 'email', 'max:255'],
+            'cliente_id' => ['required', 'exists:clientes,id'],
+            'nombre' => ['required', 'string', 'max:255'],
+            'direccion' => ['required', 'string', 'max:255'],
+            'ciudad' => ['nullable', 'string', 'max:100'],
+            'departamento' => ['nullable', 'string', 'max:100'],
+            'codigo_postal' => ['nullable', 'string', 'max:20'],
+            'pisos' => ['nullable', 'integer', 'min:1'],
+            'observaciones' => ['nullable', 'string'],
+            'nombre_contacto' => ['nullable', 'string', 'max:255'],
+            'telefono_contacto' => ['nullable', 'string', 'max:50'],
+            'correo_contacto' => ['nullable', 'email', 'max:255'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge($this->mapApiFields([
+            'client_id' => 'cliente_id',
+            'name' => 'nombre',
+            'address' => 'direccion',
+            'city' => 'ciudad',
+            'department' => 'departamento',
+            'postal_code' => 'codigo_postal',
+            'floors' => 'pisos',
+            'observations' => 'observaciones',
+            'contact_name' => 'nombre_contacto',
+            'contact_phone' => 'telefono_contacto',
+            'contact_email' => 'correo_contacto',
+        ], $this->all()));
     }
 }

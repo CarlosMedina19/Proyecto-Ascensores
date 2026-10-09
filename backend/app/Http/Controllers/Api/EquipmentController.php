@@ -22,13 +22,17 @@ class EquipmentController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
+        $this->authorize('viewAny', Equipment::class);
         $equipment = $this->equipmentService->list($request->all(), (int) $request->input('per_page', 15));
+
         return EquipmentResource::collection($equipment);
     }
 
     public function store(StoreEquipmentRequest $request): JsonResponse
     {
+        $this->authorize('create', Equipment::class);
         $equipment = $this->equipmentService->create($request->validated());
+
         return (new EquipmentResource($equipment))
             ->response()
             ->setStatusCode(201);
@@ -36,20 +40,26 @@ class EquipmentController extends Controller
 
     public function show(Equipment $equipment): EquipmentResource
     {
+        $this->authorize('view', $equipment);
+
         return new EquipmentResource(
-            $equipment->load(['building.client', 'elevator', 'electricDoor', 'history.user'])
+            $equipment->load(['building.client', 'elevator', 'history.user'])
         );
     }
 
     public function update(UpdateEquipmentRequest $request, Equipment $equipment): EquipmentResource
     {
+        $this->authorize('update', $equipment);
         $updated = $this->equipmentService->update($equipment, $request->validated());
+
         return new EquipmentResource($updated);
     }
 
     public function destroy(Equipment $equipment): JsonResponse
     {
+        $this->authorize('delete', $equipment);
         $this->equipmentService->delete($equipment);
+
         return response()->json([
             'success' => true,
             'message' => 'Equipo eliminado correctamente',
@@ -58,13 +68,17 @@ class EquipmentController extends Controller
 
     public function history(Equipment $equipment): AnonymousResourceCollection
     {
+        $this->authorize('viewHistory', $equipment);
         $history = $equipment->history()->with('user')->latest()->get();
+
         return EquipmentHistoryResource::collection($history);
     }
 
     public function addHistory(StoreEquipmentHistoryRequest $request, Equipment $equipment): JsonResponse
     {
+        $this->authorize('addHistory', $equipment);
         $history = $this->equipmentService->addHistory($equipment, $request->validated());
+
         return (new EquipmentHistoryResource($history))
             ->response()
             ->setStatusCode(201);

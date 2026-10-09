@@ -7,20 +7,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AuditLog extends Model
 {
-    public $timestamps = false; // solo tenemos created_at
+    protected $table = 'registros_auditoria';
 
-    protected $fillable = ['user_id', 'action', 'model', 'model_id', 'changes'];
+    public $timestamps = false;
+
+    protected $fillable = ['usuario_id', 'accion', 'modelo', 'modelo_id', 'cambios'];
 
     protected function casts(): array
     {
         return [
-            'changes' => 'array',
+            'cambios' => 'array',
             'created_at' => 'datetime',
         ];
     }
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'usuario_id');
     }
 }

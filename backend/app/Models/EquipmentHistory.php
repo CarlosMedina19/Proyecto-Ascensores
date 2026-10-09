@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EquipmentHistory extends Model
 {
-    protected $table = 'equipment_history';
+    protected $table = 'historial_equipos';
 
-    public $timestamps = false; // solo tenemos created_at
+    public $timestamps = false;
 
-    protected $fillable = ['equipment_id', 'user_id', 'event', 'description'];
+    protected $fillable = ['equipo_id', 'usuario_id', 'evento', 'descripcion'];
 
     protected function casts(): array
     {
@@ -20,11 +20,11 @@ class EquipmentHistory extends Model
 
     public function equipment(): BelongsTo
     {
-        return $this->belongsTo(Equipment::class);
+        return $this->belongsTo(Equipment::class, 'equipo_id');
     }
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'usuario_id');
     }
 }

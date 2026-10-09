@@ -11,10 +11,10 @@ class ClientContactResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
-            'position' => $this->position,
-            'phone' => $this->phone,
-            'email' => $this->email,
+            'name' => $this->nombre,
+            'position' => $this->cargo,
+            'phone' => $this->telefono,
+            'email' => $this->correo,
         ];
     }
 }

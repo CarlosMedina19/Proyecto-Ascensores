@@ -14,24 +14,26 @@ class Equipment extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'equipos';
+
     protected $fillable = [
-        'uuid',
-        'building_id',
-        'code',
-        'type',
-        'brand',
-        'model',
-        'serial_number',
-        'location',
-        'status',
-        'installation_date',
-        'observations',
+        'identificador_uuid',
+        'edificio_id',
+        'codigo',
+        'tipo',
+        'marca',
+        'modelo',
+        'numero_serie',
+        'ubicacion',
+        'estado',
+        'fecha_instalacion',
+        'observaciones',
     ];
 
     protected function casts(): array
     {
         return [
-            'installation_date' => 'date',
+            'fecha_instalacion' => 'date',
         ];
     }
 
@@ -40,24 +42,24 @@ class Equipment extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            if (empty($model->uuid)) {
-                $model->uuid = (string) Str::uuid();
+            if (empty($model->identificador_uuid)) {
+                $model->identificador_uuid = (string) Str::uuid();
             }
         });
     }
 
     public function building(): BelongsTo
     {
-        return $this->belongsTo(Building::class);
+        return $this->belongsTo(Building::class, 'edificio_id');
     }
 
     public function elevator(): HasOne
     {
-        return $this->hasOne(Elevator::class);
+        return $this->hasOne(Elevator::class, 'equipo_id');
     }
 
     public function history(): HasMany
     {
-        return $this->hasMany(EquipmentHistory::class);
+        return $this->hasMany(EquipmentHistory::class, 'equipo_id');
     }
 }

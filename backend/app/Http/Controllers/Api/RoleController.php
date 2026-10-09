@@ -11,12 +11,16 @@ class RoleController extends Controller
 {
     public function index(): AnonymousResourceCollection
     {
+        $this->authorize('viewAny', Role::class);
         $roles = Role::with('permissions')->withCount('users')->get();
+
         return RoleResource::collection($roles);
     }
 
     public function show(Role $role): RoleResource
     {
+        $this->authorize('view', $role);
+
         return new RoleResource($role->load('permissions')->loadCount('users'));
     }
 }

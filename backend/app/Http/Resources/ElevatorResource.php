@@ -11,18 +11,18 @@ class ElevatorResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'equipment_id' => $this->equipment_id,
-            'brand' => $this->brand,
-            'model' => $this->model,
-            'capacity_kg' => $this->capacity_kg,
-            'stops' => $this->stops,
-            'speed_mpm' => $this->speed_mpm,
-            'drive_type' => $this->drive_type,
+            'equipment_id' => $this->equipo_id,
+            'brand' => $this->marca,
+            'model' => $this->modelo,
+            'capacity_kg' => $this->capacidad_kg,
+            'stops' => $this->paradas,
+            'speed_mpm' => $this->velocidad_mpm,
+            'drive_type' => $this->tipo_traccion,
             'motor' => $this->motor,
-            'controller' => $this->controller,
-            'door_type' => $this->door_type,
-            'technical_specs' => $this->technical_specs,
-            'installation_date' => $this->installation_date?->format('Y-m-d'),
+            'controller' => $this->controlador,
+            'door_type' => $this->tipo_puerta,
+            'technical_specs' => $this->especificaciones_tecnicas,
+            'installation_date' => $this->fecha_instalacion?->format('Y-m-d'),
         ];
     }
 }
