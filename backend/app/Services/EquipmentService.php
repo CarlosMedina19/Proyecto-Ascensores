@@ -16,7 +16,7 @@ class EquipmentService
      */
     public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = Equipment::with(['building.client', 'elevator', 'electricDoor']);
+        $query = Equipment::with(['building.client', 'elevator']);
 
         if (!empty($filters['building_id'])) {
             $query->where('building_id', $filters['building_id']);

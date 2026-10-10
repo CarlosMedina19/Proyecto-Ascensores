@@ -37,7 +37,7 @@ class EquipmentController extends Controller
     public function show(Equipment $equipment): EquipmentResource
     {
         return new EquipmentResource(
-            $equipment->load(['building.client', 'elevator', 'electricDoor', 'history.user'])
+            $equipment->load(['building.client', 'elevator', 'history.user'])
         );
     }
 

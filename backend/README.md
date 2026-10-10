@@ -57,3 +57,57 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Ascensores API
+
+La API está versionada en `/api/v1`; los recursos operativos requieren autenticación
+Sanctum. En las colecciones se aceptan `elementos_por_pagina` (1–100), `pagina`,
+`buscar` y los filtros indicados por cada recurso. Las respuestas de colección
+incluyen `datos` y metadatos de paginación en español.
+
+### Esquema de base de datos
+
+Los nombres físicos de las tablas y columnas se traducen al español mediante la
+migración `2026_10_08_200007_translate_database_identifiers_to_spanish`. Eloquent
+adapta las consultas al esquema elegido. La migración también contempla las tablas de
+autenticación y notificaciones de Laravel. Al aplicarla en cada entorno, renombra los
+objetos existentes sin recrearlos ni borrar sus datos.
+
+La migración `2026_10_08_200008_translate_electric_doors_table_to_spanish` también
+renombra la tabla heredada `electric_doors` a `puertas_electricas` y traduce sus
+columnas si existe en una instalación previa. No agrega rutas CRUD para ese módulo.
+La tabla interna `migrations` y la clave primaria convencional `id` conservan sus
+nombres técnicos de Laravel.
+
+La API dispone de rutas y campos JSON en español. Por ejemplo, se puede crear un plan
+con `POST /api/v1/planes-mantenimiento` y enviar `nombre`, `tipo_servicio` y
+`esta_activo`; las respuestas usan `datos` y los errores `errores`. Se conserva la
+superficie anterior en inglés para no romper integraciones existentes. Para listar
+recursos, los filtros de búsqueda y paginación en español son `buscar`, `pagina` y
+`elementos_por_pagina`.
+
+| Módulo | Rutas en español |
+| --- | --- |
+| Mantenimiento | `/planes-mantenimiento`, `/asignaciones-planes`, `/historial-precios-planes`, `/programaciones-mantenimiento` |
+| Operaciones | `/tecnicos`, `/contratos`, `/equipos-contratos`, `/ordenes-trabajo`, `/tecnicos-ordenes-trabajo`, `/eventos-ordenes-trabajo` |
+| Verificaciones | `/plantillas-verificacion`, `/secciones-verificacion`, `/elementos-verificacion`, `/verificaciones-ordenes-trabajo` |
+| Inventario | `/repuestos`, `/movimientos-inventario`, `/repuestos-ordenes-trabajo` |
+| Finanzas | `/cotizaciones`, `/conceptos-cotizaciones`, `/facturas`, `/conceptos-facturas`, `/pagos`, `/movimientos-cuenta` |
+| Archivos | `POST /adjuntos/cargar`; `GET /adjuntos/{attachment}/descargar` |
+| IoT | `/iot/dispositivos`, `/iot/sensores`, `/iot/lecturas`, `/iot/eventos`, `/iot/reglas-alerta`, `/iot/alertas` |
+| IA | `/ia/documentos`, `/ia/fragmentos-documentos`, `/ia/incrustaciones`, `/ia/conversaciones`, `/ia/mensajes`, `/ia/comentarios`, `/ia/predicciones` |
+| Analítica | `GET /analitica/indicadores`, `/analitica/anomalias`, `/analitica/predicciones` |
+
+Los recursos CRUD usan `GET` para listar/detallar, `POST` para crear y `PATCH`/`PUT`
+para actualizar cuando el recurso lo permite. El consumo de repuestos y los
+movimientos de inventario se registran transaccionalmente y no permiten dejar el
+stock negativo. Los pagos contabilizan el crédito en cartera, impiden exceder el
+saldo y actualizan el estado de la factura. Los importes de cotizaciones y facturas
+se calculan a partir de sus conceptos; una cotización aprobada se puede convertir
+en borrador de factura. Historiales financieros, lecturas IoT y eventos se conservan
+como registros inmutables. No se incluyen recursos de puertas eléctricas.
+
+Las tablas y endpoints de IA almacenan documentos, conversaciones y predicciones;
+la generación de respuestas con un proveedor IA, el transporte MQTT, la entrega
+real de notificaciones y las pantallas Flutter requieren servicios/configuración
+adicionales y no se simulan en esta API.

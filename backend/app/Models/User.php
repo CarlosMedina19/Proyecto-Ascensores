@@ -5,11 +5,11 @@ namespace App\Models;
 // Notifiable y HasApiTokens son necesarios para Sanctum (login con tokens).
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends DatabaseAuthenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -38,6 +38,11 @@ class User extends Authenticatable
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(DatabaseNotification::class, 'notifiable')->latest();
     }
 
     public function hasRole(string $roleName): bool

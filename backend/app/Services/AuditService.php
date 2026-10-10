@@ -18,6 +18,7 @@ class AuditService
             'action' => $action,
             'model' => get_class($model),
             'model_id' => $model->getKey(),
+            'ip_address' => request()->ip(),
             'changes' => $changes ?? $model->getChanges(),
         ]);
     }

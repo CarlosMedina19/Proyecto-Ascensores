@@ -32,10 +32,11 @@ class BuildingController extends Controller
             ->setStatusCode(201);
     }
 
-    public function show(Building $building): BuildingResource
-    {
-        return new BuildingResource($building->load(['client', 'equipment.elevator', 'equipment.electricDoor']));
-    }
+    
+public function show(Building $building): BuildingResource
+{
+    return new BuildingResource($building->load(['client','equipment.elevator']));
+}
 
     public function update(UpdateBuildingRequest $request, Building $building): BuildingResource
     {
