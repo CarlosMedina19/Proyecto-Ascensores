@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class UsuarioFactory extends Factory
 {
-    protected $modelo = Usuario::class;
+    protected $model = Usuario::class;
 
     protected static ?string $password;
 

@@ -418,7 +418,8 @@ class PruebasFaseUnoTest extends TestCase
         $this->assertTrue(Schema::hasTable('edificios'));
         $this->assertTrue(Schema::hasTable('equipos'));
         $this->assertTrue(Schema::hasTable('ascensores'));
-        $this->assertTrue(Schema::hasTable('puertas_electricas'));
+        $this->assertFalse(Schema::hasTable('puertas_electricas'));
+        $this->assertFalse(Schema::hasTable('electric_doors'));
         $this->assertTrue(Schema::hasTable('historial_equipos'));
         $this->assertTrue(Schema::hasTable('registros_auditoria'));
 
@@ -439,8 +440,6 @@ class PruebasFaseUnoTest extends TestCase
         $this->assertTrue(Schema::hasColumn('equipos', 'edificio_id'));
         $this->assertTrue(Schema::hasColumn('ascensores', 'equipo_id'));
         $this->assertTrue(Schema::hasColumn('ascensores', 'capacidad_kg'));
-        $this->assertTrue(Schema::hasColumn('puertas_electricas', 'equipo_id'));
-        $this->assertTrue(Schema::hasColumn('puertas_electricas', 'tipo_apertura'));
         $this->assertTrue(Schema::hasColumn('historial_equipos', 'usuario_id'));
         $this->assertTrue(Schema::hasColumn('registros_auditoria', 'usuario_id'));
     }
