@@ -25,7 +25,7 @@ return new class extends Migration
         Schema::table('buildings', function (Blueprint $table) {
             $table->dropColumn([
                 'uuid', 'department', 'postal_code', 'observations',
-                'contact_name', 'contact_phone', 'contact_email'
+                'contact_name', 'contact_phone', 'contact_email',
             ]);
         });
     }

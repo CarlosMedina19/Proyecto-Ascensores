@@ -3,5 +3,5 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return response()->json(['status' => 'ok', 'app' => 'Proyecto Ascensores API']);
+    return response()->json(['estado' => 'ok', 'app' => 'Proyecto Ascensores API']);
 });
