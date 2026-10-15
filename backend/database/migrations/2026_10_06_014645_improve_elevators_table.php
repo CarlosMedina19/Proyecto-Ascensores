@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('elevators', function (Blueprint $table) {
-            $table->decimal('speed_mpm', 8, 2)->nullable()->after('capacity_kg'); 
-            $table->string('drive_type')->nullable()->after('stops'); 
+            $table->decimal('speed_mpm', 8, 2)->nullable()->after('capacity_kg');
+            $table->string('drive_type')->nullable()->after('stops');
             $table->string('motor')->nullable()->after('drive_type');
             $table->string('controller')->nullable()->after('motor');
             $table->string('door_type')->nullable()->after('controller');
@@ -23,7 +23,7 @@ return new class extends Migration
         Schema::table('elevators', function (Blueprint $table) {
             $table->dropColumn([
                 'speed_mpm', 'drive_type', 'motor',
-                'controller', 'door_type', 'technical_specs'
+                'controller', 'door_type', 'technical_specs',
             ]);
         });
     }

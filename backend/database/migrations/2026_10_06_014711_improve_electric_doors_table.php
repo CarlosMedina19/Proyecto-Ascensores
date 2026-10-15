@@ -20,7 +20,7 @@ return new class extends Migration
     {
         Schema::table('electric_doors', function (Blueprint $table) {
             $table->dropColumn([
-                'opening_type', 'access_type', 'serial_number', 'technical_specs'
+                'opening_type', 'access_type', 'serial_number', 'technical_specs',
             ]);
         });
     }
