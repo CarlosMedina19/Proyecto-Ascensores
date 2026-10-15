@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('building_id')->constrained()->cascadeOnDelete();
             $table->string('code')->unique();
-            $table->enum('type', ['elevator', 'electric_door']);
+            $table->enum('type', ['elevator']);
             $table->string('location')->nullable(); // ej: "Torre A, piso 3"
             $table->enum('status', ['active', 'inactive', 'maintenance'])->default('active');
             $table->timestamps();

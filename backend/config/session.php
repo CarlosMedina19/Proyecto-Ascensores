@@ -90,7 +90,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Cache Store
+    | Session Cache Guardar
     |--------------------------------------------------------------------------
     |
     | When using one of the framework's cache driven session backends, you may
