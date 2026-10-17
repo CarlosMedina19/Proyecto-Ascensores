@@ -1,5 +1,8 @@
 
 import 'package:flutter/material.dart';
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
+import 'package:signature/signature.dart';
 
 void main() {
   runApp(const MyApp());
@@ -334,8 +337,6 @@ class OrdenesTrabajoPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-
-          // ORDEN 001
           Card(
             child: ListTile(
               leading: const Icon(
@@ -366,8 +367,6 @@ class OrdenesTrabajoPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-
-          // ORDEN 002
           Card(
             child: ListTile(
               leading: const Icon(
@@ -427,6 +426,7 @@ class _DetalleOrdenPageState extends State<DetalleOrdenPage> {
   bool revisarPuertas = false;
   bool revisarPanel = false;
   bool revisarSeguridad = false;
+
   // ACTIVIDADES REALIZADAS
   bool limpiezaRealizada = false;
   bool lubricacionRealizada = false;
@@ -437,47 +437,73 @@ class _DetalleOrdenPageState extends State<DetalleOrdenPage> {
 
   final TextEditingController observacionesController =
       TextEditingController();
-  
-  
+
   final TextEditingController repuestoController =
-    TextEditingController();
+      TextEditingController();
 
   final TextEditingController cantidadController =
-    TextEditingController();
+      TextEditingController();
+
   List<String> repuestos = [];
-  
-void agregarRepuesto() {
-  String nombre = repuestoController.text.trim();
-  String cantidad = cantidadController.text.trim();
 
-  if (nombre.isEmpty || cantidad.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Escribe el repuesto y la cantidad'),
-      ),
-    );
-    return;
+  // FOTOS DEL MANTENIMIENTO
+  final ImagePicker selectorImagen = ImagePicker();
+  final List<Uint8List> fotosMantenimiento = [];
+
+  // FIRMA DEL TÉCNICO
+  final SignatureController controladorFirma = SignatureController(
+    penStrokeWidth: 3,
+    penColor: Colors.black,
+  );
+
+  void agregarRepuesto() {
+    String nombre = repuestoController.text.trim();
+    String cantidad = cantidadController.text.trim();
+
+    if (nombre.isEmpty || cantidad.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Escribe el repuesto y la cantidad'),
+        ),
+      );
+      return;
+    }
+
+    if (int.tryParse(cantidad) == null ||
+        int.parse(cantidad) <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'La cantidad debe ser un número mayor que cero',
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      repuestos.add('$nombre - Cantidad: $cantidad');
+    });
+
+    repuestoController.clear();
+    cantidadController.clear();
   }
 
-  if (int.tryParse(cantidad) == null ||
-      int.parse(cantidad) <= 0) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('La cantidad debe ser un número mayor que cero'),
-      ),
+  Future<void> seleccionarFoto() async {
+    final XFile? imagen = await selectorImagen.pickImage(
+      source: ImageSource.gallery,
     );
-    return;
+
+    if (imagen == null) {
+      return;
+    }
+
+    final Uint8List datosImagen = await imagen.readAsBytes();
+
+    setState(() {
+      fotosMantenimiento.add(datosImagen);
+    });
   }
-
-  setState(() {
-    repuestos.add('$nombre - Cantidad: $cantidad');
-  });
-
-  repuestoController.clear();
-  cantidadController.clear();
-}
-
-
 
   @override
   void dispose() {
@@ -485,6 +511,7 @@ void agregarRepuesto() {
     observacionesController.dispose();
     repuestoController.dispose();
     cantidadController.dispose();
+    controladorFirma.dispose();
     super.dispose();
   }
 
@@ -495,14 +522,12 @@ void agregarRepuesto() {
       revisarPanel,
       revisarSeguridad,
     ].where((tarea) => tarea).length;
-    
-final int actividadesCompletadas = [
-  limpiezaRealizada,
-  lubricacionRealizada,
-  ajusteRealizado,
-].where((actividad) => actividad).length;
 
-    
+    final int actividadesCompletadas = [
+      limpiezaRealizada,
+      lubricacionRealizada,
+      ajusteRealizado,
+    ].where((actividad) => actividad).length;
 
     return Scaffold(
       appBar: AppBar(
@@ -534,6 +559,8 @@ final int actividadesCompletadas = [
             'Estado: ${widget.estado}',
             style: const TextStyle(fontSize: 16),
           ),
+
+          // LISTA DE REVISIÓN
           const Divider(height: 35),
           const Text(
             'Lista de revisión',
@@ -548,7 +575,6 @@ final int actividadesCompletadas = [
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 8),
-
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Revisar puertas'),
@@ -581,64 +607,57 @@ final int actividadesCompletadas = [
               });
             },
           ),
-          
-const Divider(height: 35),
 
-const Text(
-  'Actividades realizadas',
-  style: TextStyle(
-    fontSize: 21,
-    fontWeight: FontWeight.bold,
-  ),
-),
-
-const SizedBox(height: 8),
-
-CheckboxListTile(
-  contentPadding: EdgeInsets.zero,
-  title: const Text('Limpieza del equipo'),
-  value: limpiezaRealizada,
-  onChanged: (valor) {
-    setState(() {
-      limpiezaRealizada = valor ?? false;
-    });
-  },
-),
-
-CheckboxListTile(
-  contentPadding: EdgeInsets.zero,
-  title: const Text('Lubricación del equipo'),
-  value: lubricacionRealizada,
-  onChanged: (valor) {
-    setState(() {
-      lubricacionRealizada = valor ?? false;
-    });
-  },
-),
-
-CheckboxListTile(
-  contentPadding: EdgeInsets.zero,
-  title: const Text('Ajustes necesarios'),
-
-  value: ajusteRealizado,
-  onChanged: (valor) {
-    setState(() {
-      ajusteRealizado = valor ?? false;
-    });
-  },
-),
-
-const SizedBox(height: 8),
-
-Text(
-  'Actividades completadas: $actividadesCompletadas de 3',
-  style: const TextStyle(fontSize: 16),
-),
-
+          // ACTIVIDADES REALIZADAS
+          const Divider(height: 35),
+          const Text(
+            'Actividades realizadas',
+            style: TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Limpieza del equipo'),
+            value: limpiezaRealizada,
+            onChanged: (valor) {
+              setState(() {
+                limpiezaRealizada = valor ?? false;
+              });
+            },
+          ),
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Lubricación del equipo'),
+            value: lubricacionRealizada,
+            onChanged: (valor) {
+              setState(() {
+                lubricacionRealizada = valor ?? false;
+              });
+            },
+          ),
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Ajustes necesarios'),
+            value: ajusteRealizado,
+            onChanged: (valor) {
+              setState(() {
+                ajusteRealizado = valor ?? false;
+              });
+            },
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Actividades completadas: '
+            '$actividadesCompletadas de 3',
+            style: const TextStyle(fontSize: 16),
+          ),
 
           const SizedBox(height: 20),
 
-          // BOTÓN PARA VERIFICAR EL CHECKLIST
+          // VERIFICAR CHECKLIST
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -668,7 +687,7 @@ Text(
             ),
           ),
 
-          // CAMPO PARA EL DIAGNÓSTICO
+          // DIAGNÓSTICO
           const Divider(height: 35),
           const Text(
             'Diagnóstico del técnico',
@@ -690,7 +709,7 @@ Text(
           ),
           const SizedBox(height: 20),
 
-          // CAMPO PARA LAS OBSERVACIONES
+          // OBSERVACIONES
           TextField(
             controller: observacionesController,
             maxLines: 3,
@@ -703,7 +722,7 @@ Text(
           ),
           const SizedBox(height: 20),
 
-          // BOTÓN PARA REVISAR EL DIAGNÓSTICO
+          // REVISAR DIAGNÓSTICO
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -751,69 +770,163 @@ Text(
               label: const Text('Revisar diagnóstico'),
             ),
           ),
-          
-const Divider(height: 35),
 
-const Text(
-  'Repuestos utilizados',
-  style: TextStyle(
-    fontSize: 21,
-    fontWeight: FontWeight.bold,
-  ),
-),
+          // REPUESTOS UTILIZADOS
+          const Divider(height: 35),
+          const Text(
+            'Repuestos utilizados',
+            style: TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: repuestoController,
+            decoration: const InputDecoration(
+              labelText: 'Nombre del repuesto',
+              hintText: 'Ej. Rodamiento',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.build),
+            ),
+          ),
+          const SizedBox(height: 15),
+          TextField(
+            controller: cantidadController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'Cantidad utilizada',
+              hintText: 'Ej. 2',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.numbers),
+            ),
+          ),
+          const SizedBox(height: 15),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: agregarRepuesto,
+              icon: const Icon(Icons.add),
+              label: const Text('Añadir repuesto'),
+            ),
+          ),
+          const SizedBox(height: 15),
+          if (repuestos.isEmpty)
+            const Text('Todavía no has agregado repuestos.')
+          else
+            ...repuestos.map(
+              (repuesto) => Card(
+                child: ListTile(
+                  leading: const Icon(Icons.build),
+                  title: Text(repuesto),
+                  trailing: IconButton(
+                    icon: const Icon(
+                      Icons.delete,
+                      color: Colors.red,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        repuestos.remove(repuesto);
+                      });
+                    },
+                  ),
+                ),
+              ),
+            ),
 
-const SizedBox(height: 12),
+          // FOTOS DEL MANTENIMIENTO
+          const Divider(height: 35),
+          const Text(
+            'Fotos del mantenimiento',
+            style: TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: seleccionarFoto,
+              icon: const Icon(Icons.add_a_photo),
+              label: const Text('Adjuntar foto'),
+            ),
+          ),
+          const SizedBox(height: 15),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: fotosMantenimiento.map((foto) {
+              return Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.memory(
+                      foto,
+                      width: 140,
+                      height: 140,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          fotosMantenimiento.remove(foto);
+                        });
+                      },
+                      icon: const Icon(
+                        Icons.delete,
+                        color: Colors.red,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
 
-TextField(
-  controller: repuestoController,
-  decoration: const InputDecoration(
-    labelText: 'Nombre del repuesto',
-    hintText: 'Ej. Rodamiento',
-    border: OutlineInputBorder(),
-    prefixIcon: Icon(Icons.build),
-  ),
-),
-
-const SizedBox(height: 15),
-
-TextField(
-  controller: cantidadController,
-  keyboardType: TextInputType.number,
-  decoration: const InputDecoration(
-    labelText: 'Cantidad utilizada',
-    hintText: 'Ej. 2',
-    border: OutlineInputBorder(),
-    prefixIcon: Icon(Icons.numbers),
-  ),
-),
-
-const SizedBox(height: 15),
-
-SizedBox(
-  width: double.infinity,
-  child: ElevatedButton.icon(
-    onPressed: agregarRepuesto,
-    icon: const Icon(Icons.add),
-    label: const Text('Añadir repuesto'),
-  ),
-),
-
-const SizedBox(height: 15),
-
-if (repuestos.isEmpty)
-  const Text('Todavía no has agregado repuestos.')
-else
-  ...repuestos.map(
-    (repuesto) => Card(
-      child: ListTile(
-        leading: const Icon(Icons.build),
-        title: Text(repuesto),
-      ),
-    ),
-  ),
-
-
-
+          // FIRMA DEL TÉCNICO
+          const Divider(height: 35),
+          const Text(
+            'Firma del técnico',
+            style: TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            height: 200,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.white,
+            ),
+            child: Signature(
+              controller: controladorFirma,
+              backgroundColor: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                setState(() {
+                  controladorFirma.clear();
+                });
+              },
+              icon: const Icon(Icons.delete),
+              label: const Text('Borrar firma'),
+            ),
+          ),
         ],
       ),
     );
