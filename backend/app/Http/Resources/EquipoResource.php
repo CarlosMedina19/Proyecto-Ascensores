@@ -24,6 +24,11 @@ class EquipoResource extends RecursoApi
             'observaciones' => $this->observaciones,
             'ascensor' => new AscensorResource($this->whenLoaded('ascensor')),
             'historial' => HistorialEquipoResource::collection($this->whenLoaded('historial')),
+            'fotos' => FotoEquipoResource::collection($this->whenLoaded('fotos')),
+            'ultima_revision' => $this->when(array_key_exists('ultima_revision', $this->resource->getAttributes()), fn () => $this->resource->getAttributes()['ultima_revision']),
+            // Fase 2: plan vigente y próximo mantenimiento del ascensor.
+            'asignacion_activa' => new AsignacionPlanResource($this->whenLoaded('asignacionActiva')),
+            'proximo_mantenimiento' => $this->whenLoaded('asignacionActiva', fn () => $this->asignacionActiva?->proximo_mantenimiento?->format('Y-m-d')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

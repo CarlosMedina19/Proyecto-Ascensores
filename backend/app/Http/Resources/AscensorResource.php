@@ -20,6 +20,9 @@ class AscensorResource extends RecursoApi
             'motor' => $this->motor,
             'controlador' => $this->controlador,
             'tipo_puerta' => $this->tipo_puerta,
+            'puertas_cabina' => $this->puertas_cabina,
+            'puertas_piso' => $this->puertas_piso,
+            'operador_puertas' => $this->operador_puertas,
             'especificaciones_tecnicas' => $this->especificaciones_tecnicas,
             'fecha_instalacion' => $this->fecha_instalacion?->format('Y-m-d'),
         ];

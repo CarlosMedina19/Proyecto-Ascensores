@@ -10,6 +10,7 @@ use App\Http\Resources\EquipoResource;
 use App\Http\Resources\HistorialEquipoResource;
 use App\Models\Equipo;
 use App\Services\EquipoService;
+use App\Services\PlanillaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -23,7 +24,7 @@ class EquipoController extends Controller
     public function index(Request $solicitud): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Equipo::class);
-        $equipos = $this->servicioEquipo->listar($solicitud->all(), (int) $solicitud->input('por_pagina', 15));
+        $equipos = $this->servicioEquipo->listar($solicitud->all(), $this->porPagina($solicitud));
 
         return EquipoResource::collection($equipos);
     }
@@ -42,9 +43,11 @@ class EquipoController extends Controller
     {
         $this->authorize('view', $equipo);
 
-        return new EquipoResource(
-            $equipo->load(['edificio.cliente', 'ascensor', 'historial.usuario'])
-        );
+        $equipo->load(['edificio.cliente', 'ascensor', 'asignacionActiva.plan', 'asignacionActiva.periodicidad', 'asignacionActiva.contrato', 'fotos']);
+        // Fase 4: estado de cada sección según la última planilla completa (esquema del ascensor).
+        $equipo->setAttribute('ultima_revision', app(PlanillaService::class)->ultimaRevision($equipo->id));
+
+        return new EquipoResource($equipo);
     }
 
     public function update(ActualizarEquipoRequest $solicitud, Equipo $equipo): EquipoResource
@@ -69,7 +72,11 @@ class EquipoController extends Controller
     public function historial(Equipo $equipo): AnonymousResourceCollection
     {
         $this->authorize('verHistorial', $equipo);
-        $historial = $equipo->historial()->with('usuario')->latest()->get();
+        $historial = $equipo->historial()
+            ->with('usuario')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
 
         return HistorialEquipoResource::collection($historial);
     }

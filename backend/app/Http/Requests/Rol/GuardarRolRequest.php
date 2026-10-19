@@ -2,31 +2,36 @@
 
 namespace App\Http\Requests\Rol;
 
-use App\Http\Requests\Concerns\MapearCamposApi;
+use App\Models\Rol;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class GuardarRolRequest extends FormRequest
 {
-    use MapearCamposApi;
-
     public function authorize(): bool
     {
         return true;
     }
 
+    protected function rolActual(): ?Rol
+    {
+        return null;
+    }
+
     public function rules(): array
     {
+        $requerido = $this->rolActual() ? ['sometimes', 'required'] : ['required'];
+
         return [
-            'nombre' => ['required', 'string', 'max:100', 'regex:/^[a-z][a-z0-9_-]*$/', 'unique:roles,nombre'],
+            'nombre' => [...$requerido, 'string', 'max:100', 'regex:/^[a-z][a-z0-9_-]*$/', Rule::unique('roles', 'nombre')->ignore($this->rolActual()?->id)],
             'descripcion' => ['nullable', 'string', 'max:255'],
         ];
     }
 
-    protected function prepareForValidation(): void
+    public function messages(): array
     {
-        $this->merge($this->mapApiFields([
-            'nombre' => 'nombre',
-            'descripcion' => 'descripcion',
-        ], $this->all()));
+        return [
+            'nombre.regex' => 'El nombre del rol solo admite minúsculas, números, guion y guion bajo, y debe iniciar con una letra.',
+        ];
     }
 }

@@ -23,7 +23,9 @@ class EdificioResource extends RecursoApi
             'nombre_contacto' => $this->nombre_contacto,
             'telefono_contacto' => $this->telefono_contacto,
             'correo_contacto' => $this->correo_contacto,
-            'equipment_count' => $this->whenCounted('equipos'),
+            'activo' => (bool) $this->activo,
+            'equipos_count' => $this->whenCounted('equipos'),
+            'equipos' => EquipoResource::collection($this->whenLoaded('equipos')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

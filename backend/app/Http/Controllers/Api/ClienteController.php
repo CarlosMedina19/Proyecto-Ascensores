@@ -23,7 +23,7 @@ class ClienteController extends Controller
     public function index(Request $solicitud): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Cliente::class);
-        $clientes = $this->servicioCliente->listar($solicitud->all(), (int) $solicitud->input('por_pagina', 15));
+        $clientes = $this->servicioCliente->listar($solicitud->all(), $this->porPagina($solicitud));
 
         return ClienteResource::collection($clientes);
     }
@@ -42,7 +42,10 @@ class ClienteController extends Controller
     {
         $this->authorize('view', $cliente);
 
-        return new ClienteResource($cliente->load(['contactos', 'edificios.equipos']));
+        return new ClienteResource($cliente->load([
+            'contactos',
+            'edificios' => fn ($consulta) => $consulta->withCount('equipos')->orderBy('nombre'),
+        ]));
     }
 
     public function update(ActualizarClienteRequest $solicitud, Cliente $cliente): ClienteResource

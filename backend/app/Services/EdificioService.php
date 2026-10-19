@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\ReglaNegocioException;
 use App\Models\Edificio;
 use App\Models\Usuario;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -15,7 +16,7 @@ class EdificioService
         $consulta = Edificio::with(['cliente'])->withCount('equipos');
         $usuarioActual = Auth::user();
 
-        if ($usuarioActual instanceof Usuario && $usuarioActual->tieneRol('cliente')) {
+        if ($usuarioActual instanceof Usuario && $usuarioActual->esCliente()) {
             $consulta->where('cliente_id', $usuarioActual->cliente_id);
         }
 
@@ -29,6 +30,10 @@ class EdificioService
             $consulta->where('ciudad', $coincidencia, "%{$filtros['ciudad']}%");
         }
 
+        if (isset($filtros['activo']) && $filtros['activo'] !== '') {
+            $consulta->where('activo', filter_var($filtros['activo'], FILTER_VALIDATE_BOOLEAN));
+        }
+
         if (! empty($filtros['busqueda'])) {
             $busqueda = $filtros['busqueda'];
             $consulta->where(function ($consulta) use ($busqueda, $coincidencia) {
@@ -38,7 +43,7 @@ class EdificioService
             });
         }
 
-        return $consulta->latest()->paginate($porPagina);
+        return $consulta->orderBy('nombre')->paginate($porPagina, ['*'], 'pagina');
     }
 
     public function crear(array $datos): Edificio
@@ -61,11 +66,18 @@ class EdificioService
         });
     }
 
+    /**
+     * RF-006: un edificio con equipos activos no se elimina; solo se desactiva.
+     */
     public function eliminar(Edificio $edificio): void
     {
+        if ($edificio->equipos()->where('estado', '!=', 'inactivo')->exists()) {
+            throw new ReglaNegocioException('El edificio tiene equipos activos. Desactívelo en lugar de eliminarlo.');
+        }
+
         DB::transaction(function () use ($edificio) {
             $edificio->delete();
-            RegistroAuditoriaService::registrar('eliminado', $edificio);
+            RegistroAuditoriaService::registrar('eliminado', $edificio, []);
         });
     }
 }

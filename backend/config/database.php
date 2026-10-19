@@ -97,6 +97,8 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Debe coincidir con app.timezone para que las columnas TIMESTAMPTZ se guarden con la hora correcta.
+            'timezone' => env('DB_TIMEZONE', 'America/Bogota'),
         ],
 
         'sqlsrv' => [

@@ -1,141 +1,190 @@
-# API — fase 1
+# API de SIGMA — Fase 1 (Fundación y datos maestros)
 
-Base local: `http://localhost:8000/api/v1`. Solicitudes y respuestas usan JSON.
-La fase cubre autenticación, RBAC, usuarios, auditoría, clientes/contactos,
-edificios, equipos tipo ascensor e historial. No incluye puertas eléctricas,
-planes, contratos, órdenes ni inventario.
+Base: `http://localhost:8000/api/v1`. Solicitudes y respuestas en JSON y en español.
+Cubre RF-001 a RF-009 del documento de requerimientos de SIGMA: autenticación, roles y
+permisos, usuarios, auditoría, clientes, edificios, equipos, ascensores (con sus puertas de
+cabina y de piso) e historial. No incluye puertas eléctricas independientes.
 
-## Autenticación
+## Formato de las respuestas
 
-| Método | Ruta | Acceso |
-| --- | --- | --- |
-| POST | `/login` | Público; máximo 5 intentos por minuto y correo/IP |
-| POST | `/logout` | Token Sanctum |
-| GET | `/me` | Token Sanctum |
-| GET | `/dashboard` | `dashboard.view` |
-
-Envía `email` y `password` a `/login`; la respuesta incluye `token` y `user`.
-En rutas protegidas envía el encabezado HTTP `Authorization` con el esquema
-`Bearer` y el token recibido. Los usuarios inactivos no pueden iniciar sesión;
-las solicitudes sin permiso responden 403.
-
-## Roles, usuarios y auditoría
-
-| Método | Ruta | Permiso |
-| --- | --- | --- |
-| GET | `/roles`, `/roles/{role}` | `roles.view` |
-| POST | `/roles` | `roles.create` |
-| PATCH | `/roles/{role}` | `roles.update` |
-| PUT | `/roles/{role}/permissions` | `roles.permissions.update` |
-| GET | `/permissions` | `permissions.view` |
-| GET | `/users`, `/users/{user}` | `users.view` |
-| POST | `/users` | `users.create` |
-| PUT/PATCH | `/users/{user}` | `users.update` |
-| PATCH | `/users/{user}/toggle-status` | `users.update` |
-| GET | `/audit-logs` | `audit-logs.view` |
-
-Los listados admiten paginación y filtros; para usuarios se admiten `search`,
-`role_id`, `is_active`. La desactivación reemplaza el borrado permanente de
-usuarios. Los permisos disponibles son un catálogo sembrado y no se crean por
-API; el rol `admin` no se puede renombrar ni modificar para evitar bloquear la
-administración. La auditoría admite `action`, `model`, `user_id` y limita la
-página a 100 registros.
-
-Para crear un rol envía `name` y, opcionalmente, `description` a `POST /roles`.
-Para asignarle permisos, envía `PUT /roles/{role}/permissions` con
-`{"permissions":["clients.view","buildings.view"]}`. La lista reemplaza las
-asignaciones actuales y solo acepta permisos existentes en el catálogo.
-
-## Clientes y edificios
-
-| Método | Ruta | Permiso |
-| --- | --- | --- |
-| GET/POST | `/clients` | `clients.view` / `clients.create` |
-| GET/PUT/PATCH/DELETE | `/clients/{client}` | `clients.view`, `clients.update`, `clients.delete` |
-| POST | `/clients/{client}/contacts` | `clients.contacts.create` |
-| GET/POST | `/buildings` | `buildings.view` / `buildings.create` |
-| GET/PUT/PATCH/DELETE | `/buildings/{building}` | `buildings.view`, `buildings.update`, `buildings.delete` |
-
-La eliminación de clientes y edificios es lógica. Clientes admiten filtros
-`search`, `status`, `type`; edificios admiten `client_id`, `city`, `search`.
-Contactos requieren `name`; edificios requieren `client_id`, `name`, `address`.
-
-## Equipos, ascensores e historial
-
-| Método | Ruta | Permiso |
-| --- | --- | --- |
-| GET/POST | `/equipment` | `equipment.view` / `equipment.create` |
-| GET/PUT/PATCH/DELETE | `/equipment/{equipment}` | `equipment.view`, `equipment.update`, `equipment.delete` |
-| GET/POST | `/equipment/{equipment}/history` | `equipment.history.view` / `equipment.history.create` |
-
-El tipo admitido es `elevator`. El registro crea automáticamente el evento
-`alta_equipo`; los cambios de estado y las bajas también quedan en el historial.
-Los filtros son `building_id`, `type`, `status`, `search`.
-
-## Permisos sembrados
-
-Capacidades: `dashboard.view`, `roles.view`, `users.view`, `users.create`,
-`roles.create`, `roles.update`, `roles.permissions.update`, `permissions.view`,
-`users.update`, `audit-logs.view`, `clients.view`, `clients.create`,
-`clients.update`, `clients.delete`, `clients.contacts.create`,
-`buildings.view`, `buildings.create`, `buildings.update`, `buildings.delete`,
-`equipment.view`, `equipment.create`, `equipment.update`, `equipment.delete`,
-`equipment.history.view`, `equipment.history.create`.
-
-El seeder asigna todos al rol `admin`; `coordinador` recibe permisos operativos
-y `supervisor` acceso de lectura. Roles distintos comienzan sin permisos de
-fase 1. La siembra es idempotente y conserva permisos adicionales.
-
-## Relaciones
-
-- `Role` tiene muchos `Permission` por `role_permissions` y muchos `User`.
-- `Client` tiene muchos `ClientContact` y `Building`.
-- `Building` pertenece a un `Client` y tiene muchos `Equipment`.
-- `Equipment` pertenece a un `Building`, tiene un `Elevator` y muchos
-  `EquipmentHistory`.
-- El historial y la auditoría guardan el usuario actor cuando está disponible.
-
-## Convención de base de datos
-
-Los campos JSON de API conservan los nombres ingleses documentados arriba. Las
-columnas persistidas de negocio en fase 1 son:
-
-| Tabla | Columnas |
+| Caso | Forma |
 | --- | --- |
-| `usuarios` | `id`, `nombre`, `correo`, `correo_verificado_en`, `password`, `remember_token`, `rol_id`, `activo`, `created_at`, `updated_at` |
-| `roles` | `id`, `nombre`, `descripcion`, `created_at`, `updated_at` |
-| `permisos` | `id`, `nombre`, `descripcion`, `created_at`, `updated_at` |
-| `rol_permisos` | `id`, `rol_id`, `permiso_id`, `created_at`, `updated_at` |
-| `registros_auditoria` | `id`, `usuario_id`, `accion`, `modelo`, `modelo_id`, `cambios`, `created_at` |
-| `clientes` | `id`, `identificador_uuid`, `tipo`, `nombre`, `tipo_documento`, `numero_documento`, `nit`, `direccion`, `telefono`, `correo`, `regimen_tributario`, `actividad_economica`, `estado`, `observaciones`, `created_at`, `updated_at`, `deleted_at` |
-| `contactos_cliente` | `id`, `cliente_id`, `nombre`, `cargo`, `telefono`, `correo`, `created_at`, `updated_at` |
-| `edificios` | `id`, `identificador_uuid`, `cliente_id`, `nombre`, `direccion`, `ciudad`, `departamento`, `codigo_postal`, `pisos`, `observaciones`, `nombre_contacto`, `telefono_contacto`, `correo_contacto`, `created_at`, `updated_at`, `deleted_at` |
-| `equipos` | `id`, `identificador_uuid`, `edificio_id`, `codigo`, `tipo`, `marca`, `modelo`, `numero_serie`, `ubicacion`, `estado`, `fecha_instalacion`, `observaciones`, `created_at`, `updated_at`, `deleted_at` |
-| `ascensores` | `id`, `equipo_id`, `marca`, `modelo`, `capacidad_kg`, `paradas`, `velocidad_mpm`, `tipo_traccion`, `motor`, `controlador`, `tipo_puerta`, `especificaciones_tecnicas`, `fecha_instalacion`, `created_at`, `updated_at` |
-| `historial_equipos` | `id`, `equipo_id`, `usuario_id`, `evento`, `descripcion`, `created_at` |
+| Un registro | `{ "datos": { ... } }` |
+| Listado paginado | `{ "datos": [...], "enlaces": { "primera", "ultima", "anterior", "siguiente" }, "metadatos": { "pagina_actual", "ultima_pagina", "por_pagina", "desde", "hasta", "total" } }` |
+| Error de validación (422) | `{ "mensaje": "Los datos enviados no son válidos.", "errores": { "campo": ["mensaje"] } }` |
+| Otros errores | `{ "mensaje": "..." }` con 401, 403, 404, 405, 422 (regla de negocio), 423 (cuenta bloqueada) o 429 |
 
-Se conservan los nombres técnicos que requiere Laravel/Sanctum (`id`,
-`password`, `remember_token`, timestamps y `deleted_at`); la fecha de
-verificación se almacena como `correo_verificado_en`.
-Las llaves foráneas de dominio usan `rol_id`, `permiso_id`, `cliente_id`,
-`edificio_id`, `equipo_id` y `usuario_id`. Las migraciones heredadas aún
-incluyen el esquema de puertas eléctricas por compatibilidad con el historial
-de instalación, pero no hay modelo, endpoint ni funcionalidad de ese módulo en
-el alcance actual.
+Paginación: `?pagina=2&por_pagina=20` (máximo 100 por página). Los listados aceptan
+`busqueda` y los filtros indicados en cada recurso.
 
-Se conservan sin renombrar las tablas técnicas Laravel/Sanctum: `migrations`,
-`cache`, `cache_locks`, `sessions`, `personal_access_tokens`, `jobs`,
-`failed_jobs`, `job_batches` y `password_reset_tokens`. `identificador_uuid` se
-expone como `uuid` en JSON. Los nombres de secuencias, índices y restricciones
-de las tablas de dominio también usan los nuevos nombres españoles.
+## Autenticación (RF-001)
 
-Las migraciones `2026_10_08_000000_translate_phase_one_columns_to_spanish` y
-`2026_10_09_020000_rename_phase_one_tables_to_spanish` renombraron columnas y
-tablas en sitio y conservaron los datos. Antes de aplicarlas a una base
-existente, genera un respaldo; luego ejecuta `php artisan migrate`.
+| Método | Ruta | Acceso | Notas |
+| --- | --- | --- | --- |
+| POST | `/iniciar-sesion` | Público | `correo`, `password`, `dispositivo` (opcional). Devuelve `usuario`, `token_acceso`, `minutos_inactividad`. Máx. 5 intentos/minuto por correo e IP. |
+| POST | `/recuperar-contrasena` | Público | `correo`. Siempre responde igual, exista o no la cuenta. |
+| POST | `/restablecer-contrasena` | Público | `correo`, `token`, `password`, `password_confirmation`. Enlace de un solo uso, vence a los 60 min. |
+| GET | `/verificar-correo/{usuario}/{hash}` | Enlace firmado | Llega por correo al crear el usuario; vence en 24 h. |
+| POST | `/cerrar-sesion` | Token | Invalida el token actual. |
+| GET | `/perfil` | Token | Usuario con `rol.permisos` y `cliente`. |
+| PUT | `/perfil/contrasena` | Token | `contrasena_actual`, `password`, `password_confirmation`. Cierra las demás sesiones. |
 
-## Administrador inicial
+Envíe el token en `Authorization: Bearer <token>`.
 
-Configura `ADMIN_EMAIL` válido y `ADMIN_PASSWORD` de al menos 12 caracteres en
-el entorno antes de ejecutar `php artisan db:seed`. No se usa contraseña
-predeterminada en el repositorio.
+Reglas implementadas:
+
+- **Inactividad:** un token sin uso durante `SIGMA_MINUTOS_INACTIVIDAD` (10) deja de ser válido (401).
+  Los clientes web y móvil avisan un minuto antes y permiten mantener la sesión.
+- **Bloqueo:** 5 intentos fallidos consecutivos bloquean la cuenta `SIGMA_MINUTOS_BLOQUEO` (15) minutos (423).
+- **Usuario desactivado:** pierde el acceso de inmediato; sus tokens se eliminan.
+- **Contraseñas:** mínimo 8 caracteres con letras y números; se guardan con hash.
+
+## Roles y permisos (RF-002)
+
+| Método | Ruta | Permiso |
+| --- | --- | --- |
+| GET | `/roles`, `/roles/{rol}` | `roles.ver` |
+| POST | `/roles` | `roles.crear` |
+| PATCH | `/roles/{rol}` | `roles.editar` |
+| PUT | `/roles/{rol}/permisos` | `roles.permisos.editar` — `{ "permisos": ["clientes.ver", ...] }` reemplaza la lista |
+| GET | `/permisos` | `permisos.ver` |
+
+El rol `administrador` no se puede renombrar ni cambiar de permisos. Los permisos
+`roles.crear`, `roles.editar`, `roles.permisos.editar`, `permisos.ver`, `usuarios.crear`,
+`usuarios.editar` y `registros_auditoria.ver` son **exclusivos del administrador**
+(`config/sigma.php`); asignarlos a otro rol responde 422.
+
+Permisos iniciales por rol (`PermisoSeeder`):
+
+| Rol | Permisos |
+| --- | --- |
+| administrador | Todos |
+| coordinador | Resumen, ver roles y usuarios, y gestión completa de clientes, edificios, equipos e historial |
+| supervisor | Solo consulta: resumen, clientes, edificios, equipos e historial |
+| técnico | Ver edificios y equipos; ver y registrar eventos del historial |
+| contador | Resumen y consulta de clientes, edificios y equipos |
+| cliente | Consulta de **sus propios** clientes, edificios, equipos e historial |
+
+## Usuarios (RF-003)
+
+| Método | Ruta | Permiso |
+| --- | --- | --- |
+| GET | `/usuarios` | `usuarios.ver` — filtros `busqueda`, `rol_id`, `activo` |
+| GET | `/usuarios/{usuario}` | `usuarios.ver` |
+| POST | `/usuarios` | `usuarios.crear` — `nombre`, `correo`, `password`, `rol_id`, `cliente_id` (obligatorio si el rol es cliente), `activo` |
+| PATCH | `/usuarios/{usuario}` | `usuarios.editar` |
+| PATCH | `/usuarios/{usuario}/alternar-estado` | `usuarios.editar` |
+
+No hay borrado: los usuarios se desactivan y conservan su historial. Nadie puede
+desactivarse ni cambiar su propio rol. Al crear un usuario se le envía el correo de verificación.
+
+## Auditoría (RF-004)
+
+| Método | Ruta | Permiso |
+| --- | --- | --- |
+| GET | `/registros-auditoria` | `registros_auditoria.ver` — filtros `modulo`, `accion`, `usuario_id`, `fecha_desde`, `fecha_hasta` |
+| GET | `/registros-auditoria/modulos` | `registros_auditoria.ver` |
+
+Cada registro guarda usuario, acción, módulo, modelo e id afectado, cambios, IP y fecha
+(`TIMESTAMPTZ`). Se registran altas, cambios, bajas, inicios y cierres de sesión, bloqueos
+y cambios de contraseña. Los registros no se pueden modificar ni eliminar (el modelo lo impide).
+
+## Clientes (RF-005)
+
+| Método | Ruta | Permiso |
+| --- | --- | --- |
+| GET | `/clientes` | `clientes.ver` — filtros `busqueda`, `tipo`, `estado` |
+| GET | `/clientes/{cliente}` | `clientes.ver` (incluye `contactos` y `edificios`) |
+| POST | `/clientes` | `clientes.crear` |
+| PATCH | `/clientes/{cliente}` | `clientes.editar` |
+| DELETE | `/clientes/{cliente}` | `clientes.eliminar` — solo si no tiene edificios; si los tiene, se desactiva (`estado: false`) |
+| POST | `/clientes/{cliente}/contactos` | `clientes.contactos.crear` — `nombre` y teléfono o correo |
+
+`tipo` es `juridica` (exige `nit`) o `natural` (exige `tipo_documento` y `numero_documento`).
+NIT y número de documento son únicos.
+
+## Edificios (RF-006)
+
+| Método | Ruta | Permiso |
+| --- | --- | --- |
+| GET | `/edificios` | `edificios.ver` — filtros `busqueda`, `cliente_id`, `ciudad`, `activo` |
+| GET | `/edificios/{edificio}` | `edificios.ver` (incluye `cliente` y `equipos`) |
+| POST | `/edificios` | `edificios.crear` — `cliente_id`, `nombre`, `direccion`, `ciudad`, `nombre_contacto` y teléfono o correo de contacto |
+| PATCH | `/edificios/{edificio}` | `edificios.editar` (incluye `activo`) |
+| DELETE | `/edificios/{edificio}` | `edificios.eliminar` — un edificio con equipos activos no se elimina, se desactiva |
+
+No se registran equipos en un edificio inactivo.
+
+## Equipos, ascensores e historial (RF-007, RF-008, RF-009)
+
+| Método | Ruta | Permiso |
+| --- | --- | --- |
+| GET | `/equipos` | `equipos.ver` — filtros `busqueda`, `estado`, `edificio_id`, `cliente_id` |
+| GET | `/equipos/{equipo}` | `equipos.ver` (incluye `edificio.cliente` y `ascensor`) |
+| POST | `/equipos` | `equipos.crear` |
+| PATCH | `/equipos/{equipo}` | `equipos.editar` |
+| DELETE | `/equipos/{equipo}` | `equipos.eliminar` — baja lógica; queda el evento `baja_equipo` |
+| GET | `/equipos/{equipo}/historial` | `equipos.historial.ver` |
+| POST | `/equipos/{equipo}/historial` | `equipos.historial.crear` — `evento` (ej. `incidente`, `reparacion`, `mantenimiento`) y `descripcion` |
+
+Ejemplo de creación:
+
+```json
+{
+  "edificio_id": 3,
+  "codigo": "ASC-010",
+  "marca": "Otis",
+  "modelo": "Gen2",
+  "estado": "activo",
+  "ascensor": {
+    "capacidad_kg": 630,
+    "velocidad_mpm": 60,
+    "paradas": 7,
+    "tipo_traccion": "Eléctrico de tracción",
+    "tipo_puerta": "Automática apertura central",
+    "puertas_cabina": 1,
+    "puertas_piso": 7
+  }
+}
+```
+
+- El código es único. Capacidad, velocidad y paradas son obligatorias y mayores que cero.
+- Las puertas de cabina y de piso se registran dentro del ascensor (no son equipos aparte).
+- Estados: `activo`, `mantenimiento`, `inactivo`. Cada cambio de estado o de ficha técnica
+  queda en el historial automáticamente, igual que el alta (`alta_equipo`).
+- El historial no se modifica ni se elimina; las correcciones se registran como eventos nuevos.
+
+## Resumen
+
+`GET /resumen` (`resumen.ver`): totales de usuarios, clientes, edificios, equipos por estado
+y los últimos eventos del historial.
+
+## Modelo de datos
+
+| Tabla | Relación |
+| --- | --- |
+| `usuarios` | pertenece a `roles` y, si es cliente, a `clientes` |
+| `roles` ⟷ `permisos` | muchos a muchos por `rol_permisos` |
+| `clientes` | tiene muchos `contactos_cliente` y `edificios` |
+| `edificios` | pertenece a `clientes`, tiene muchos `equipos` |
+| `equipos` | pertenece a `edificios`, tiene un `ascensores` y muchos `historial_equipos` |
+| `registros_auditoria` | pertenece a `usuarios` |
+
+Convenciones PostgreSQL aplicadas en la migración `2026_10_16_000000_reforzar_fase_uno_sigma`:
+UUID públicos (`identificador_uuid`), `TIMESTAMPTZ` en auditoría e historial, restricciones
+`UNIQUE` y `CHECK`, índices en todas las llaves foráneas y en `estado`/`created_at`, y
+borrado lógico (`deleted_at`) en clientes, edificios y equipos. La conexión usa la zona
+horaria `America/Bogota` (`DB_TIMEZONE`), igual que la aplicación.
+
+## Administrador inicial y datos de demostración
+
+`php artisan db:seed` crea los roles, los permisos y el administrador definido en
+`ADMIN_EMAIL` / `ADMIN_PASSWORD` (mínimo 12 caracteres). Para desarrollo,
+`php artisan db:seed --class=DatosDemoSeeder` crea clientes, edificios, ascensores y un
+usuario por rol (`coordinador@gmail.com`, `tecnico@gmail.com`, `supervisor@gmail.com`,
+`contador@gmail.com`, `cliente@gmail.com`) con la contraseña de `SIGMA_DEMO_PASSWORD`.
+Nunca se ejecuta en producción.
+
+## Pendiente
+
+- Documentación OpenAPI/Swagger (RNF-11): este documento describe la API mientras se genera la especificación.

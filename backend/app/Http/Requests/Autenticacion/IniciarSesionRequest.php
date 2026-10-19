@@ -2,13 +2,10 @@
 
 namespace App\Http\Requests\Autenticacion;
 
-use App\Http\Requests\Concerns\MapearCamposApi;
 use Illuminate\Foundation\Http\FormRequest;
 
 class IniciarSesionRequest extends FormRequest
 {
-    use MapearCamposApi;
-
     public function authorize(): bool
     {
         return true;
@@ -17,13 +14,14 @@ class IniciarSesionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'correo' => ['required', 'email'],
-            'password' => ['required', 'string'],
+            'correo' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string', 'max:255'],
+            'dispositivo' => ['nullable', 'string', 'max:100'],
         ];
     }
 
-    protected function prepareForValidation(): void
+    public function attributes(): array
     {
-        $this->merge($this->mapApiFields(['correo' => 'correo'], $this->all()));
+        return ['password' => 'contraseña'];
     }
 }

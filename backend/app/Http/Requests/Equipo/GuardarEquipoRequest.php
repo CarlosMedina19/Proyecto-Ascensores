@@ -2,80 +2,77 @@
 
 namespace App\Http\Requests\Equipo;
 
-use App\Http\Requests\Concerns\MapearCamposApi;
+use App\Models\Equipo;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
+/**
+ * RF-007 (equipos) y RF-008 (ficha técnica del ascensor).
+ */
 class GuardarEquipoRequest extends FormRequest
 {
-    use MapearCamposApi;
+    public const ESTADOS = ['activo', 'inactivo', 'mantenimiento'];
 
     public function authorize(): bool
     {
         return true;
     }
 
+    protected function equipoActual(): ?Equipo
+    {
+        return null;
+    }
+
     public function rules(): array
     {
+        $actualizando = $this->equipoActual() !== null;
+        $requerido = $actualizando ? ['sometimes', 'required'] : ['required'];
+
         return [
-            // Datos generales del equipo (RF-007)
-            'edificio_id' => ['required', 'exists:edificios,id'],
-            'codigo' => ['required', 'string', 'max:100', 'unique:equipos,codigo'],
-            'tipo' => ['required', 'in:ascensor'],
+            'edificio_id' => [...$requerido, 'integer', Rule::exists('edificios', 'id')->whereNull('deleted_at')],
+            'codigo' => [...$requerido, 'string', 'max:100', Rule::unique('equipos', 'codigo')->ignore($this->equipoActual()?->id)],
+            'tipo' => ['nullable', Rule::in(['ascensor'])],
             'marca' => ['nullable', 'string', 'max:100'],
             'modelo' => ['nullable', 'string', 'max:100'],
             'numero_serie' => ['nullable', 'string', 'max:100'],
             'ubicacion' => ['nullable', 'string', 'max:255'],
-            'estado' => ['nullable', 'in:activo,inactivo,mantenimiento'],
-            'fecha_instalacion' => ['nullable', 'date'],
-            'observaciones' => ['nullable', 'string'],
+            'estado' => ['nullable', Rule::in(self::ESTADOS)],
+            'fecha_instalacion' => ['nullable', 'date', 'before_or_equal:today'],
+            'observaciones' => ['nullable', 'string', 'max:2000'],
 
-            // Datos técnicos específicos del ascensor (RF-008)
-            'ascensor' => ['required', 'array'],
-            'ascensor.marca' => ['nullable', 'string', 'max:100'],
-            'ascensor.modelo' => ['nullable', 'string', 'max:100'],
-            'ascensor.capacidad_kg' => ['nullable', 'integer', 'min:0'],
-            'ascensor.paradas' => ['nullable', 'integer', 'min:1'],
-            'ascensor.velocidad_mpm' => ['nullable', 'numeric', 'min:0'],
+            // Ficha técnica: capacidad, velocidad y paradas son obligatorias y mayores que cero.
+            'ascensor' => [$actualizando ? 'sometimes' : 'required', 'array'],
+            'ascensor.capacidad_kg' => [...$requerido, 'integer', 'gt:0', 'max:100000'],
+            'ascensor.velocidad_mpm' => [...$requerido, 'numeric', 'gt:0', 'max:1000'],
+            'ascensor.paradas' => [...$requerido, 'integer', 'gt:0', 'max:300'],
             'ascensor.tipo_traccion' => ['nullable', 'string', 'max:100'],
             'ascensor.motor' => ['nullable', 'string', 'max:100'],
             'ascensor.controlador' => ['nullable', 'string', 'max:100'],
             'ascensor.tipo_puerta' => ['nullable', 'string', 'max:100'],
-            'ascensor.especificaciones_tecnicas' => ['nullable', 'string'],
+            'ascensor.puertas_cabina' => ['nullable', 'integer', 'min:0', 'max:10'],
+            'ascensor.puertas_piso' => ['nullable', 'integer', 'min:0', 'max:600'],
+            'ascensor.operador_puertas' => ['nullable', 'string', 'max:100'],
+            'ascensor.especificaciones_tecnicas' => ['nullable', 'string', 'max:5000'],
         ];
     }
 
-    protected function prepareForValidation(): void
+    public function attributes(): array
     {
-        $this->merge($this->mapApiFields([
-            'edificio_id' => 'edificio_id',
-            'code' => 'codigo',
-            'tipo' => 'tipo',
-            'marca' => 'marca',
-            'modelo' => 'modelo',
-            'numero_serie' => 'numero_serie',
-            'ubicacion' => 'ubicacion',
-            'estado' => 'estado',
-            'fecha_instalacion' => 'fecha_instalacion',
-            'observaciones' => 'observaciones',
-        ], $this->all()));
-
-        $elevator = $this->input('ascensor', []);
-
-        if (is_array($elevator)) {
-            $this->merge([
-                'ascensor' => $this->mapApiFields([
-                    'marca' => 'marca',
-                    'modelo' => 'modelo',
-                    'capacidad_kg' => 'capacidad_kg',
-                    'paradas' => 'paradas',
-                    'velocidad_mpm' => 'velocidad_mpm',
-                    'tipo_traccion' => 'tipo_traccion',
-                    'controlador' => 'controlador',
-                    'tipo_puerta' => 'tipo_puerta',
-                    'especificaciones_tecnicas' => 'especificaciones_tecnicas',
-                    'fecha_instalacion' => 'fecha_instalacion',
-                ], $elevator),
-            ]);
-        }
+        return [
+            'edificio_id' => 'edificio',
+            'codigo' => 'código',
+            'numero_serie' => 'número de serie',
+            'ubicacion' => 'ubicación',
+            'fecha_instalacion' => 'fecha de instalación',
+            'ascensor' => 'ficha técnica del ascensor',
+            'ascensor.capacidad_kg' => 'capacidad (kg)',
+            'ascensor.velocidad_mpm' => 'velocidad (m/min)',
+            'ascensor.paradas' => 'número de paradas',
+            'ascensor.tipo_traccion' => 'accionamiento',
+            'ascensor.puertas_cabina' => 'puertas de cabina',
+            'ascensor.puertas_piso' => 'puertas de piso',
+            'ascensor.operador_puertas' => 'operador de puertas',
+            'ascensor.especificaciones_tecnicas' => 'especificaciones técnicas',
+        ];
     }
 }

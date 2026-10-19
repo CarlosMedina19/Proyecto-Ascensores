@@ -12,6 +12,8 @@ class RegistroAuditoriaResource extends RecursoApi
             'id' => $this->id,
             'usuario' => new UsuarioResource($this->whenLoaded('usuario')),
             'accion' => $this->accion,
+            'modulo' => $this->modulo,
+            'ip' => $this->ip,
             'modelo' => class_basename($this->modelo),
             'modelo_id' => $this->modelo_id,
             'cambios' => $this->cambios,

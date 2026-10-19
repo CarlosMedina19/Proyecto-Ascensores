@@ -2,13 +2,10 @@
 
 namespace App\Http\Requests\Equipo;
 
-use App\Http\Requests\Concerns\MapearCamposApi;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RegistrarHistorialEquipoRequest extends FormRequest
 {
-    use MapearCamposApi;
-
     public function authorize(): bool
     {
         return true;
@@ -17,16 +14,20 @@ class RegistrarHistorialEquipoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'evento' => ['required', 'string', 'max:255'],
-            'descripcion' => ['nullable', 'string'],
+            'evento' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_]+$/'],
+            'descripcion' => ['required', 'string', 'max:2000'],
         ];
     }
 
-    protected function prepareForValidation(): void
+    public function attributes(): array
     {
-        $this->merge($this->mapApiFields([
-            'evento' => 'evento',
-            'descripcion' => 'descripcion',
-        ], $this->all()));
+        return ['descripcion' => 'descripción'];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'evento.regex' => 'El evento solo admite minúsculas, números y guion bajo (ej. incidente, reparacion).',
+        ];
     }
 }

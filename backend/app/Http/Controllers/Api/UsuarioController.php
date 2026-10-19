@@ -21,7 +21,7 @@ class UsuarioController extends Controller
     public function index(Request $solicitud): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Usuario::class);
-        $usuarios = $this->servicioUsuario->listar($solicitud->all(), (int) $solicitud->input('por_pagina', 15));
+        $usuarios = $this->servicioUsuario->listar($solicitud->all(), $this->porPagina($solicitud));
 
         return UsuarioResource::collection($usuarios);
     }

@@ -1,6 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Necesario para consumir la API de SIGMA. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- usesCleartextTraffic permite HTTP al servidor local de desarrollo.
+         En producción la API debe usar HTTPS (RNF-01) y este atributo debe quitarse. -->
     <application
-        android:label="flutter_application_1"
+        android:label="SIGMA"
+        android:usesCleartextTraffic="true"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

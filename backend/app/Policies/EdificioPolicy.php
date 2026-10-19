@@ -15,7 +15,7 @@ class EdificioPolicy
     public function view(Usuario $usuario, Edificio $edificio): bool
     {
         return $usuario->tienePermiso('edificios.ver')
-            && (! $usuario->tieneRol('cliente') || $usuario->cliente_id === $edificio->cliente_id);
+            && $usuario->puedeVerCliente($edificio->cliente_id);
     }
 
     public function create(Usuario $usuario): bool

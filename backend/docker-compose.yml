@@ -21,7 +21,51 @@ services:
       DB_USERNAME: ascensores_user
       DB_PASSWORD: ascensores_pass
       DB_CONNECTION: pgsql
-    command: sh -c "php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=8000"
+    command: sh -c "php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=8000 --no-reload"
+
+  # Fase 2: procesa la cola de avisos (correo y notificaciones en la aplicación).
+  queue:
+    build:
+      context: .
+    container_name: ascensores_queue
+    restart: always
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - app
+    networks:
+      - app_network
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: ascensores
+      DB_USERNAME: ascensores_user
+      DB_PASSWORD: ascensores_pass
+      DB_CONNECTION: pgsql
+    command: php artisan queue:work --tries=3 --sleep=3 --max-time=3600
+
+  # Fase 2: tareas diarias (vigencias a las 00:15, avisos y alertas de contratos a las 07:00).
+  scheduler:
+    build:
+      context: .
+    container_name: ascensores_scheduler
+    restart: always
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - app
+    networks:
+      - app_network
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: ascensores
+      DB_USERNAME: ascensores_user
+      DB_PASSWORD: ascensores_pass
+      DB_CONNECTION: pgsql
+    command: php artisan schedule:work
 
   db:
     image: postgres:16

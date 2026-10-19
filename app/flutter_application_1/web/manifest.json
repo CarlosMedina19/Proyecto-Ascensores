@@ -1,11 +1,11 @@
 {
-    "name": "flutter_application_1",
-    "short_name": "flutter_application_1",
+    "name": "SIGMA",
+    "short_name": "SIGMA",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "theme_color": "#6B3FD4",
+    "description": "SIGMA — app para técnicos y clientes",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

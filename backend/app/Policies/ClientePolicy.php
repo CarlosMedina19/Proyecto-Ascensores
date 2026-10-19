@@ -15,7 +15,7 @@ class ClientePolicy
     public function view(Usuario $usuario, Cliente $cliente): bool
     {
         return $usuario->tienePermiso('clientes.ver')
-            && (! $usuario->tieneRol('cliente') || $usuario->cliente_id === $cliente->id);
+            && $usuario->puedeVerCliente($cliente->id);
     }
 
     public function create(Usuario $usuario): bool

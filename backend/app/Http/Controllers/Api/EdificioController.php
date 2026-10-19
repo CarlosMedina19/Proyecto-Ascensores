@@ -21,7 +21,7 @@ class EdificioController extends Controller
     public function index(Request $solicitud): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Edificio::class);
-        $edificios = $this->servicioEdificio->listar($solicitud->all(), (int) $solicitud->input('por_pagina', 15));
+        $edificios = $this->servicioEdificio->listar($solicitud->all(), $this->porPagina($solicitud));
 
         return EdificioResource::collection($edificios);
     }
@@ -40,7 +40,10 @@ class EdificioController extends Controller
     {
         $this->authorize('view', $edificio);
 
-        return new EdificioResource($edificio->load(['cliente', 'equipos.ascensor']));
+        return new EdificioResource($edificio->load([
+            'cliente',
+            'equipos' => fn ($consulta) => $consulta->with('ascensor')->orderBy('codigo'),
+        ]));
     }
 
     public function update(ActualizarEdificioRequest $solicitud, Edificio $edificio): EdificioResource

@@ -12,7 +12,7 @@ class RegistroAuditoriaPolicy
         return $usuario->tienePermiso('registros_auditoria.ver');
     }
 
-    public function view(Usuario $usuario, RegistroAuditoria $auditLog): bool
+    public function view(Usuario $usuario, RegistroAuditoria $registro): bool
     {
         return $usuario->tienePermiso('registros_auditoria.ver');
     }

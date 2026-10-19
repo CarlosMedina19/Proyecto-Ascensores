@@ -14,7 +14,7 @@ class ContactoCliente extends Model
 
     protected $fillable = ['cliente_id', 'nombre', 'cargo', 'telefono', 'correo'];
 
-    public function client(): BelongsTo
+    public function cliente(): BelongsTo
     {
         return $this->belongsTo(Cliente::class, 'cliente_id');
     }

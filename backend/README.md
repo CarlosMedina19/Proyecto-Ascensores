@@ -1,76 +1,72 @@
-# Proyecto Ascensores — backend
+# SIGMA — backend (Laravel + PostgreSQL)
 
-API REST versionada para la fase 1: autenticación con Sanctum, roles y permisos,
-usuarios, auditoría, clientes y contactos, edificios, ascensores e historial
-técnico. La gestión de puertas eléctricas queda fuera del alcance.
+API REST versionada (`/api/v1`). Guías de la API con endpoints, permisos y reglas:
 
-## Requisitos
+- [Fase 1](docs/FASE-1-API.md): autenticación con Sanctum, roles y permisos, usuarios,
+  auditoría, clientes y contactos, edificios, ascensores e historial.
+- [Fase 2](docs/FASE-2-API.md): planes, periodicidades, precios e historial de precios,
+  planes de los ascensores, calendario de mantenimientos, contratos, renovaciones y avisos.
+- [Fase 3](docs/FASE-3-API.md): técnicos y especialidades, agenda, órdenes de trabajo con
+  asignación, estados, prioridad, tiempos y trazabilidad.
+- [Fase 4](docs/FASE-4-API.md): planilla del preventivo por secciones (B/R/M), fotos, firmas,
+  orden correctiva derivada e informe PDF versionado.
 
-- PHP 8.2 o superior
-- Composer
-- PostgreSQL para ejecución local/producción
+## Con Docker (recomendado)
 
-## Instalación
+```sh
+copy .env.example .env          # y complete ADMIN_EMAIL, ADMIN_PASSWORD y SIGMA_DEMO_PASSWORD
+docker compose up -d --build    # app :8000, PostgreSQL :5433, pgAdmin :5050
+docker exec ascensores_app php artisan key:generate
+docker exec ascensores_app php artisan db:seed --class=DatosDemoSeeder   # opcional
+```
+
+El servicio `app` aplica las migraciones y los seeders al iniciar. Los servicios `queue`
+(envío de avisos) y `scheduler` (tareas diarias de la fase 2) usan la misma imagen. Con Docker Desktop en
+Windows, OPcache revalida el código cada 60 s: un cambio en PHP puede tardar hasta un
+minuto en verse (o reinicie con `docker compose restart app`).
+
+## Sin Docker
+
+Requisitos: PHP 8.2+, Composer y PostgreSQL.
 
 ```sh
 composer install
 copy .env.example .env
 php artisan key:generate
-```
-
-Configura en `.env` una conexión PostgreSQL válida y define `ADMIN_EMAIL` y
-`ADMIN_PASSWORD`. La contraseña debe tener mínimo 12 caracteres; el seeder no
-crea una cuenta con contraseñas conocidas o predeterminadas.
-
-```sh
 php artisan migrate --seed
 php artisan serve
+php artisan queue:work      # en otra terminal: envío de avisos
+php artisan schedule:work   # en otra terminal: tareas diarias
 ```
 
-Para ejecutar las pruebas con PostgreSQL, inicia el servicio `db` y crea una
-base aislada. En PowerShell:
+## Variables de SIGMA (`config/sigma.php`)
+
+| Variable | Valor por defecto | Uso |
+| --- | --- | --- |
+| `SIGMA_MINUTOS_INACTIVIDAD` | 10 | Cierre de sesión por inactividad (RF-001) |
+| `SIGMA_INTENTOS_MAXIMOS` | 5 | Intentos fallidos antes del bloqueo |
+| `SIGMA_MINUTOS_BLOQUEO` | 15 | Duración del bloqueo |
+| `FRONTEND_URL` | `http://localhost:5173` | Enlaces de los correos y CORS |
+| `SIGMA_DEMO_PASSWORD` | — | Contraseña de los usuarios de `DatosDemoSeeder` |
+| `DB_TIMEZONE` | `America/Bogota` | Debe coincidir con la zona horaria de la aplicación |
+
+En desarrollo los correos (recuperación y verificación) se escriben en
+`storage/logs/laravel.log` (`MAIL_MAILER=log`).
+
+## Pruebas
+
+Las pruebas usan la base `ascensores_test` del mismo PostgreSQL:
 
 ```sh
-docker compose up -d db
 docker exec ascensores_db psql -U ascensores_user -d ascensores -c "CREATE DATABASE ascensores_test OWNER ascensores_user;"
+docker exec ascensores_app php artisan test
 ```
 
-Crea `backend/.env.testing` (no se sube a Git) con `APP_ENV=testing`,
-`DB_CONNECTION=pgsql`, `DB_HOST=127.0.0.1`, `DB_PORT=5433`,
-`DB_DATABASE=ascensores_test` y las credenciales del servicio `db`. Añade una
-clave de aplicación independiente con `php artisan key:generate --env=testing`.
-PHPUnit ya está configurado para utilizar PostgreSQL:
+`phpunit.xml` fuerza `DB_DATABASE=ascensores_test` y `tests/TestCase.php` detiene las pruebas
+si la conexión apunta a otra base, para no borrar los datos de desarrollo.
 
-```sh
-php artisan test --compact
-```
-
-El puerto `5433` es el puerto del host publicado por `docker-compose.yml`; desde
-el contenedor `app`, PostgreSQL se alcanza como `db:5432`.
-
-Para ejecutar pruebas funcionales localmente sin iniciar PostgreSQL, puede
-usarse SQLite en memoria desde PowerShell. Esto verifica los flujos de la API,
-pero no reemplaza la validación de integración específica de PostgreSQL:
-
-```powershell
-$env:DB_CONNECTION = 'sqlite'
-$env:DB_DATABASE = ':memory:'
-$env:DB_URL = ''
-php artisan test
-```
-
-## Autenticación y permisos
-
-Envía `POST /api/v1/login` con correo y contraseña. Envía el token Sanctum en
-el encabezado HTTP `Authorization` con el esquema `Bearer`. El login limita a
-cinco intentos por minuto y combinación de correo/IP. Los endpoints privados requieren token y
-validan la capacidad del rol; el administrador recibe todos los permisos del
-catálogo sembrado.
-
-Consulta [la guía de la API de fase 1](docs/FASE-1-API.md) para endpoints,
-permisos, relaciones y ejemplos.
-
-Las tablas y columnas propias de negocio están en español, mientras la API
-conserva sus claves JSON existentes. Los nombres de tablas técnicas de
-Laravel/Sanctum no se cambian. Antes de desplegar, respalda la base y ejecuta
-`php artisan migrate` para aplicar los renombrados sin recrear ni borrar datos.
+`tests/Feature/PruebasFaseUnoTest.php` cubre los CRUD y las reglas de datos maestros;
+`tests/Feature/PruebasSeguridadTest.php` cubre bloqueo de cuenta, inactividad,
+recuperación de contraseña, aislamiento entre clientes, permisos exclusivos y auditoría;
+`tests/Feature/PruebasFaseDosTest.php` y `tests/Unit/CalendarioProgramacionTest.php` cubren
+la fase 2 (ver la [guía](docs/FASE-2-API.md#pruebas)).

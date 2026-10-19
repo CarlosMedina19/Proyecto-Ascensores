@@ -25,6 +25,9 @@ class Ascensor extends Model
         'tipo_puerta',
         'especificaciones_tecnicas',
         'fecha_instalacion',
+        'puertas_cabina',
+        'puertas_piso',
+        'operador_puertas',
     ];
 
     protected function casts(): array
@@ -34,6 +37,8 @@ class Ascensor extends Model
             'capacidad_kg' => 'integer',
             'velocidad_mpm' => 'decimal:2',
             'paradas' => 'integer',
+            'puertas_cabina' => 'integer',
+            'puertas_piso' => 'integer',
         ];
     }
 

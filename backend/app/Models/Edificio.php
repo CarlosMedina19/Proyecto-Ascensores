@@ -28,7 +28,16 @@ class Edificio extends Model
         'nombre_contacto',
         'telefono_contacto',
         'correo_contacto',
+        'activo',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'activo' => 'boolean',
+            'pisos' => 'integer',
+        ];
+    }
 
     protected static function boot()
     {

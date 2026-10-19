@@ -25,6 +25,7 @@ class ClienteResource extends RecursoApi
             'observaciones' => $this->observaciones,
             'contactos' => ContactoClienteResource::collection($this->whenLoaded('contactos')),
             'edificios_count' => $this->whenCounted('edificios'),
+            'edificios' => EdificioResource::collection($this->whenLoaded('edificios')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

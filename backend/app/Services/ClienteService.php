@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\ReglaNegocioException;
 use App\Models\Cliente;
 use App\Models\ContactoCliente;
 use App\Models\Usuario;
@@ -16,7 +17,7 @@ class ClienteService
         $consulta = Cliente::with(['contactos'])->withCount('edificios');
         $usuarioActual = Auth::user();
 
-        if ($usuarioActual instanceof Usuario && $usuarioActual->tieneRol('cliente')) {
+        if ($usuarioActual instanceof Usuario && $usuarioActual->esCliente()) {
             $consulta->whereKey($usuarioActual->cliente_id);
         }
 
@@ -31,7 +32,7 @@ class ClienteService
             });
         }
 
-        if (isset($filtros['estado'])) {
+        if (isset($filtros['estado']) && $filtros['estado'] !== '') {
             $consulta->where('estado', filter_var($filtros['estado'], FILTER_VALIDATE_BOOLEAN));
         }
 
@@ -39,7 +40,7 @@ class ClienteService
             $consulta->where('tipo', $filtros['tipo']);
         }
 
-        return $consulta->latest()->paginate($porPagina);
+        return $consulta->orderBy('nombre')->paginate($porPagina, ['*'], 'pagina');
     }
 
     public function crear(array $datos): Cliente
@@ -62,11 +63,18 @@ class ClienteService
         });
     }
 
+    /**
+     * Un cliente con edificios registrados no se elimina; se desactiva para conservar su historial.
+     */
     public function eliminar(Cliente $cliente): void
     {
+        if ($cliente->edificios()->exists()) {
+            throw new ReglaNegocioException('El cliente tiene edificios registrados. Desactívelo en lugar de eliminarlo.');
+        }
+
         DB::transaction(function () use ($cliente) {
             $cliente->delete();
-            RegistroAuditoriaService::registrar('eliminado', $cliente);
+            RegistroAuditoriaService::registrar('eliminado', $cliente, []);
         });
     }
 

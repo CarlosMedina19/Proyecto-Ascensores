@@ -57,4 +57,9 @@ class Cliente extends Model
     {
         return $this->hasMany(Edificio::class, 'cliente_id');
     }
+
+    public function contratos(): HasMany
+    {
+        return $this->hasMany(Contrato::class, 'cliente_id');
+    }
 }
