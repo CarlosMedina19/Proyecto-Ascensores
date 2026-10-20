@@ -509,19 +509,14 @@ class SeccionPlan extends StatelessWidget {
     }
 
     final proximo = plan.proximoMantenimiento;
-    final dias = proximo == null
-        ? null
-        : MantenimientoProgramado(id: 0, estado: 'programado', fechaProgramada: proximo).diasRestantes();
+    final dias = proximo == null ? null : MantenimientoProgramado(id: 0, estado: 'programado', fechaProgramada: proximo).diasRestantes();
 
     return Seccion(
       titulo: 'Plan de mantenimiento',
       hijos: [
         Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: SigmaColores.primario.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(14),
-          ),
+          decoration: BoxDecoration(color: SigmaColores.primario.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),
           child: Row(
             children: [
               const Icon(Icons.event_available, color: SigmaColores.primario),

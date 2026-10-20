@@ -85,9 +85,11 @@ class Sesion extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> iniciarSesion(String correo, String password) async {
+  /// `antesDeEntrar` corre con las credenciales ya validadas y antes de mostrar la app (transición).
+  Future<void> iniciarSesion(String correo, String password, {Future<void> Function()? antesDeEntrar}) async {
     final resultado = await repositorio.iniciarSesion(correo.trim(), password);
     repositorio.api.token = resultado.token;
+    if (antesDeEntrar != null) await antesDeEntrar();
     await _almacen.guardar(resultado.token);
     minutosInactividad = resultado.minutosInactividad;
     usuario = resultado.usuario;

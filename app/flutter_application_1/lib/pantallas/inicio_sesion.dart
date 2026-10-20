@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../datos/cliente_api.dart';
 import '../estado/sesion.dart';
+import '../tema.dart';
 import '../widgets/comunes.dart';
+import '../widgets/puertas.dart';
 
 /// RF-001: inicio de sesión con el correo y la contraseña de la cuenta.
 class PantallaInicioSesion extends StatefulWidget {
@@ -37,7 +39,7 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion> {
       _erroresCampo = {};
     });
     try {
-      await context.read<Sesion>().iniciarSesion(_correo.text, _password.text);
+      await context.read<Sesion>().iniciarSesion(_correo.text, _password.text, antesDeEntrar: PuertasSigma.cerrar);
     } on ErrorApi catch (e) {
       setState(() {
         _error = e.mensaje;
@@ -69,79 +71,98 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const _Presentacion(),
-                    const SizedBox(height: 28),
-                    const Etiqueta('Bienvenido de nuevo'),
-                    const SizedBox(height: 4),
-                    const Text('Ingresar', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -0.8)),
                     const SizedBox(height: 18),
-                    if (motivo != null && _error == null) _Aviso(texto: motivo, color: esquema.primary),
-                    if (_error != null) _Aviso(texto: _error!, color: esquema.error),
-                    TextFormField(
-                      key: const Key('campo-correo'),
-                      controller: _correo,
-                      keyboardType: TextInputType.emailAddress,
-                      autofillHints: const [AutofillHints.username],
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        labelText: 'Correo electrónico',
-                        prefixIcon: const Icon(Icons.mail_outline),
-                        errorText: _erroresCampo['correo'],
-                      ),
-                      validator: (valor) {
-                        final texto = valor?.trim() ?? '';
-                        if (texto.isEmpty) return 'Escriba su correo';
-                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(texto)) return 'El correo no es válido';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    TextFormField(
-                      key: const Key('campo-password'),
-                      controller: _password,
-                      obscureText: !_verPassword,
-                      autofillHints: const [AutofillHints.password],
-                      onFieldSubmitted: (_) => _ingresar(),
-                      decoration: InputDecoration(
-                        labelText: 'Contraseña',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        errorText: _erroresCampo['password'],
-                        suffixIcon: IconButton(
-                          tooltip: _verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña',
-                          icon: Icon(_verPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                          onPressed: () => setState(() => _verPassword = !_verPassword),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Etiqueta('Bienvenido de nuevo'),
+                            const SizedBox(height: 4),
+                            Text('Ingresa a SIGMA', style: Theme.of(context).textTheme.headlineMedium),
+                            const SizedBox(height: 18),
+                            if (motivo != null && _error == null) _Aviso(texto: motivo, color: esquema.primary),
+                            if (_error != null) _Aviso(texto: _error!, color: esquema.error),
+                            TextFormField(
+                              key: const Key('campo-correo'),
+                              controller: _correo,
+                              keyboardType: TextInputType.emailAddress,
+                              autofillHints: const [AutofillHints.username],
+                              textInputAction: TextInputAction.next,
+                              decoration: InputDecoration(
+                                labelText: 'Correo electrónico',
+                                prefixIcon: const Icon(Icons.mail_outline),
+                                errorText: _erroresCampo['correo'],
+                              ),
+                              validator: (valor) {
+                                final texto = valor?.trim() ?? '';
+                                if (texto.isEmpty) return 'Escriba su correo';
+                                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(texto)) return 'El correo no es válido';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 14),
+                            TextFormField(
+                              key: const Key('campo-password'),
+                              controller: _password,
+                              obscureText: !_verPassword,
+                              autofillHints: const [AutofillHints.password],
+                              onFieldSubmitted: (_) => _ingresar(),
+                              decoration: InputDecoration(
+                                labelText: 'Contraseña',
+                                prefixIcon: const Icon(Icons.lock_outline),
+                                errorText: _erroresCampo['password'],
+                                suffixIcon: IconButton(
+                                  tooltip: _verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña',
+                                  icon: Icon(_verPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                                  onPressed: () => setState(() => _verPassword = !_verPassword),
+                                ),
+                              ),
+                              validator: (valor) => (valor ?? '').isEmpty ? 'Escriba su contraseña' : null,
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PantallaRecuperarContrasena())),
+                                child: const Text('¿Olvidó su contraseña?'),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            FilledButton.icon(
+                              key: const Key('boton-ingresar'),
+                              onPressed: _enviando ? null : _ingresar,
+                              icon: _enviando
+                                  ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                                  : const Icon(Icons.arrow_forward),
+                              label: Text(_enviando ? 'Ingresando…' : 'Ingresar'),
+                            ),
+                            const SizedBox(height: 16),
+                            const Divider(),
+                            const SizedBox(height: 12),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(Icons.shield_outlined, size: 14, color: esquema.onSurfaceVariant),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'La sesión se cierra tras 10 minutos sin actividad. Cinco intentos fallidos bloquean la cuenta durante 15 minutos.',
+                                    style: TextStyle(fontSize: 12, color: esquema.onSurfaceVariant),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      validator: (valor) => (valor ?? '').isEmpty ? 'Escriba su contraseña' : null,
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PantallaRecuperarContrasena())),
-                        child: const Text('¿Olvidó su contraseña?'),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    FilledButton.icon(
-                      key: const Key('boton-ingresar'),
-                      onPressed: _enviando ? null : _ingresar,
-                      icon: _enviando
-                          ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.arrow_forward),
-                      label: Text(_enviando ? 'Ingresando…' : 'Ingresar'),
                     ),
                     const SizedBox(height: 18),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.shield_outlined, size: 14, color: esquema.onSurfaceVariant),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'La sesión se cierra tras 10 minutos sin actividad. Cinco intentos fallidos bloquean la cuenta durante 15 minutos.',
-                            style: TextStyle(fontSize: 12, color: esquema.onSurfaceVariant),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      'SENA · Proyecto formativo SIGMA',
+                      textAlign: TextAlign.center,
+                      style: estiloEtiqueta(esquema.outline, tamano: 10.5),
                     ),
                   ],
                 ),
@@ -154,41 +175,86 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion> {
   }
 }
 
+/// Presentación del prototipo: fondo tinta con cuadrícula, marca SIGMA y lema con degradado.
 class _Presentacion extends StatelessWidget {
   const _Presentacion();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: const RadialGradient(center: Alignment(0.8, -0.9), radius: 1.4, colors: [Color(0xFF5A2FC2), Color(0xFF0E0A17)]),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              LogoSigma(tamano: 40),
-              SizedBox(width: 10),
-              Text(
-                'SIGMA',
-                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: 0.5),
-              ),
-            ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(center: Alignment(1, -1), radius: 1.5, colors: [Color(0x805A30C5), Color(0x005A30C5)]),
+          color: SigmaColores.tinta,
+        ),
+        child: CustomPaint(
+          painter: _Cuadricula(),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const MarcaSigma(tamanoLogo: 40, sobreOscuro: true),
+                const SizedBox(height: 22),
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      const TextSpan(text: 'Cada ascensor, '),
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.baseline,
+                        baseline: TextBaseline.alphabetic,
+                        child: ShaderMask(
+                          blendMode: BlendMode.srcIn,
+                          shaderCallback: (r) => const LinearGradient(colors: [Color(0xFFCDC0ED), SigmaColores.lima]).createShader(r),
+                          child: const Text('cada piso', style: _estiloLema),
+                        ),
+                      ),
+                      const TextSpan(text: ', bajo control.'),
+                    ],
+                  ),
+                  style: _estiloLema,
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Programación de mantenimientos, checklist digital en campo e informes firmados en PDF.',
+                  style: TextStyle(color: Color(0xFFCDC0ED), fontSize: 13.5),
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: 20),
-          Text(
-            'Cada ascensor, cada piso, bajo control.',
-            style: TextStyle(color: Colors.white, fontSize: 24, height: 1.1, fontWeight: FontWeight.w700, letterSpacing: -0.5),
-          ),
-          SizedBox(height: 8),
-          Text('Sistema Integral de Gestión y Mantenimiento de Ascensores', style: TextStyle(color: Color(0xFFB6AEC6), fontSize: 13)),
-        ],
+        ),
       ),
     );
   }
+}
+
+const _estiloLema = TextStyle(
+  fontFamily: SigmaFuentes.titulos,
+  color: SigmaColores.tintaTexto,
+  fontSize: 27,
+  height: 1.08,
+  fontWeight: FontWeight.w700,
+  letterSpacing: -0.8,
+);
+
+/// Cuadrícula tenue del fondo de la presentación.
+class _Cuadricula extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final pincel = Paint()
+      ..color = Colors.white.withValues(alpha: 0.04)
+      ..strokeWidth = 1;
+    for (var x = 0.0; x < size.width; x += 32) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), pincel);
+    }
+    for (var y = 0.0; y < size.height; y += 32) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), pincel);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _Aviso extends StatelessWidget {

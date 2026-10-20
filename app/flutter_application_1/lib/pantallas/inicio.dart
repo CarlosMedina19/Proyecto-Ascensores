@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../datos/modelos.dart';
@@ -45,11 +46,18 @@ class _PantallaInicioState extends State<PantallaInicio> {
       // Fase 3 (RF-023): el técnico ve sus órdenes activas, de la más próxima a la más lejana.
       _misOrdenes = esTecnico && sesion.tienePermiso('ordenes.ver')
           ? sesion.repositorio.ordenes().then(
-              (pagina) => pagina.elementos.toList()
-                ..sort((a, b) => '${a.fecha.toIso8601String()} ${a.hora}'.compareTo('${b.fecha.toIso8601String()} ${b.hora}')),
+              (pagina) =>
+                  pagina.elementos.toList()
+                    ..sort((a, b) => '${a.fecha.toIso8601String()} ${a.hora}'.compareTo('${b.fecha.toIso8601String()} ${b.hora}')),
             )
           : null;
     });
+  }
+
+  /// "Lunes 19 de octubre de 2026"
+  String _hoy() {
+    final texto = DateFormat("EEEE d 'de' MMMM 'de' y", 'es').format(DateTime.now());
+    return texto[0].toUpperCase() + texto.substring(1);
   }
 
   String _saludo() {
@@ -65,17 +73,27 @@ class _PantallaInicioState extends State<PantallaInicio> {
     final esquema = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(titleSpacing: 16, title: const Row(children: [LogoSigma(tamano: 30), SizedBox(width: 10), Text('SIGMA')])),
+      appBar: AppBar(titleSpacing: 16, title: const MarcaSigma(tamanoLogo: 30)),
       body: RefreshIndicator(
         onRefresh: () async => _cargar(),
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Etiqueta(usuario.esCliente ? 'Portal del cliente · ${usuario.clienteNombre ?? ''}' : usuario.nombreRol),
-            const SizedBox(height: 4),
-            Text(
-              '${_saludo()}, ${usuario.primerNombre}',
-              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: -0.6),
+            EncabezadoSigma(
+              etiqueta: usuario.esCliente ? 'Portal del cliente · ${usuario.clienteNombre ?? ''}' : usuario.nombreRol,
+              titulo: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: '${_saludo()}, '),
+                    TextSpan(
+                      text: usuario.primerNombre,
+                      style: TextStyle(color: esquema.primary),
+                    ),
+                    const TextSpan(text: '.'),
+                  ],
+                ),
+              ),
+              descripcion: _hoy(),
             ),
             const SizedBox(height: 16),
             FutureBuilder<Resumen?>(
@@ -135,10 +153,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                         ),
                         const SizedBox(height: 16),
                       ],
-                      Text(
-                        usuario.esCliente ? 'Mis ascensores' : 'Ascensores',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                      ),
+                      Text(usuario.esCliente ? 'Mis ascensores' : 'Ascensores', style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 8),
                       if (lista.isEmpty) const EstadoVacio(titulo: 'No hay ascensores asociados'),
                       for (final equipo in lista.take(6)) FilaEquipo(equipo: equipo),
@@ -217,36 +232,35 @@ class _TarjetaDestacada extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: const RadialGradient(
-          center: Alignment(1, -1),
-          radius: 1.6,
-          colors: [Color(0xFF8C5CFF), Color(0xFF5A2FC2), Color(0xFF2D1670)],
-        ),
-      ),
+    return TarjetaDestacada(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.circle, size: 8, color: Color(0xFF7FE6F5)),
-              SizedBox(width: 6),
-              Text('ESTADO DE LOS ASCENSORES', style: TextStyle(color: Colors.white70, fontSize: 11, letterSpacing: 1)),
+              const PuntoVivo(),
+              const SizedBox(width: 8),
+              Text('ESTADO DE LOS ASCENSORES', style: estiloEtiqueta(Colors.white.withValues(alpha: .82), tamano: 10.5)),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             titulo,
-            style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800, letterSpacing: -1),
+            style: const TextStyle(
+              fontFamily: SigmaFuentes.titulos,
+              color: Colors.white,
+              fontSize: 40,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -1.2,
+              height: 1,
+            ),
           ),
-          Text(subtitulo, style: const TextStyle(color: Colors.white)),
+          const SizedBox(height: 4),
+          Text(subtitulo, style: TextStyle(color: Colors.white.withValues(alpha: .92), fontSize: 13.5)),
           const SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(5),
-            child: LinearProgressIndicator(value: progreso, minHeight: 5, backgroundColor: Colors.white24, color: const Color(0xFF7FE6F5)),
+            child: LinearProgressIndicator(value: progreso, minHeight: 5, backgroundColor: Colors.white24, color: SigmaColores.lima),
           ),
         ],
       ),
@@ -271,13 +285,21 @@ class _Indicador extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(icono, size: 18, color: SigmaColores.primario),
-                const SizedBox(width: 6),
-                Text(etiqueta, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                Container(
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer, borderRadius: BorderRadius.circular(8)),
+                  child: Icon(icono, size: 15, color: Theme.of(context).colorScheme.primary),
+                ),
+                const SizedBox(width: 8),
+                Text(etiqueta, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13)),
               ],
             ),
-            const SizedBox(height: 6),
-            Text('$valor', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            Text(
+              '$valor',
+              style: const TextStyle(fontFamily: SigmaFuentes.titulos, fontSize: 30, fontWeight: FontWeight.w700, letterSpacing: -0.8),
+            ),
           ],
         ),
       ),
@@ -305,10 +327,7 @@ class ProximosMantenimientos extends StatelessWidget {
               leading: const Icon(Icons.event_note_outlined, color: SigmaColores.primario),
               title: Text('${visita.equipoCodigo ?? ''} · ${visita.edificioNombre ?? ''}'),
               subtitle: Text([fecha(visita.fechaProgramada), ?visita.hora, ?visita.planNombre].join(' · ')),
-              trailing: Insignia(
-                texto: textoDias(visita.diasRestantes()),
-                color: estadoMantenimiento(visita).color,
-              ),
+              trailing: Insignia(texto: textoDias(visita.diasRestantes()), color: estadoMantenimiento(visita).color),
               onTap: visita.equipoId == null
                   ? null
                   : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PantallaDetalleEquipo(equipoId: visita.equipoId!))),

@@ -17,8 +17,8 @@ import '../widgets/comunes.dart';
 ///
 /// Se guarda automáticamente en el dispositivo (funciona sin conexión y no se
 /// pierde al cerrar la sesión). Al enviarla, el resumen queda en el historial
-/// del equipo (RF-009). El checklist completo por ítem, el informe PDF y la
-/// carga de fotos y firmas al servidor llegan en la fase 4.
+/// del equipo (RF-009). Exige la firma del técnico y la de quien recibe (RF-025).
+/// La planilla por ítem, las fotos y el informe PDF se hacen desde la orden (fase 4).
 class PantallaVisita extends StatefulWidget {
   const PantallaVisita({super.key, required this.equipo, this.almacen});
 
@@ -44,6 +44,12 @@ class _PantallaVisitaState extends State<PantallaVisita> {
   final Map<String, TextEditingController> _observacionZona = {};
   final _selectorImagen = ImagePicker();
   late final SignatureController _firma = SignatureController(penStrokeWidth: 3, penColor: Colors.black, onDrawEnd: _guardarFirma);
+  late final SignatureController _firmaRecibe = SignatureController(
+    penStrokeWidth: 3,
+    penColor: Colors.black,
+    onDrawEnd: _guardarFirmaRecibe,
+  );
+  final _nombreRecibe = TextEditingController();
 
   @override
   void initState() {
@@ -56,6 +62,7 @@ class _PantallaVisitaState extends State<PantallaVisita> {
     final visita = guardada ?? VisitaBorrador(equipoId: widget.equipo.id, equipoCodigo: widget.equipo.codigo);
     _diagnostico.text = visita.diagnostico;
     _observaciones.text = visita.observaciones;
+    _nombreRecibe.text = visita.nombreRecibe;
     for (final zona in visita.zonas.entries) {
       _observacionZona[zona.key] = TextEditingController(text: zona.value.observacion);
     }
@@ -77,6 +84,8 @@ class _PantallaVisitaState extends State<PantallaVisita> {
       c.dispose();
     }
     _firma.dispose();
+    _firmaRecibe.dispose();
+    _nombreRecibe.dispose();
     super.dispose();
   }
 
@@ -90,6 +99,42 @@ class _PantallaVisitaState extends State<PantallaVisita> {
   Future<void> _guardarFirma() async {
     final png = await _firma.toPngBytes();
     if (png != null) _cambio(() => _visita!.firmaBase64 = base64Encode(png));
+  }
+
+  Future<void> _guardarFirmaRecibe() async {
+    final png = await _firmaRecibe.toPngBytes();
+    if (png != null) _cambio(() => _visita!.firmaRecibeBase64 = base64Encode(png));
+  }
+
+  /// Recuadro de firma: muestra la guardada o el lienzo para firmar.
+  Widget _recuadroFirma({required SignatureController controlador, required String? guardada, required VoidCallback alBorrar}) {
+    final hayGuardada = guardada != null && guardada.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          height: 160,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: SigmaColores.borde),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: hayGuardada && controlador.isEmpty
+              ? Image.memory(Uint8List.fromList(base64Decode(guardada)))
+              : Signature(controller: controlador, backgroundColor: Colors.white),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () => _cambio(() {
+            controlador.clear();
+            alBorrar();
+          }),
+          icon: const Icon(Icons.refresh),
+          label: const Text('Borrar firma'),
+        ),
+      ],
+    );
   }
 
   void _agregarRepuesto() {
@@ -365,44 +410,37 @@ class _PantallaVisitaState extends State<PantallaVisita> {
                     ),
                 ],
               ),
-              Text('Las fotos quedan en el dispositivo; se subirán al informe en la fase 4.', style: TextStyle(fontSize: 12, color: suave)),
+              Text(
+                'Las fotos quedan en el dispositivo. Las del informe PDF se suben desde la planilla de la orden.',
+                style: TextStyle(fontSize: 12, color: suave),
+              ),
             ],
           ),
           const SizedBox(height: 12),
 
-          // FIRMA DEL TÉCNICO
+          // FIRMAS (RF-025): técnico y quien recibe el servicio
           Seccion(
             titulo: 'Firma del técnico',
             accion: visita.tieneFirma ? const Insignia(texto: 'Registrada', color: SigmaColores.bueno) : null,
+            hijos: [_recuadroFirma(controlador: _firma, guardada: visita.firmaBase64, alBorrar: () => visita.firmaBase64 = null)],
+          ),
+          const SizedBox(height: 12),
+          Seccion(
+            titulo: 'Firma de quien recibe',
+            accion: visita.tieneFirmaRecibe ? const Insignia(texto: 'Registrada', color: SigmaColores.bueno) : null,
             hijos: [
-              if (visita.tieneFirma && _firma.isEmpty)
-                Container(
-                  height: 160,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: SigmaColores.borde),
-                  ),
-                  child: Image.memory(Uint8List.fromList(base64Decode(visita.firmaBase64!))),
-                )
-              else
-                Container(
-                  height: 160,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: SigmaColores.borde),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Signature(controller: _firma, backgroundColor: Colors.white),
-                ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: () => _cambio(() {
-                  _firma.clear();
-                  visita.firmaBase64 = null;
-                }),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Borrar firma'),
+              TextField(
+                key: const Key('nombre-recibe'),
+                controller: _nombreRecibe,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(labelText: 'Nombre de quien recibe el servicio'),
+                onChanged: (texto) => _cambio(() => visita.nombreRecibe = texto),
+              ),
+              const SizedBox(height: 10),
+              _recuadroFirma(
+                controlador: _firmaRecibe,
+                guardada: visita.firmaRecibeBase64,
+                alBorrar: () => visita.firmaRecibeBase64 = null,
               ),
             ],
           ),
@@ -440,16 +478,11 @@ class _PantallaVisitaState extends State<PantallaVisita> {
               Expanded(
                 child: Text(nombre, style: const TextStyle(fontWeight: FontWeight.w500)),
               ),
-              SegmentedButton<String>(
-                showSelectedIcon: false,
-                emptySelectionAllowed: true,
-                style: const ButtonStyle(visualDensity: VisualDensity.compact),
-                segments: [
-                  for (final estado in ['B', 'R', 'M']) ButtonSegment(value: estado, label: Text(estado), tooltip: nombresEstado[estado]),
-                ],
-                selected: revision.estado.isEmpty ? <String>{} : {revision.estado},
-                onSelectionChanged: (seleccion) {
-                  final estado = seleccion.isEmpty ? '' : seleccion.first;
+              BotonesBRM(
+                valor: revision.estado,
+                ancho: 38,
+                alCambiar: (elegido) {
+                  final estado = elegido == revision.estado ? '' : elegido;
                   _cambio(() => revision.estado = estado);
                   if (estado == 'M') _aviso('$nombre en Malo: informe al coordinador.');
                 },

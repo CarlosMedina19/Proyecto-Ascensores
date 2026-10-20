@@ -39,8 +39,8 @@ class Repuesto {
 /// Borrador de una visita de mantenimiento guardado en el dispositivo.
 ///
 /// Se guarda sin conexión y no se pierde al cerrar la sesión. Al enviarlo,
-/// el resumen queda en el historial del equipo (RF-009). Las fotos y la firma
-/// permanecen en el dispositivo hasta que la API de adjuntos esté disponible (fase 4).
+/// el resumen queda en el historial del equipo (RF-009). Las fotos y las firmas
+/// (técnico y quien recibe el servicio, RF-025) permanecen en el dispositivo.
 class VisitaBorrador {
   VisitaBorrador({
     required this.equipoId,
@@ -52,6 +52,8 @@ class VisitaBorrador {
     List<Repuesto>? repuestos,
     List<String>? fotos,
     this.firmaBase64,
+    this.firmaRecibeBase64,
+    this.nombreRecibe = '',
     DateTime? inicio,
   }) : zonas = zonas ?? {for (final zona in zonasAscensor) zona: RevisionZona()},
        actividades = actividades ?? <String>{},
@@ -69,6 +71,8 @@ class VisitaBorrador {
     repuestos: ((json['repuestos'] as List?) ?? const []).map((e) => Repuesto.desdeJson(e as Map<String, dynamic>)).toList(),
     fotos: ((json['fotos'] as List?) ?? const []).map((e) => '$e').toList(),
     firmaBase64: json['firma'] as String?,
+    firmaRecibeBase64: json['firma_recibe'] as String?,
+    nombreRecibe: json['nombre_recibe'] as String? ?? '',
     inicio: DateTime.tryParse(json['inicio'] as String? ?? ''),
   );
 
@@ -83,11 +87,16 @@ class VisitaBorrador {
   /// Fotos en base64 (funciona igual en Android, iOS y web).
   final List<String> fotos;
   String? firmaBase64;
+
+  /// Firma y nombre de quien recibe el servicio en el edificio.
+  String? firmaRecibeBase64;
+  String nombreRecibe;
   final DateTime inicio;
 
   int get zonasRevisadas => zonas.values.where((z) => z.estado.isNotEmpty).length;
   int get zonasConObservacionPendiente => zonas.values.where((z) => z.faltaObservacion).length;
   bool get tieneFirma => firmaBase64 != null && firmaBase64!.isNotEmpty;
+  bool get tieneFirmaRecibe => firmaRecibeBase64 != null && firmaRecibeBase64!.isNotEmpty;
 
   /// Lo que falta para poder enviar la visita.
   List<String> get pendientes => [
@@ -95,6 +104,8 @@ class VisitaBorrador {
     if (zonasConObservacionPendiente > 0) '$zonasConObservacionPendiente hallazgo(s) sin observación',
     if (diagnostico.trim().isEmpty) 'Falta el diagnóstico',
     if (!tieneFirma) 'Falta la firma del técnico',
+    if (nombreRecibe.trim().length < 3) 'Falta el nombre de quien recibe',
+    if (!tieneFirmaRecibe) 'Falta la firma de quien recibe',
   ];
 
   bool get listaParaEnviar => pendientes.isEmpty;
@@ -122,7 +133,7 @@ class VisitaBorrador {
       if (observaciones.trim().isNotEmpty) 'Observaciones: ${observaciones.trim()}',
       if (repuestos.isNotEmpty) 'Repuestos: ${repuestos.map((r) => '${r.nombre} (${r.cantidad})').join(', ')}.',
       if (fotos.isNotEmpty) 'Fotografías tomadas: ${fotos.length} (guardadas en el dispositivo).',
-      'Firmado por el técnico en el dispositivo.',
+      'Firmado en el dispositivo por el técnico y por ${nombreRecibe.trim()} (recibe el servicio).',
     ];
     final texto = lineas.join('\n');
     // La API admite descripciones de hasta 2000 caracteres.
@@ -139,6 +150,8 @@ class VisitaBorrador {
     'repuestos': repuestos.map((r) => r.aJson()).toList(),
     'fotos': fotos,
     'firma': firmaBase64,
+    'firma_recibe': firmaRecibeBase64,
+    'nombre_recibe': nombreRecibe,
     'inicio': inicio.toIso8601String(),
   };
 }

@@ -35,7 +35,13 @@ Map<String, dynamic> ordenJson({String estado = 'en_proceso', bool ejecutar = tr
       'usuario': {'nombre': 'Andrés Rojas'},
       'created_at': '2026-10-18T07:41:00-05:00',
     },
-    {'id': 2, 'accion': 'inicio_registrado', 'campo': 'inicio_en', 'valor_nuevo': '2026-10-18T07:41:00-05:00', 'created_at': '2026-10-18T07:41:00-05:00'},
+    {
+      'id': 2,
+      'accion': 'inicio_registrado',
+      'campo': 'inicio_en',
+      'valor_nuevo': '2026-10-18T07:41:00-05:00',
+      'created_at': '2026-10-18T07:41:00-05:00',
+    },
   ],
 };
 

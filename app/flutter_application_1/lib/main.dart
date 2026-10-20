@@ -11,6 +11,7 @@ import 'pantallas/inicio_sesion.dart';
 import 'pantallas/principal.dart';
 import 'tema.dart';
 import 'widgets/comunes.dart';
+import 'widgets/puertas.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +50,8 @@ class SigmaApp extends StatelessWidget {
           locale: const Locale('es', 'CO'),
           supportedLocales: const [Locale('es', 'CO'), Locale('es')],
           localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          // Las puertas de ascensor quedan por encima de todas las pantallas.
+          builder: (context, child) => PuertasSigma(child: child!),
           home: const _Raiz(),
         ),
       ),

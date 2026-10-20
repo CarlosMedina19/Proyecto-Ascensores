@@ -129,7 +129,9 @@ void main() {
       }
       visita
         ..diagnostico = 'Equipo operando normalmente.'
-        ..firmaBase64 = 'iVBORw0KGgo=';
+        ..firmaBase64 = 'iVBORw0KGgo='
+        ..firmaRecibeBase64 = 'iVBORw0KGgo='
+        ..nombreRecibe = 'Marta Díaz';
       return visita;
     }
 
@@ -138,6 +140,8 @@ void main() {
       expect(visita.listaParaEnviar, isFalse);
       expect(visita.pendientes, contains('Falta el diagnóstico'));
       expect(visita.pendientes, contains('Falta la firma del técnico'));
+      expect(visita.pendientes, contains('Falta el nombre de quien recibe'));
+      expect(visita.pendientes, contains('Falta la firma de quien recibe'));
       expect(visitaCompleta().listaParaEnviar, isTrue);
     });
 
@@ -165,6 +169,7 @@ void main() {
       expect(resumen, contains('Resultado general: Regular.'));
       expect(resumen, contains('- Cabina: Regular — Dos paneles LED parpadean.'));
       expect(resumen, contains('Rodamiento (2)'));
+      expect(resumen, contains('por el técnico y por Marta Díaz (recibe el servicio)'));
       expect(resumen.length, lessThanOrEqualTo(2000));
     });
 
@@ -175,6 +180,8 @@ void main() {
       expect(recuperada.zonasRevisadas, 6);
       expect(recuperada.repuestos.single.nombre, 'Contacto');
       expect(recuperada.inicio, visita.inicio);
+      expect(recuperada.nombreRecibe, 'Marta Díaz');
+      expect(recuperada.tieneFirmaRecibe, isTrue);
       expect(recuperada.listaParaEnviar, isTrue);
     });
   });

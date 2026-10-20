@@ -100,7 +100,9 @@ void main() {
         supportedLocales: const [Locale('es')],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         home: Scaffold(
-          body: SingleChildScrollView(child: SeccionPlan(asignacion: plan, visitas: [visita])),
+          body: SingleChildScrollView(
+            child: SeccionPlan(asignacion: plan, visitas: [visita]),
+          ),
         ),
       ),
     );

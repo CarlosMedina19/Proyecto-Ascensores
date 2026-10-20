@@ -58,14 +58,22 @@ Sesion _sesion(MockClient http) => Sesion(
 Future<void> _montar(WidgetTester tester, Sesion sesion) async {
   await sesion.iniciar();
   await tester.pumpWidget(SigmaApp(sesion: sesion, preferencias: Preferencias()));
-  await tester.pumpAndSettle();
+  await _asentar(tester);
+}
+
+/// Avanza el tiempo sin esperar a que terminen las animaciones continuas (el punto "en vivo" late siempre).
+Future<void> _asentar(WidgetTester tester) async {
+  for (var i = 0; i < 20; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
 }
 
 Future<void> _ingresar(WidgetTester tester) async {
   await tester.enterText(find.byKey(const Key('campo-correo')), 'andres@sigma.test');
   await tester.enterText(find.byKey(const Key('campo-password')), 'Clave2026');
+  await tester.ensureVisible(find.byKey(const Key('boton-ingresar')));
   await tester.tap(find.byKey(const Key('boton-ingresar')));
-  await tester.pumpAndSettle();
+  await _asentar(tester);
 }
 
 void main() {
@@ -75,7 +83,9 @@ void main() {
   testWidgets('valida el formulario antes de llamar a la API', (tester) async {
     await _montar(tester, _sesion(_apiSimulada(usuario: _usuario('tecnico', []))));
 
-    await tester.tap(find.byKey(const Key('boton-ingresar')));
+    await tester.ensureVisible(find.byKey(const Key('boton-ingresar')));
+    await tester.ensureVisible(find.byKey(const Key('boton-ingresar')));
+  await tester.tap(find.byKey(const Key('boton-ingresar')));
     await tester.pump();
 
     expect(find.text('Escriba su correo'), findsOneWidget);
@@ -109,10 +119,10 @@ void main() {
     expect(find.text('Visitas'), findsOneWidget);
 
     await tester.tap(find.text('Perfil'));
-    await tester.pumpAndSettle();
+    await _asentar(tester);
     await tester.scrollUntilVisible(find.text('Cerrar sesión'), 200);
     await tester.tap(find.text('Cerrar sesión'));
-    await tester.pumpAndSettle();
+    await _asentar(tester);
 
     expect(sesion.autenticado, isFalse);
     expect(find.byKey(const Key('boton-ingresar')), findsOneWidget);
@@ -136,7 +146,7 @@ void main() {
 
     // Cierra la sesión para detener el reloj de inactividad antes de terminar la prueba.
     await sesion.cerrarSesion();
-    await tester.pumpAndSettle();
+    await _asentar(tester);
   });
 
   test('la sesión avisa en el último minuto y se cierra a los 10 minutos sin actividad', () async {

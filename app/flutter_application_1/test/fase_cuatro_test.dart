@@ -108,7 +108,9 @@ void main() {
       }
       return http.Response(jsonEncode(cuerpo), 200, headers: {'content-type': 'application/json; charset=utf-8'});
     });
-    final sesion = Sesion(repositorio: Repositorio(ClienteApi(http: api, urlBase: 'http://api.test/api/v1')));
+    final sesion = Sesion(
+      repositorio: Repositorio(ClienteApi(http: api, urlBase: 'http://api.test/api/v1')),
+    );
 
     await tester.pumpWidget(
       ChangeNotifierProvider.value(
@@ -127,8 +129,9 @@ void main() {
     expect(find.text('Freno de máquina'), findsOneWidget);
     expect(find.text('Todo guardado'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(ChoiceChip, 'INS').first);
-    await tester.tap(find.widgetWithText(ChoiceChip, 'M').first);
+    // Botón punteado (sin resultado → INS) y botón M del primer ítem.
+    await tester.tap(find.text('Resultado').first);
+    await tester.tap(find.text('M').first);
     await tester.pump();
 
     // Sin observación no se envía.

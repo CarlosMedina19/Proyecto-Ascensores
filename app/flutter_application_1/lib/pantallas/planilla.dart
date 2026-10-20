@@ -153,11 +153,12 @@ class _PantallaPlanillaState extends State<PantallaPlanilla> {
         body: VistaError(mensaje: _error!, alReintentar: _cargar),
       );
     }
-    if (items == null)
+    if (items == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Planilla')),
         body: const Cargando(),
       );
+    }
 
     final hechos = items.where((i) => _valor(i.id).completo).length;
 
@@ -196,9 +197,57 @@ class _PantallaPlanillaState extends State<PantallaPlanilla> {
             for (final seccion in nombresSeccion.keys)
               ListView(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-                children: [for (final item in items.where((i) => i.seccion == seccion)) _filaItem(item)],
+                children: [
+                  _resumen(items),
+                  const SizedBox(height: 10),
+                  for (final item in items.where((i) => i.seccion == seccion)) _filaItem(item),
+                ],
               ),
             _cierre(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _textoResultado(String resultado) => switch (resultado) {
+    'NA' => 'N.A.',
+    '' => 'Resultado',
+    _ => resultado,
+  };
+
+  static String _siguienteResultado(String actual) => switch (actual) {
+    'INS' => 'EST',
+    'EST' => 'NA',
+    _ => 'INS',
+  };
+
+  /// Avance de toda la planilla con el conteo B / R / M (anillo del prototipo).
+  Widget _resumen(List<ItemChecklist> items) {
+    final valores = [for (final i in items) _valor(i.id)];
+    final hechos = valores.where((v) => v.completo).length;
+    int cuenta(String e) => valores.where((v) => v.estado == e).length;
+    final suave = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            AnilloAvance(valor: items.isEmpty ? 0 : hechos / items.length, tamano: 58),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${items.isEmpty ? 0 : (hechos * 100 / items.length).round()} %',
+                    style: const TextStyle(fontFamily: SigmaFuentes.titulos, fontSize: 24, fontWeight: FontWeight.w700),
+                  ),
+                  Text('$hechos de ${items.length} ítems', style: TextStyle(color: suave, fontSize: 12.5)),
+                  Text('B ${cuenta('B')} · R ${cuenta('R')} · M ${cuenta('M')}', style: estiloEtiqueta(suave, tamano: 11.5)),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -232,36 +281,27 @@ class _PantallaPlanillaState extends State<PantallaPlanilla> {
             ),
             const SizedBox(height: 8),
             if (_editable)
+              // Prototipo: B / R / M cuadrados y el resultado en un botón punteado que alterna INS → EST → N.A.
               Wrap(
-                spacing: 6,
-                runSpacing: 6,
+                spacing: 8,
+                runSpacing: 8,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  for (final (codigo, texto) in const [('INS', 'INS'), ('EST', 'EST'), ('NA', 'N.A.')])
-                    ChoiceChip(
-                      label: Text(texto),
-                      selected: valor.resultado == codigo,
-                      onSelected: (_) => _cambiar(item.id, (r) => r.resultado = codigo),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  const SizedBox(width: 6),
-                  for (final estado in const ['B', 'R', 'M'])
-                    ChoiceChip(
-                      label: Text(estado),
-                      selected: valor.estado == estado,
-                      selectedColor: colorBRM(estado),
-                      labelStyle: TextStyle(color: valor.estado == estado ? Colors.white : null, fontWeight: FontWeight.w700),
-                      onSelected: (_) => _cambiar(item.id, (r) => r.estado = estado),
-                      visualDensity: VisualDensity.compact,
-                    ),
+                  BotonesBRM(valor: valor.estado, alCambiar: (estado) => _cambiar(item.id, (r) => r.estado = estado)),
+                  BotonCiclo(
+                    texto: _textoResultado(valor.resultado),
+                    alPresionar: () => _cambiar(item.id, (r) => r.resultado = _siguienteResultado(r.resultado)),
+                  ),
                 ],
               )
             else
               Row(
                 children: [
-                  Text(valor.resultado.isEmpty ? 'Sin registrar' : (valor.resultado == 'NA' ? 'N.A.' : valor.resultado)),
-                  const SizedBox(width: 8),
-                  if (valor.estado.isNotEmpty) Insignia(texto: valor.estado, color: colorBRM(valor.estado)),
+                  if (valor.estado.isNotEmpty) ...[BotonesBRM(valor: valor.estado), const SizedBox(width: 8)],
+                  Text(
+                    valor.resultado.isEmpty ? 'Sin registrar' : _textoResultado(valor.resultado),
+                    style: estiloEtiqueta(Theme.of(context).colorScheme.onSurfaceVariant, tamano: 12),
+                  ),
                 ],
               ),
             if (_editable && (valor.estado == 'R' || valor.estado == 'M' || valor.observacion.isNotEmpty))

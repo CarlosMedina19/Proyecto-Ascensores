@@ -547,9 +547,7 @@ class OrdenTrabajo {
       llevaPlanilla: json['lleva_planilla'] as bool? ?? false,
       planillaRegistrados: _entero((json['planilla'] as Map<String, dynamic>?)?['registrados']) ?? 0,
       planillaTotal: _entero((json['planilla'] as Map<String, dynamic>?)?['total_items']) ?? 0,
-      firmas: {
-        for (final f in (json['firmas'] as List?) ?? const []) '${(f as Map)['tipo']}': '${f['nombre']}',
-      },
+      firmas: {for (final f in (json['firmas'] as List?) ?? const []) '${(f as Map)['tipo']}': '${f['nombre']}'},
       informes: ((json['informes'] as List?) ?? const []).length,
     );
   }
@@ -560,7 +558,9 @@ class OrdenTrabajo {
     String? legible(Object? valor) => valor == null ? null : (campo == 'estado' ? nombresEstadoOrden['$valor'] ?? '$valor' : '$valor');
     final anterior = legible(traza['valor_anterior']);
     final nuevo = legible(traza['valor_nuevo']);
-    final cambio = campo == null || campo == 'inicio_en' || campo == 'fin_en' ? null : (anterior != null ? '$anterior → ${nuevo ?? '—'}' : nuevo);
+    final cambio = campo == null || campo == 'inicio_en' || campo == 'fin_en'
+        ? null
+        : (anterior != null ? '$anterior → ${nuevo ?? '—'}' : nuevo);
     return EventoHistorial(
       id: _entero(traza['id'])!,
       evento: nombresAccionOrden[traza['accion']] ?? '${traza['accion']}',

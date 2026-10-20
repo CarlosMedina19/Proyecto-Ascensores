@@ -32,6 +32,16 @@ plugins en Windows active el Modo de desarrollador (`start ms-settings:developer
   obligatoria en R o M, orden correctiva desde un ítem, recomendaciones y fotos (cámara o galería).
 - **Firmas** del técnico y de quien recibe. Sin la planilla completa y las dos firmas, la orden no se finaliza.
 
+## Diseño (prototipo SIGMA)
+
+Mismo sistema visual del panel web: morado #4E29AA, verde lima para datos en vivo y verde/ámbar/rojo
+para Bueno/Regular/Malo (en modo oscuro pasan a sus variantes claras). Tarjetas con borde luminoso
+degradado, encabezados con brillo, marca SIGMA en Michroma, títulos en Bricolage Grotesque, texto en
+Geist y etiquetas en JetBrains Mono. Las fuentes van incluidas en `assets/fuentes` (licencia OFL)
+para que la app funcione sin conexión. La planilla usa los botones B / R / M cuadrados y el botón
+punteado INS → EST → N.A.; la orden muestra su avance por etapas. Al ingresar, unas puertas de
+ascensor se cierran y se abren ya dentro de la app (se omite si el sistema desactiva las animaciones).
+
 ### Versión web
 
 ```sh

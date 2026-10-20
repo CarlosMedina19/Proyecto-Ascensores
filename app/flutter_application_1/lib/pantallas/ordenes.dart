@@ -313,6 +313,22 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
                 Insignia(texto: orden.nombreEstado, color: colorEstadoOrden(orden.estado)),
               ],
             ),
+            if (orden.estado != 'cancelada') ...[
+              const SizedBox(height: 16),
+              AvanceEtapas(
+                etapas: ['Programada', 'Asignada', 'En camino', orden.estado == 'pendiente' ? 'Pendiente' : 'En proceso', 'Finalizada'],
+                actual:
+                    const {
+                      'programada': 0,
+                      'asignada': 1,
+                      'en_camino': 2,
+                      'en_proceso': 3,
+                      'pendiente': 3,
+                      'finalizada': 4,
+                    }[orden.estado] ??
+                    0,
+              ),
+            ],
             if (orden.estado == 'cancelada' && orden.motivoCancelacion != null) ...[
               const SizedBox(height: 10),
               Text('Cancelada: ${orden.motivoCancelacion}'),

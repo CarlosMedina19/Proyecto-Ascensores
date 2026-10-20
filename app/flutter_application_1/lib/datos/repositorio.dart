@@ -70,13 +70,8 @@ class Repositorio {
   // RF-017 y RF-018 Mantenimientos programados (rango de máximo 100 días)
   Future<List<MantenimientoProgramado>> mantenimientos({required DateTime desde, required DateTime hasta, int? equipoId}) async {
     String dia(DateTime valor) => '${valor.year}-${'${valor.month}'.padLeft(2, '0')}-${'${valor.day}'.padLeft(2, '0')}';
-    final respuesta = await api.obtener(
-      '/mantenimientos',
-      consulta: {'desde': dia(desde), 'hasta': dia(hasta), 'equipo_id': equipoId},
-    );
-    return ((respuesta['datos'] as List?) ?? const [])
-        .map((m) => MantenimientoProgramado.desdeJson(m as Map<String, dynamic>))
-        .toList();
+    final respuesta = await api.obtener('/mantenimientos', consulta: {'desde': dia(desde), 'hasta': dia(hasta), 'equipo_id': equipoId});
+    return ((respuesta['datos'] as List?) ?? const []).map((m) => MantenimientoProgramado.desdeJson(m as Map<String, dynamic>)).toList();
   }
 
   // RF-023 a RF-026 Órdenes de trabajo (el técnico solo recibe las suyas)
@@ -103,8 +98,9 @@ class Repositorio {
       );
 
   // Fase 4 (RF-030 a RF-039): planilla, fotos, firmas y correctivo derivado
-  Future<List<ItemChecklist>> catalogoChecklist() async =>
-      (((await api.obtener('/checklist/items'))['datos'] as List?) ?? const []).map((i) => ItemChecklist.desdeJson(i as Map<String, dynamic>)).toList();
+  Future<List<ItemChecklist>> catalogoChecklist() async => (((await api.obtener('/checklist/items'))['datos'] as List?) ?? const [])
+      .map((i) => ItemChecklist.desdeJson(i as Map<String, dynamic>))
+      .toList();
 
   Future<Planilla> planilla(int ordenId) async => Planilla.desdeRespuesta(await api.obtener('/ordenes/$ordenId/planilla'));
 
@@ -133,18 +129,25 @@ class Repositorio {
   );
 
   /// RF-025: firma del técnico ('tecnico') o de quien recibe ('cliente'), PNG en base64.
-  Future<void> firmarOrden(int ordenId, {required String tipo, required String nombre, required String pngBase64, String? documento, String? cargo}) =>
-      api.crear('/ordenes/$ordenId/firmas', {
-        'tipo': tipo,
-        'nombre': nombre,
-        'imagen': 'data:image/png;base64,$pngBase64',
-        'documento': ?documento,
-        'cargo': ?cargo,
-      });
+  Future<void> firmarOrden(
+    int ordenId, {
+    required String tipo,
+    required String nombre,
+    required String pngBase64,
+    String? documento,
+    String? cargo,
+  }) => api.crear('/ordenes/$ordenId/firmas', {
+    'tipo': tipo,
+    'nombre': nombre,
+    'imagen': 'data:image/png;base64,$pngBase64',
+    'documento': ?documento,
+    'cargo': ?cargo,
+  });
 
   /// RF-038: orden correctiva desde un ítem en R o M.
   Future<String> crearCorrectivo(int ordenId, int resultadoId) async =>
-      ((await api.crear('/ordenes/$ordenId/planilla/resultados/$resultadoId/correctivo'))['datos'] as Map<String, dynamic>)['numero'] as String;
+      ((await api.crear('/ordenes/$ordenId/planilla/resultados/$resultadoId/correctivo'))['datos'] as Map<String, dynamic>)['numero']
+          as String;
 
   // RF-005 Clientes
   Future<Cliente> cliente(int id) async => Cliente.desdeJson((await api.obtener('/clientes/$id'))['datos'] as Map<String, dynamic>);
