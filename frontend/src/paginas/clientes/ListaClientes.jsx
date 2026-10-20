@@ -4,6 +4,7 @@ import { clientes } from '../../api/servicios';
 import { useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import { ArbolCliente } from '../../componentes/Despliegues';
 import { TIPOS_CLIENTE } from '../../utilidades/formato';
 
 export default function ListaClientes() {
@@ -18,7 +19,7 @@ export default function ListaClientes() {
     <>
       <EncabezadoPagina
         titulo={esCliente ? 'Mi empresa' : 'Clientes'}
-        descripcion="Personas naturales y jurídicas con sus datos de contacto e información tributaria."
+        descripcion="Personas naturales y jurídicas. Despliegue un cliente para ver sus conjuntos, edificios institucionales y residenciales, con sus ascensores."
       >
         {tienePermiso('clientes.crear') && (
           <Link to="/clientes/nuevo" className="boton">
@@ -65,6 +66,8 @@ export default function ListaClientes() {
           <Tabla
             filas={filas}
             alSeleccionar={(cliente) => navegar(`/clientes/${cliente.id}`)}
+            expandir={(cliente) => <ArbolCliente clienteId={cliente.id} />}
+            etiquetaExpandir="Ver edificios de"
             vacio={<EstadoVacio titulo="No se encontraron clientes" descripcion="Ajuste los filtros o registre un nuevo cliente." />}
             columnas={[
               {

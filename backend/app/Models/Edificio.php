@@ -15,9 +15,17 @@ class Edificio extends Model
 
     protected $table = 'edificios';
 
+    /** Agrupación de los edificios de cada cliente. */
+    public const TIPOS = [
+        'conjunto' => 'Conjunto',
+        'institucional' => 'Institucional',
+        'residencial' => 'Residencial',
+    ];
+
     protected $fillable = [
         'identificador_uuid',
         'cliente_id',
+        'tipo',
         'nombre',
         'direccion',
         'ciudad',
@@ -48,6 +56,12 @@ class Edificio extends Model
                 $modelo->identificador_uuid = (string) Str::uuid();
             }
         });
+    }
+
+    /** Ubicación que heredan los ascensores del edificio. */
+    public function ubicacionEquipos(): string
+    {
+        return mb_substr("{$this->nombre} · {$this->direccion}, {$this->ciudad}", 0, 255);
     }
 
     public function cliente(): BelongsTo

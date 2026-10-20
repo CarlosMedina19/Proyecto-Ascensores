@@ -76,6 +76,13 @@ export const ESTADOS_EQUIPO = {
   inactivo: { texto: 'Inactivo', tipo: 'neutro' },
 };
 
+/** Agrupación de los edificios de cada cliente (y su ruta en el menú). */
+export const TIPOS_EDIFICIO = {
+  conjunto: { texto: 'Conjunto', plural: 'Conjuntos', ruta: '/clientes/conjuntos' },
+  institucional: { texto: 'Institucional', plural: 'Institucionales', ruta: '/clientes/institucionales' },
+  residencial: { texto: 'Residencial', plural: 'Residenciales', ruta: '/clientes/residenciales' },
+};
+
 export const TIPOS_CLIENTE = {
   natural: 'Persona natural',
   juridica: 'Persona jurídica',

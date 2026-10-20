@@ -57,6 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/registros-auditoria/modulos', [RegistroAuditoriaController::class, 'modulos']);
 
     // RF-005 y RF-006: clientes, contactos y edificios.
+    Route::get('/clientes/{cliente}/estructura', [ClienteController::class, 'estructura']);
     Route::post('/clientes/{cliente}/contactos', [ClienteController::class, 'agregarContacto']);
     Route::apiResource('clientes', ClienteController::class);
     Route::apiResource('edificios', EdificioController::class);

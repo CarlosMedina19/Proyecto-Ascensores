@@ -48,6 +48,8 @@ export const clientes = {
   actualizar: (id, datos) => api.actualizar(`/clientes/${id}`, datos),
   eliminar: (id) => api.eliminar(`/clientes/${id}`),
   agregarContacto: (id, datos) => api.crear(`/clientes/${id}/contactos`, datos),
+  // Tipos de edificio que tiene el cliente, con sus edificios y ascensores.
+  estructura: (id) => api.obtener(`/clientes/${id}/estructura`),
 };
 
 // RF-006 Edificios

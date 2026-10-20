@@ -9,6 +9,7 @@ use App\Http\Requests\Cliente\GuardarContactoClienteRequest;
 use App\Http\Resources\ClienteResource;
 use App\Http\Resources\ContactoClienteResource;
 use App\Models\Cliente;
+use App\Models\Edificio;
 use App\Services\ClienteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -46,6 +47,44 @@ class ClienteController extends Controller
             'contactos',
             'edificios' => fn ($consulta) => $consulta->withCount('equipos')->orderBy('nombre'),
         ]));
+    }
+
+    /**
+     * Árbol del cliente: tipos de edificio (conjunto, institucional, residencial) que tiene,
+     * con sus edificios y los ascensores de cada uno.
+     */
+    public function estructura(Cliente $cliente): JsonResponse
+    {
+        $this->authorize('view', $cliente);
+
+        $edificios = $cliente->edificios()
+            ->with(['equipos' => fn ($consulta) => $consulta->orderBy('codigo')])
+            ->orderBy('nombre')
+            ->get();
+
+        $grupos = collect(Edificio::TIPOS)
+            ->map(fn ($nombre, $tipo) => [
+                'tipo' => $tipo,
+                'nombre' => $nombre,
+                'edificios' => $edificios->where('tipo', $tipo)->values()->map(fn (Edificio $edificio) => [
+                    'id' => $edificio->id,
+                    'nombre' => $edificio->nombre,
+                    'direccion' => $edificio->direccion,
+                    'ciudad' => $edificio->ciudad,
+                    'activo' => (bool) $edificio->activo,
+                    'equipos' => $edificio->equipos->map(fn ($equipo) => [
+                        'id' => $equipo->id,
+                        'codigo' => $equipo->codigo,
+                        'marca' => $equipo->marca,
+                        'modelo' => $equipo->modelo,
+                        'estado' => $equipo->estado,
+                    ])->values(),
+                ]),
+            ])
+            ->filter(fn ($grupo) => $grupo['edificios']->isNotEmpty())
+            ->values();
+
+        return response()->json(['datos' => $grupos]);
     }
 
     public function update(ActualizarClienteRequest $solicitud, Cliente $cliente): ClienteResource

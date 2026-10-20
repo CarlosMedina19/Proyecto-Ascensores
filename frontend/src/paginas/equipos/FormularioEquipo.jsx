@@ -14,7 +14,6 @@ const EQUIPO_VACIO = {
   marca: '',
   modelo: '',
   numero_serie: '',
-  ubicacion: '',
   estado: 'activo',
   fecha_instalacion: '',
   observaciones: '',
@@ -81,6 +80,7 @@ export default function FormularioEquipo() {
     });
     const cuerpo = {
       ...limpiarVacios({ ...datos, ascensor: undefined }),
+      // La ubicación la asigna el servidor a partir del edificio.
       edificio_id: datos.edificio_id ? Number(datos.edificio_id) : null,
       ascensor: ficha,
     };
@@ -101,6 +101,10 @@ export default function FormularioEquipo() {
   }
 
   if (cargando) return <Cargando />;
+
+  // La ubicación del ascensor es la del edificio: se muestra, no se escribe.
+  const edificioElegido = opcionesEdificios.find((e) => String(e.id) === String(datos.edificio_id));
+  const ubicacion = edificioElegido ? `${edificioElegido.nombre} · ${edificioElegido.direccion}, ${edificioElegido.ciudad}` : '';
 
   return (
     <>
@@ -129,7 +133,7 @@ export default function FormularioEquipo() {
             <CampoTexto etiqueta="Número de serie" valor={datos.numero_serie} alCambiar={cambiar('numero_serie')} error={error('numero_serie')} />
           </div>
           <div className="formulario__fila formulario__fila--3">
-            <CampoTexto etiqueta="Ubicación" valor={datos.ubicacion} alCambiar={cambiar('ubicacion')} error={error('ubicacion')} placeholder="Ej. Torre A — Ascensor 1" />
+            <CampoTexto etiqueta="Ubicación" valor={ubicacion} alCambiar={() => {}} readOnly placeholder="Se toma del edificio" ayuda="Se toma del edificio elegido." />
             <CampoSelector
               etiqueta="Estado"
               vacio={null}

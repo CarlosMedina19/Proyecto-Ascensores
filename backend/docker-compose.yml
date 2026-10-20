@@ -21,6 +21,8 @@ services:
       DB_USERNAME: ascensores_user
       DB_PASSWORD: ascensores_pass
       DB_CONNECTION: pgsql
+      # El servidor de desarrollo atiende varias solicitudes a la vez (panel y app piden en paralelo).
+      PHP_CLI_SERVER_WORKERS: 6
     command: sh -c "php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=8000 --no-reload"
 
   # Fase 2: procesa la cola de avisos (correo y notificaciones en la aplicación).

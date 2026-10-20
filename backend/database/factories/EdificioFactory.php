@@ -16,6 +16,7 @@ class EdificioFactory extends Factory
         return [
             'identificador_uuid' => (string) Str::uuid(),
             'cliente_id' => Cliente::factory(),
+            'tipo' => 'residencial',
             'nombre' => fake()->streetName().' Building',
             'direccion' => fake()->streetAddress(),
             'ciudad' => fake()->city(),

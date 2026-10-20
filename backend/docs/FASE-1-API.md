@@ -95,6 +95,7 @@ y cambios de contraseña. Los registros no se pueden modificar ni eliminar (el m
 | --- | --- | --- |
 | GET | `/clientes` | `clientes.ver` — filtros `busqueda`, `tipo`, `estado` |
 | GET | `/clientes/{cliente}` | `clientes.ver` (incluye `contactos` y `edificios`) |
+| GET | `/clientes/{cliente}/estructura` | `clientes.ver` — árbol del cliente: solo los tipos que tiene (`conjunto`, `institucional`, `residencial`), cada uno con sus edificios y los ascensores de cada edificio |
 | POST | `/clientes` | `clientes.crear` |
 | PATCH | `/clientes/{cliente}` | `clientes.editar` |
 | DELETE | `/clientes/{cliente}` | `clientes.eliminar` — solo si no tiene edificios; si los tiene, se desactiva (`estado: false`) |
@@ -107,11 +108,14 @@ NIT y número de documento son únicos.
 
 | Método | Ruta | Permiso |
 | --- | --- | --- |
-| GET | `/edificios` | `edificios.ver` — filtros `busqueda`, `cliente_id`, `ciudad`, `activo` |
+| GET | `/edificios` | `edificios.ver` — filtros `busqueda`, `cliente_id`, `tipo`, `ciudad`, `activo` |
 | GET | `/edificios/{edificio}` | `edificios.ver` (incluye `cliente` y `equipos`) |
-| POST | `/edificios` | `edificios.crear` — `cliente_id`, `nombre`, `direccion`, `ciudad`, `nombre_contacto` y teléfono o correo de contacto |
+| POST | `/edificios` | `edificios.crear` — `cliente_id`, `tipo` (`conjunto`, `institucional` o `residencial`), `nombre`, `direccion`, `ciudad`, `nombre_contacto` y teléfono o correo de contacto |
 | PATCH | `/edificios/{edificio}` | `edificios.editar` (incluye `activo`) |
 | DELETE | `/edificios/{edificio}` | `edificios.eliminar` — un edificio con equipos activos no se elimina, se desactiva |
+
+La **ubicación de cada ascensor** no se escribe: se toma del edificio (`nombre · dirección, ciudad`) al
+crearlo o al moverlo de edificio, y se actualiza sola si cambian el nombre, la dirección o la ciudad del edificio.
 
 No se registran equipos en un edificio inactivo.
 

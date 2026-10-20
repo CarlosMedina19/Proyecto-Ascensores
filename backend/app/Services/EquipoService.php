@@ -30,6 +30,10 @@ class EquipoService
             $consulta->whereHas('edificio', fn ($consulta) => $consulta->where('cliente_id', $filtros['cliente_id']));
         }
 
+        if (! empty($filtros['tipo_edificio'])) {
+            $consulta->whereHas('edificio', fn ($consulta) => $consulta->where('tipo', $filtros['tipo_edificio']));
+        }
+
         if (! empty($filtros['estado'])) {
             $consulta->where('estado', $filtros['estado']);
         }
@@ -56,6 +60,7 @@ class EquipoService
         return DB::transaction(function () use ($datos) {
             $datosEquipo = collect($datos)->except(['ascensor'])->toArray();
             $datosEquipo['tipo'] = 'ascensor';
+            $datosEquipo['ubicacion'] = Edificio::findOrFail($datos['edificio_id'])->ubicacionEquipos();
             $equipo = Equipo::create($datosEquipo);
 
             $equipo->ascensor()->create($datos['ascensor']);
@@ -80,6 +85,9 @@ class EquipoService
 
         return DB::transaction(function () use ($equipo, $datos) {
             $datosEquipo = collect($datos)->except(['ascensor', 'tipo'])->toArray();
+            if (isset($datos['edificio_id'])) {
+                $datosEquipo['ubicacion'] = Edificio::findOrFail($datos['edificio_id'])->ubicacionEquipos();
+            }
             $estadoAnterior = $equipo->estado;
             $equipo->update($datosEquipo);
             $cambios = $equipo->getChanges();

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
-  ArrowUpDown,
   Briefcase,
   Building2,
   CalendarDays,
+  ChevronDown,
   CircleUser,
   ClipboardCheck,
   ClipboardList,
@@ -14,6 +14,8 @@ import {
   LogOut,
   Menu,
   Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
   ScrollText,
   Settings,
   ShieldCheck,
@@ -24,11 +26,12 @@ import { useAutenticacion } from '../contexto/AutenticacionContexto';
 import { useInactividad } from '../hooks/useInactividad';
 import { useTema } from '../hooks/useTema';
 import { autenticacion } from '../api/servicios';
-import { iniciales, nombreRol } from '../utilidades/formato';
+import { TIPOS_EDIFICIO, iniciales, nombreRol } from '../utilidades/formato';
 import { Modal } from './Basicos';
 import CampanaNotificaciones from './CampanaNotificaciones';
 import BuscadorGlobal from './BuscadorGlobal';
 import { Marca } from './Marca';
+import { RamaTipo } from './ArbolLateral';
 
 /** Opciones del menú lateral y el permiso que requiere cada una (RF-002). */
 function opcionesMenu(esCliente, esTecnico) {
@@ -36,9 +39,16 @@ function opcionesMenu(esCliente, esTecnico) {
     { grupo: 'Operación' },
     { ruta: '/inicio', texto: 'Panel', icono: LayoutDashboard },
     { ruta: '/ordenes', texto: esTecnico ? 'Mis órdenes' : esCliente ? 'Mis órdenes de servicio' : 'Órdenes de trabajo', icono: ClipboardCheck, permiso: 'ordenes.ver' },
-    { ruta: '/equipos', texto: esCliente ? 'Mis ascensores' : 'Ascensores', icono: ArrowUpDown, permiso: 'equipos.ver' },
-    { ruta: '/edificios', texto: esCliente ? 'Mis edificios' : 'Edificios', icono: Building2, permiso: 'edificios.ver' },
-    { ruta: '/clientes', texto: esCliente ? 'Mi empresa' : 'Clientes', icono: Briefcase, permiso: 'clientes.ver' },
+    // Edificios y ascensores se llegan desde Clientes: por tipo en el submenú o desplegando cada cliente.
+    {
+      ruta: '/clientes',
+      texto: esCliente ? 'Mi empresa' : 'Clientes',
+      icono: Briefcase,
+      permiso: 'clientes.ver',
+      hijos: Object.entries(TIPOS_EDIFICIO).map(([tipo, t]) => ({ tipo, ruta: t.ruta, texto: t.plural, icono: Building2, permiso: 'edificios.ver' })),
+      // Mantienen el menú abierto y resaltado al navegar por edificios y ascensores.
+      relacionadas: ['/edificios', '/equipos'],
+    },
     { grupo: 'Mantenimiento' },
     { ruta: '/calendario', texto: 'Calendario', icono: CalendarDays, permiso: 'mantenimientos.ver' },
     { ruta: '/tecnicos', texto: 'Técnicos', icono: HardHat, permiso: 'tecnicos.ver' },
@@ -58,6 +68,23 @@ export default function Estructura() {
   const { usuario, tienePermiso, esCliente, esTecnico, cerrarSesion, minutosInactividad } = useAutenticacion();
   const { tema, alternar } = useTema();
   const [menuAbierto, setMenuAbierto] = useState(false);
+  // Menú contraído a solo íconos (pantallas anchas); se recuerda entre visitas.
+  const [contraido, setContraido] = useState(() => {
+    try {
+      return localStorage.getItem('sigma.menu-contraido') === '1';
+    } catch {
+      return false;
+    }
+  });
+  const alternarContraido = () =>
+    setContraido((actual) => {
+      try {
+        localStorage.setItem('sigma.menu-contraido', actual ? '0' : '1');
+      } catch {
+        // Sin almacenamiento local la preferencia dura solo esta visita.
+      }
+      return !actual;
+    });
   const ubicacion = useLocation();
   const navegar = useNavigate();
 
@@ -78,7 +105,17 @@ export default function Estructura() {
   // Oculta los grupos que quedan vacíos por falta de permisos.
   const visibles = opcionesMenu(esCliente, esTecnico).filter((o) => o.grupo || !o.permiso || tienePermiso(o.permiso));
   const menu = visibles.filter((o, i) => !o.grupo || (visibles[i + 1] && !visibles[i + 1].grupo));
-  const actual = menu.find((o) => o.ruta && ubicacion.pathname.startsWith(o.ruta));
+  const ruta = ubicacion.pathname;
+  const hijoActual = menu.flatMap((o) => o.hijos || []).find((h) => ruta.startsWith(h.ruta));
+  const actual =
+    (hijoActual && ruta.endsWith('/ascensores') && { texto: `Ascensores · ${hijoActual.texto}` }) ||
+    hijoActual ||
+    (ruta.startsWith('/edificios') && { texto: 'Edificios' }) ||
+    (ruta.startsWith('/equipos') && { texto: 'Ascensores' }) ||
+    menu.find((o) => o.ruta && ruta.startsWith(o.ruta));
+  const dentroDe = (o) => ruta.startsWith(o.ruta) || (o.relacionadas || []).some((r) => ruta.startsWith(r));
+  const [desplegados, setDesplegados] = useState({});
+  const estaDesplegado = (o) => desplegados[o.ruta] ?? dentroDe(o);
 
   async function salir() {
     await cerrarSesion();
@@ -86,7 +123,7 @@ export default function Estructura() {
   }
 
   return (
-    <div className="estructura">
+    <div className={`estructura${contraido ? ' estructura--contraida' : ''}`}>
       <aside className={`lateral${menuAbierto ? ' abierto' : ''}`} aria-label="Menú principal">
         <Marca />
         <nav className="lateral__navegacion">
@@ -95,15 +132,58 @@ export default function Estructura() {
               <div key={opcion.grupo} className="lateral__grupo">
                 {opcion.grupo}
               </div>
+            ) : opcion.hijos ? (
+              <div key={opcion.ruta} className="lateral__rama">
+                <div className="lateral__fila">
+                  <NavLink
+                    to={opcion.ruta}
+                    end
+                    className={({ isActive }) => `lateral__enlace${isActive || (dentroDe(opcion) && !hijoActual) ? ' activo' : ''}`}
+                    title={contraido ? opcion.texto : undefined}
+                  >
+                    <opcion.icono size={18} aria-hidden="true" />
+                    <span className="lateral__texto">{opcion.texto}</span>
+                  </NavLink>
+                  {opcion.hijos.some((h) => tienePermiso(h.permiso)) && (
+                    <button
+                      type="button"
+                      className={`lateral__desplegar${estaDesplegado(opcion) ? ' abierto' : ''}`}
+                      aria-expanded={estaDesplegado(opcion)}
+                      aria-label={`${estaDesplegado(opcion) ? 'Contraer' : 'Desplegar'} ${opcion.texto}`}
+                      onClick={() => setDesplegados((d) => ({ ...d, [opcion.ruta]: !estaDesplegado(opcion) }))}
+                    >
+                      <ChevronDown size={16} aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
+                {estaDesplegado(opcion) && (
+                  <div className="lateral__hijos">
+                    {opcion.hijos
+                      .filter((h) => tienePermiso(h.permiso))
+                      .map((hijo) => (
+                        <RamaTipo key={hijo.ruta} ruta={hijo.ruta} texto={hijo.texto} />
+                      ))}
+                  </div>
+                )}
+              </div>
             ) : (
-              <NavLink key={opcion.ruta} to={opcion.ruta} className={({ isActive }) => `lateral__enlace${isActive ? ' activo' : ''}`}>
+              <NavLink
+                key={opcion.ruta}
+                to={opcion.ruta}
+                className={({ isActive }) => `lateral__enlace${isActive ? ' activo' : ''}`}
+                title={contraido ? opcion.texto : undefined}
+              >
                 <opcion.icono size={18} aria-hidden="true" />
-                {opcion.texto}
+                <span className="lateral__texto">{opcion.texto}</span>
               </NavLink>
             ),
           )}
         </nav>
         <div className="lateral__pie">
+          <button type="button" className="lateral__contraer" onClick={alternarContraido} aria-expanded={!contraido} aria-label={contraido ? 'Expandir menú' : 'Contraer menú'}>
+            {contraido ? <PanelLeftOpen size={16} aria-hidden="true" /> : <PanelLeftClose size={16} aria-hidden="true" />}
+            <span>{contraido ? 'Expandir menú' : 'Contraer menú'}</span>
+          </button>
           <div className="lateral__version">
             <span className="en-vivo" aria-hidden="true" />
             Conectado · Fase 4

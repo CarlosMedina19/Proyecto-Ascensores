@@ -1,5 +1,5 @@
 // Componentes básicos reutilizables de la interfaz.
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, CircleAlert, Inbox } from 'lucide-react';
 
 export function Cargando({ texto = 'Cargando…' }) {
@@ -72,14 +72,28 @@ export function Tarjeta({ titulo, acciones, children, sinRelleno = false }) {
 /**
  * Tabla genérica. Cada columna: { clave, titulo, render?, clase? }.
  */
-export function Tabla({ columnas, filas, alSeleccionar, claveFila = 'id', vacio }) {
+/**
+ * Tabla de datos. Con `expandir(fila)` cada fila se despliega en el mismo lugar para mostrar su
+ * contenido (por ejemplo, los edificios y ascensores de un cliente) sin cambiar de página.
+ */
+export function Tabla({ columnas, filas, alSeleccionar, claveFila = 'id', vacio, expandir, etiquetaExpandir = 'Desplegar' }) {
+  const [abiertas, setAbiertas] = useState(() => new Set());
   if (!filas.length) return vacio || <EstadoVacio />;
+
+  const alternar = (clave) =>
+    setAbiertas((actual) => {
+      const siguiente = new Set(actual);
+      if (siguiente.has(clave)) siguiente.delete(clave);
+      else siguiente.add(clave);
+      return siguiente;
+    });
 
   return (
     <div className="tabla-contenedor">
       <table className="tabla">
         <thead>
           <tr>
+            {expandir && <th className="tabla__expandir" aria-label={etiquetaExpandir} />}
             {columnas.map((columna) => (
               <th key={columna.clave} className={columna.clase} scope="col">
                 {columna.titulo}
@@ -88,19 +102,45 @@ export function Tabla({ columnas, filas, alSeleccionar, claveFila = 'id', vacio 
           </tr>
         </thead>
         <tbody>
-          {filas.map((fila) => (
-            <tr
-              key={fila[claveFila]}
-              className={alSeleccionar ? 'tabla__fila--enlace' : undefined}
-              onClick={alSeleccionar ? () => alSeleccionar(fila) : undefined}
-            >
-              {columnas.map((columna) => (
-                <td key={columna.clave} className={columna.clase}>
-                  {columna.render ? columna.render(fila) : (fila[columna.clave] ?? '—')}
-                </td>
-              ))}
-            </tr>
-          ))}
+          {filas.map((fila) => {
+            const clave = fila[claveFila];
+            const abierta = abiertas.has(clave);
+            return (
+              <Fragment key={clave}>
+                <tr
+                  className={[alSeleccionar && 'tabla__fila--enlace', abierta && 'tabla__fila--abierta'].filter(Boolean).join(' ') || undefined}
+                  onClick={alSeleccionar ? () => alSeleccionar(fila) : undefined}
+                >
+                  {expandir && (
+                    <td className="tabla__expandir">
+                      <button
+                        type="button"
+                        className="boton-desplegar"
+                        aria-expanded={abierta}
+                        aria-label={`${etiquetaExpandir} ${fila.nombre ?? fila.codigo ?? ''}`.trim()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          alternar(clave);
+                        }}
+                      >
+                        <ChevronRight size={16} aria-hidden="true" />
+                      </button>
+                    </td>
+                  )}
+                  {columnas.map((columna) => (
+                    <td key={columna.clave} className={columna.clase}>
+                      {columna.render ? columna.render(fila) : (fila[columna.clave] ?? '—')}
+                    </td>
+                  ))}
+                </tr>
+                {abierta && (
+                  <tr className="tabla__detalle">
+                    <td colSpan={columnas.length + 1}>{expandir(fila)}</td>
+                  </tr>
+                )}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>

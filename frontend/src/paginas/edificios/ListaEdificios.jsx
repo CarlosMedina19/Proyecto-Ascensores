@@ -5,15 +5,23 @@ import { clientes, edificios } from '../../api/servicios';
 import { useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import { AscensoresDelEdificio } from '../../componentes/Despliegues';
+import { TIPOS_EDIFICIO } from '../../utilidades/formato';
 
-export default function ListaEdificios() {
+/**
+ * Edificios de todos los clientes, o solo los de un tipo (conjuntos, institucionales o
+ * residenciales) cuando se abre desde el menú de Clientes. Cada fila despliega sus ascensores.
+ */
+export default function ListaEdificios({ tipo }) {
   const { tienePermiso, esCliente } = useAutenticacion();
   const navegar = useNavigate();
   const [opcionesClientes, setOpcionesClientes] = useState([]);
   const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina } = useListado(edificios.listar, {
     cliente_id: '',
     activo: '',
+    tipo: tipo || '',
   });
+  const grupo = TIPOS_EDIFICIO[tipo];
 
   useEffect(() => {
     if (esCliente || !tienePermiso('clientes.ver')) return;
@@ -26,11 +34,16 @@ export default function ListaEdificios() {
   return (
     <>
       <EncabezadoPagina
-        titulo={esCliente ? 'Mis edificios' : 'Edificios'}
-        descripcion="Edificios de cada cliente con su dirección, ciudad y contacto."
+        titulo={grupo ? grupo.plural : esCliente ? 'Mis edificios' : 'Edificios'}
+        descripcion={
+          grupo
+            ? `Edificios de tipo ${grupo.texto.toLowerCase()} de cada cliente. Despliegue una fila para ver sus ascensores.`
+            : 'Edificios de cada cliente con su dirección, ciudad y contacto. Despliegue una fila para ver sus ascensores.'
+        }
+        migas={grupo ? <Link to="/clientes">Clientes</Link> : undefined}
       >
         {tienePermiso('edificios.crear') && (
-          <Link to="/edificios/nuevo" className="boton">
+          <Link to={tipo ? `/edificios/nuevo?tipo=${tipo}` : '/edificios/nuevo'} className="boton">
             <Plus size={16} /> Nuevo edificio
           </Link>
         )}
@@ -58,6 +71,16 @@ export default function ListaEdificios() {
               ))}
             </select>
           )}
+          {!grupo && (
+            <select className="campo__control" value={filtros.tipo} onChange={(e) => cambiarFiltro('tipo', e.target.value)} aria-label="Tipo de edificio">
+              <option value="">Todos los tipos</option>
+              {Object.entries(TIPOS_EDIFICIO).map(([valor, { texto }]) => (
+                <option key={valor} value={valor}>
+                  {texto}
+                </option>
+              ))}
+            </select>
+          )}
           <select className="campo__control" value={filtros.activo} onChange={(e) => cambiarFiltro('activo', e.target.value)} aria-label="Estado">
             <option value="">Todos los estados</option>
             <option value="1">Activos</option>
@@ -77,7 +100,9 @@ export default function ListaEdificios() {
           <Tabla
             filas={filas}
             alSeleccionar={(edificio) => navegar(`/edificios/${edificio.id}`)}
-            vacio={<EstadoVacio titulo="No se encontraron edificios" />}
+            expandir={(edificio) => <AscensoresDelEdificio edificioId={edificio.id} />}
+            etiquetaExpandir="Ver ascensores de"
+            vacio={<EstadoVacio titulo={grupo ? `No hay edificios de tipo ${grupo.texto.toLowerCase()}` : 'No se encontraron edificios'} />}
             columnas={[
               {
                 clave: 'nombre',
@@ -85,7 +110,9 @@ export default function ListaEdificios() {
                 render: (e) => (
                   <>
                     <strong>{e.nombre}</strong>
-                    <div className="tabla__secundario">{e.cliente?.nombre}</div>
+                    <div className="tabla__secundario">
+                      {[e.cliente?.nombre, !grupo && TIPOS_EDIFICIO[e.tipo]?.texto].filter(Boolean).join(' · ')}
+                    </div>
                   </>
                 ),
               },

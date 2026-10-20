@@ -258,6 +258,7 @@ class PruebasFaseUnoTest extends TestCase
 
         $respuesta = $this->postJson('/api/v1/edificios', [
             'cliente_id' => $cliente->id,
+            'tipo' => 'conjunto',
             'nombre' => 'Torre Central',
             'direccion' => 'Calle 26 # 68-50',
             'ciudad' => 'Bogotá',
@@ -266,7 +267,7 @@ class PruebasFaseUnoTest extends TestCase
             'correo_contacto' => 'luis@torrecentral.co',
         ]);
 
-        $respuesta->assertCreated()->assertJsonFragment(['nombre' => 'Torre Central']);
+        $respuesta->assertCreated()->assertJsonFragment(['nombre' => 'Torre Central'])->assertJsonPath('datos.tipo', 'conjunto');
         $edificioId = $respuesta->json('datos.id');
 
         $this->patchJson("/api/v1/edificios/{$edificioId}", ['ciudad' => 'Medellín'])
@@ -284,7 +285,7 @@ class PruebasFaseUnoTest extends TestCase
             'nombre' => 'Sin contacto',
             'direccion' => 'Calle 1',
             'ciudad' => 'Cali',
-        ])->assertUnprocessable()->assertJsonValidationErrors(['nombre_contacto', 'telefono_contacto'], 'errores');
+        ])->assertUnprocessable()->assertJsonValidationErrors(['tipo', 'nombre_contacto', 'telefono_contacto'], 'errores');
     }
 
     public function test_edificio_con_equipos_activos_no_se_elimina(): void
@@ -327,6 +328,8 @@ class PruebasFaseUnoTest extends TestCase
 
         $respuesta->assertCreated()
             ->assertJsonPath('datos.codigo', 'ASC-001')
+            // La ubicación enviada se ignora: se toma del edificio.
+            ->assertJsonPath('datos.ubicacion', 'Torre Norte · Cra 7 # 72-10, Bogotá')
             ->assertJsonPath('datos.ascensor.paradas', 15)
             ->assertJsonPath('datos.ascensor.puertas_piso', 15)
             ->assertJsonPath('datos.ascensor.capacidad_kg', 1000);

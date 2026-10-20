@@ -13,6 +13,7 @@ class EdificioResource extends RecursoApi
             'identificador_uuid' => $this->identificador_uuid,
             'cliente_id' => $this->cliente_id,
             'cliente' => new ClienteResource($this->whenLoaded('cliente')),
+            'tipo' => $this->tipo,
             'nombre' => $this->nombre,
             'direccion' => $this->direccion,
             'ciudad' => $this->ciudad,

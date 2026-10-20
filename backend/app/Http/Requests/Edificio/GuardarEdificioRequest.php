@@ -28,6 +28,7 @@ class GuardarEdificioRequest extends FormRequest
 
         return [
             'cliente_id' => [...$requerido, 'integer', Rule::exists('clientes', 'id')->whereNull('deleted_at')],
+            'tipo' => [...$requerido, Rule::in(array_keys(Edificio::TIPOS))],
             'nombre' => [...$requerido, 'string', 'max:255'],
             'direccion' => [...$requerido, 'string', 'max:255'],
             'ciudad' => [...$requerido, 'string', 'max:100'],

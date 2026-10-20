@@ -35,7 +35,7 @@ class GuardarEquipoRequest extends FormRequest
             'marca' => ['nullable', 'string', 'max:100'],
             'modelo' => ['nullable', 'string', 'max:100'],
             'numero_serie' => ['nullable', 'string', 'max:100'],
-            'ubicacion' => ['nullable', 'string', 'max:255'],
+            // La ubicación no se recibe: se toma del edificio (EquipoService).
             'estado' => ['nullable', Rule::in(self::ESTADOS)],
             'fecha_instalacion' => ['nullable', 'date', 'before_or_equal:today'],
             'observaciones' => ['nullable', 'string', 'max:2000'],
@@ -62,7 +62,6 @@ class GuardarEquipoRequest extends FormRequest
             'edificio_id' => 'edificio',
             'codigo' => 'código',
             'numero_serie' => 'número de serie',
-            'ubicacion' => 'ubicación',
             'fecha_instalacion' => 'fecha de instalación',
             'ascensor' => 'ficha técnica del ascensor',
             'ascensor.capacidad_kg' => 'capacidad (kg)',

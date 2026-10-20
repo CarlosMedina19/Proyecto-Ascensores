@@ -4,18 +4,29 @@ import { equipos } from '../../api/servicios';
 import { useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
-import { ESTADOS_EQUIPO, numero } from '../../utilidades/formato';
+import { ResumenAscensor } from '../../componentes/Despliegues';
+import { ESTADOS_EQUIPO, TIPOS_EDIFICIO, numero } from '../../utilidades/formato';
 
-export default function ListaEquipos() {
+/** Todos los ascensores, o solo los de un tipo de edificio cuando se abre desde Clientes en el menú. */
+export default function ListaEquipos({ tipo }) {
   const { tienePermiso, esCliente } = useAutenticacion();
   const navegar = useNavigate();
-  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina } = useListado(equipos.listar, { estado: '' });
+  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina } = useListado(equipos.listar, {
+    estado: '',
+    tipo_edificio: tipo || '',
+  });
+  const grupo = TIPOS_EDIFICIO[tipo];
 
   return (
     <>
       <EncabezadoPagina
-        titulo={esCliente ? 'Mis ascensores' : 'Ascensores'}
-        descripcion="Equipos registrados con su ficha técnica, estado e historial."
+        titulo={grupo ? `Ascensores · ${grupo.plural}` : esCliente ? 'Mis ascensores' : 'Ascensores'}
+        descripcion={
+          grupo
+            ? `Ascensores de los edificios de tipo ${grupo.texto.toLowerCase()}, con su ficha técnica, estado e historial.`
+            : 'Equipos registrados con su ficha técnica, estado e historial.'
+        }
+        migas={grupo ? <Link to={grupo.ruta}>{grupo.plural}</Link> : undefined}
       >
         {tienePermiso('equipos.crear') && (
           <Link to="/equipos/nuevo" className="boton">
@@ -58,6 +69,8 @@ export default function ListaEquipos() {
           <Tabla
             filas={filas}
             alSeleccionar={(equipo) => navegar(`/equipos/${equipo.id}`)}
+            expandir={(equipo) => <ResumenAscensor equipo={equipo} />}
+            etiquetaExpandir="Ver resumen de"
             vacio={<EstadoVacio titulo="No se encontraron ascensores" />}
             columnas={[
               {

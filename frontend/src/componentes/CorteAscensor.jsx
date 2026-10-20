@@ -33,11 +33,15 @@ export default function CorteAscensor({
       <rect x="52" y="70" width="160" height="290" rx="3" style={{ fill: 'var(--color-superficie)', stroke: 'var(--color-borde-fuerte)' }} />
       <rect x="52" y="70" width="160" height="290" rx="3" style={relleno('hueco', 0.09)} />
       {Array.from({ length: totalPisos }, (_, piso) => {
-        const y = 360 - (piso + 1) * alto + 6;
+        // Con muchos pisos las puertas se juntan y solo se rotula uno de cada `paso`.
+        const separacion = Math.min(12, alto * 0.3);
+        const paso = Math.ceil(totalPisos / 12);
+        const rotulado = piso % paso === 0;
+        const y = 360 - (piso + 1) * alto + separacion / 2;
         return (
           <g key={piso}>
-            <rect x="44" y={y} width="6" height={alto - 12} rx="1.5" style={{ fill: COLORES[puertasPiso[piso] || 'P'] }} />
-            {!compacto && (
+            <rect x="44" y={y} width="6" height={Math.max(alto - separacion, 2)} rx="1.5" style={{ fill: COLORES[puertasPiso[piso] || 'P'] }} />
+            {!compacto && rotulado && (
               <text x="18" y={y + alto / 2 - 2} style={{ fill: 'var(--color-texto-suave)', font: "10px 'JetBrains Mono', monospace" }}>
                 P{piso + 1}
               </text>

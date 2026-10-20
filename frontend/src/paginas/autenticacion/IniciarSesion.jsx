@@ -6,6 +6,7 @@ import { CampoContrasena, CampoTexto } from '../../componentes/Campos';
 import { Alerta } from '../../componentes/Basicos';
 import { ErrorApi } from '../../api/cliente';
 import DisenoAcceso from './DisenoAcceso';
+import { cerrarPuertas } from '../../componentes/TransicionPuertas';
 
 export default function IniciarSesion() {
   const { iniciarSesion, motivoCierre } = useAutenticacion();
@@ -24,7 +25,7 @@ export default function IniciarSesion() {
     setError('');
     setErrores({});
     try {
-      await iniciarSesion(correo.trim(), password);
+      await iniciarSesion(correo.trim(), password, { antesDeEntrar: cerrarPuertas });
       navegar(ubicacion.state?.desde || '/inicio', { replace: true });
     } catch (e) {
       setError(e.message);
@@ -37,7 +38,7 @@ export default function IniciarSesion() {
   return (
     <DisenoAcceso>
       <p className="etiqueta-superior">Bienvenido de nuevo</p>
-      <h2>Ingresar</h2>
+      <h2>Ingresa a SIGMA</h2>
 
       <form className="formulario" onSubmit={alEnviar} noValidate>
         {parametros.get('verificado') && <Alerta tipo="exito">Su correo fue verificado. Ya puede iniciar sesión.</Alerta>}

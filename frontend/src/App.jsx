@@ -1,4 +1,5 @@
 import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom';
+import TransicionPuertas from './componentes/TransicionPuertas';
 import { ProveedorAutenticacion } from './contexto/AutenticacionContexto';
 import { ProveedorNotificaciones } from './contexto/NotificacionesContexto';
 import { ConPermiso, RutaPrivada, RutaPublica } from './componentes/Rutas';
@@ -45,6 +46,7 @@ export default function App() {
     <BrowserRouter>
       <ProveedorNotificaciones>
         <ProveedorAutenticacion>
+          <TransicionPuertas />
           <Routes>
             <Route path="/iniciar-sesion" element={<RutaPublica><IniciarSesion /></RutaPublica>} />
             <Route path="/recuperar-contrasena" element={<RutaPublica><RecuperarContrasena /></RutaPublica>} />
@@ -57,6 +59,13 @@ export default function App() {
 
               <Route path="/clientes" element={conPermiso('clientes.ver', <ListaClientes />)} />
               <Route path="/clientes/nuevo" element={conPermiso('clientes.crear', <FormularioCliente />)} />
+              {/* Edificios de cada tipo, desplegados desde Clientes en el menú. */}
+              <Route path="/clientes/conjuntos" element={conPermiso('edificios.ver', <ListaEdificios key="conjunto" tipo="conjunto" />)} />
+              <Route path="/clientes/institucionales" element={conPermiso('edificios.ver', <ListaEdificios key="institucional" tipo="institucional" />)} />
+              <Route path="/clientes/residenciales" element={conPermiso('edificios.ver', <ListaEdificios key="residencial" tipo="residencial" />)} />
+              <Route path="/clientes/conjuntos/ascensores" element={conPermiso('equipos.ver', <ListaEquipos key="conjunto" tipo="conjunto" />)} />
+              <Route path="/clientes/institucionales/ascensores" element={conPermiso('equipos.ver', <ListaEquipos key="institucional" tipo="institucional" />)} />
+              <Route path="/clientes/residenciales/ascensores" element={conPermiso('equipos.ver', <ListaEquipos key="residencial" tipo="residencial" />)} />
               <Route path="/clientes/:id" element={conPermiso('clientes.ver', <DetalleCliente />)} />
               <Route path="/clientes/:id/editar" element={conPermiso('clientes.editar', <FormularioCliente />)} />
 

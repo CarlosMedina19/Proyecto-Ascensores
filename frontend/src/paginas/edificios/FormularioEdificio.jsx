@@ -5,9 +5,11 @@ import { limpiarVacios, useFormulario } from '../../hooks/useFormulario';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { Alerta, Cargando, EncabezadoPagina, Tarjeta } from '../../componentes/Basicos';
 import { CampoArea, CampoSelector, CampoTexto, Casilla } from '../../componentes/Campos';
+import { TIPOS_EDIFICIO } from '../../utilidades/formato';
 
 const VACIO = {
   cliente_id: '',
+  tipo: '',
   nombre: '',
   direccion: '',
   ciudad: '',
@@ -32,6 +34,7 @@ export default function FormularioEdificio() {
   const { datos, setDatos, cambiar, error, mensajeError, enviando, enviar } = useFormulario({
     ...VACIO,
     cliente_id: parametros.get('cliente_id') || '',
+    tipo: TIPOS_EDIFICIO[parametros.get('tipo')] ? parametros.get('tipo') : '',
   });
 
   useEffect(() => {
@@ -71,7 +74,7 @@ export default function FormularioEdificio() {
         <form className="formulario" onSubmit={alEnviar} noValidate>
           <Alerta>{mensajeError}</Alerta>
 
-          <div className="formulario__fila">
+          <div className="formulario__fila formulario__fila--3">
             <CampoSelector
               etiqueta="Cliente"
               obligatorio
@@ -79,6 +82,14 @@ export default function FormularioEdificio() {
               alCambiar={cambiar('cliente_id')}
               error={error('cliente_id')}
               opciones={opcionesClientes.map((c) => ({ valor: String(c.id), texto: c.nombre }))}
+            />
+            <CampoSelector
+              etiqueta="Tipo"
+              obligatorio
+              valor={datos.tipo}
+              alCambiar={cambiar('tipo')}
+              error={error('tipo')}
+              opciones={Object.entries(TIPOS_EDIFICIO).map(([valor, { texto }]) => ({ valor, texto }))}
             />
             <CampoTexto etiqueta="Nombre del edificio" obligatorio valor={datos.nombre} alCambiar={cambiar('nombre')} error={error('nombre')} />
           </div>

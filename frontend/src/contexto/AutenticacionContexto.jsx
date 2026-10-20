@@ -34,9 +34,11 @@ export function ProveedorAutenticacion({ children }) {
     return () => window.removeEventListener('sigma:sesion-expirada', alExpirar);
   }, []);
 
-  const iniciarSesion = useCallback(async (correo, password) => {
+  /** `antesDeEntrar` corre con las credenciales ya validadas y antes de mostrar el panel (transición). */
+  const iniciarSesion = useCallback(async (correo, password, { antesDeEntrar } = {}) => {
     const respuesta = await autenticacion.iniciarSesion(correo, password);
     guardarToken(respuesta.token_acceso);
+    if (antesDeEntrar) await antesDeEntrar();
     const minutos = respuesta.minutos_inactividad || MINUTOS_INACTIVIDAD_POR_DEFECTO;
     sessionStorage.setItem('sigma.minutos', String(minutos));
     setMinutosInactividad(minutos);

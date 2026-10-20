@@ -71,11 +71,25 @@ src/
 - **Firmas** del técnico y de quien recibe (dibujadas en pantalla) e **informes PDF** con sus versiones.
 - **Última revisión** por sección en el detalle del ascensor y en el panel.
 
+## Clientes, edificios y ascensores
+
+- En el menú, **Clientes** se despliega en **Conjuntos**, **Institucionales** y **Residenciales**: cada uno
+  lista los edificios de ese tipo y cada fila despliega sus ascensores. Edificios y Ascensores ya no son
+  entradas fijas del menú (sus páginas siguen disponibles desde los despliegues, el buscador y los enlaces).
+- En la lista de clientes, cada fila se despliega en el mismo lugar: tipos que tiene el cliente → edificios →
+  ascensores, con accesos para agregar edificio o ascensor. Las listas de edificios y de ascensores también
+  tienen filas desplegables.
+- Al crear un ascensor, la **ubicación** se toma del edificio elegido (no se escribe a mano).
+
 ## Sistema visual
 
-Basado en el prototipo de SIGMA: morado para marca y acciones, cian para datos en vivo y
-verde/ámbar/rojo para los estados Bueno/Regular/Malo. Tipografías Bricolage Grotesque
-(títulos), Geist (texto) y JetBrains Mono (etiquetas y datos). Incluye modo oscuro.
+Basado en el prototipo *SIGMA Ascensores*: morado (#4E29AA) para marca y acciones, verde lima para
+datos en vivo y verde/ámbar/rojo para los estados Bueno/Regular/Malo. El menú lateral es oscuro en
+los dos temas y se puede contraer a solo íconos (se recuerda en el navegador). Las tarjetas y los
+encabezados de página llevan un borde luminoso degradado. El logo es la Σ trazada como el recorrido
+de un ascensor; la marca usa Michroma, los títulos Bricolage Grotesque, el texto Geist y los datos
+JetBrains Mono. El ingreso muestra un edificio con el indicador de piso y, al entrar, una transición
+de puertas de ascensor (se omite si el sistema pide movimiento reducido). Incluye modo oscuro.
 
 ## Sesión
 

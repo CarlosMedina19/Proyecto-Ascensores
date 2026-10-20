@@ -26,6 +26,10 @@ class EdificioService
             $consulta->where('cliente_id', $filtros['cliente_id']);
         }
 
+        if (! empty($filtros['tipo'])) {
+            $consulta->where('tipo', $filtros['tipo']);
+        }
+
         if (! empty($filtros['ciudad'])) {
             $consulta->where('ciudad', $coincidencia, "%{$filtros['ciudad']}%");
         }
@@ -60,7 +64,13 @@ class EdificioService
     {
         return DB::transaction(function () use ($edificio, $datos) {
             $edificio->update($datos);
-            RegistroAuditoriaService::registrar('actualizado', $edificio, $edificio->getChanges());
+            $cambios = $edificio->getChanges();
+            RegistroAuditoriaService::registrar('actualizado', $edificio, $cambios);
+
+            // Los ascensores conservan la ubicación del edificio.
+            if (array_intersect(array_keys($cambios), ['nombre', 'direccion', 'ciudad'])) {
+                $edificio->equipos()->update(['ubicacion' => $edificio->ubicacionEquipos()]);
+            }
 
             return $edificio->fresh(['cliente']);
         });

@@ -50,20 +50,20 @@ class DatosDemoSeeder extends Seeder
             [
                 'datos' => ['tipo' => 'juridica', 'nombre' => 'Conjunto Residencial Mirador del Parque', 'tipo_documento' => 'NIT', 'nit' => '900123456-1', 'direccion' => 'Cra 15 # 100-20', 'telefono' => '6017001122', 'correo' => 'administracion@miradorparque.co', 'regimen_tributario' => 'Responsable de IVA'],
                 'edificios' => [
-                    ['nombre' => 'Torre A', 'direccion' => 'Cra 15 # 100-20', 'ciudad' => 'Bogotá', 'departamento' => 'Cundinamarca', 'pisos' => 18, 'nombre_contacto' => 'Laura Gómez', 'telefono_contacto' => '3101234567'],
-                    ['nombre' => 'Torre B', 'direccion' => 'Cra 15 # 100-40', 'ciudad' => 'Bogotá', 'departamento' => 'Cundinamarca', 'pisos' => 18, 'nombre_contacto' => 'Laura Gómez', 'telefono_contacto' => '3101234567'],
+                    ['tipo' => 'conjunto', 'nombre' => 'Torre A', 'direccion' => 'Cra 15 # 100-20', 'ciudad' => 'Bogotá', 'departamento' => 'Cundinamarca', 'pisos' => 18, 'nombre_contacto' => 'Laura Gómez', 'telefono_contacto' => '3101234567'],
+                    ['tipo' => 'conjunto', 'nombre' => 'Torre B', 'direccion' => 'Cra 15 # 100-40', 'ciudad' => 'Bogotá', 'departamento' => 'Cundinamarca', 'pisos' => 18, 'nombre_contacto' => 'Laura Gómez', 'telefono_contacto' => '3101234567'],
                 ],
             ],
             [
                 'datos' => ['tipo' => 'juridica', 'nombre' => 'Centro Empresarial Andino', 'tipo_documento' => 'NIT', 'nit' => '901555222-3', 'direccion' => 'Calle 72 # 10-07', 'telefono' => '6014445566', 'correo' => 'mantenimiento@andino.co', 'regimen_tributario' => 'Gran contribuyente'],
                 'edificios' => [
-                    ['nombre' => 'Edificio Andino', 'direccion' => 'Calle 72 # 10-07', 'ciudad' => 'Bogotá', 'departamento' => 'Cundinamarca', 'pisos' => 24, 'nombre_contacto' => 'Carlos Ruiz', 'correo_contacto' => 'cruiz@andino.co'],
+                    ['tipo' => 'institucional', 'nombre' => 'Edificio Andino', 'direccion' => 'Calle 72 # 10-07', 'ciudad' => 'Bogotá', 'departamento' => 'Cundinamarca', 'pisos' => 24, 'nombre_contacto' => 'Carlos Ruiz', 'correo_contacto' => 'cruiz@andino.co'],
                 ],
             ],
             [
                 'datos' => ['tipo' => 'natural', 'nombre' => 'María Fernanda López', 'tipo_documento' => 'CC', 'numero_documento' => '52123456', 'direccion' => 'Calle 10 # 43-12', 'telefono' => '3157778899', 'correo' => 'mflopez@correo.co'],
                 'edificios' => [
-                    ['nombre' => 'Edificio Poblado Real', 'direccion' => 'Calle 10 # 43-12', 'ciudad' => 'Medellín', 'departamento' => 'Antioquia', 'pisos' => 8, 'nombre_contacto' => 'María Fernanda López', 'telefono_contacto' => '3157778899'],
+                    ['tipo' => 'residencial', 'nombre' => 'Edificio Poblado Real', 'direccion' => 'Calle 10 # 43-12', 'ciudad' => 'Medellín', 'departamento' => 'Antioquia', 'pisos' => 8, 'nombre_contacto' => 'María Fernanda López', 'telefono_contacto' => '3157778899'],
                 ],
             ],
         ];
@@ -105,7 +105,7 @@ class DatosDemoSeeder extends Seeder
                         'marca' => $marca,
                         'modelo' => 'Serie '.(1000 + $consecutivo * 7),
                         'numero_serie' => 'SN-'.strtoupper(substr(md5($codigo), 0, 8)),
-                        'ubicacion' => "{$edificio->nombre} — Ascensor {$numero}",
+                        'ubicacion' => $edificio->ubicacionEquipos(),
                         'estado' => $estados[$consecutivo % count($estados)],
                         'fecha_instalacion' => now()->subYears(2 + $consecutivo % 8)->toDateString(),
                     ]);
