@@ -20,7 +20,9 @@ class Equipo extends Model
     protected $fillable = [
         'identificador_uuid',
         'edificio_id',
+        'tecnico_id',
         'codigo',
+        'nombre',
         'tipo',
         'marca',
         'modelo',
@@ -52,6 +54,17 @@ class Equipo extends Model
     public function edificio(): BelongsTo
     {
         return $this->belongsTo(Edificio::class, 'edificio_id');
+    }
+
+    /** Técnico de referencia del ascensor (opcional). */
+    public function tecnico(): BelongsTo
+    {
+        return $this->belongsTo(Tecnico::class, 'tecnico_id');
+    }
+
+    public function puertasPiso(): HasMany
+    {
+        return $this->hasMany(PuertaPiso::class, 'equipo_id')->orderBy('piso');
     }
 
     public function ascensor(): HasOne

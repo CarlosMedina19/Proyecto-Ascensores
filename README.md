@@ -67,6 +67,22 @@ fase de puertas eléctricas de `FASES.pdf`.
 Las puertas eléctricas independientes quedaron fuera del alcance: solo se gestionan las
 puertas de cabina y de piso de cada ascensor.
 
+## Carga y descarga en Excel
+
+La plantilla [`plantillas/SIGMA_Plantilla_Datos.xlsx`](plantillas/SIGMA_Plantilla_Datos.xlsx) tiene una hoja
+por formulario (Clientes, Edificios, Ascensores, Puertas de piso, Órdenes de trabajo, Checklist, Facturas,
+Pagos y Usuarios) con listas desplegables, rangos validados y una fila de ejemplo.
+
+- **Exportar a Excel** en Ascensores, Clientes, Órdenes de trabajo, Cartera y Usuarios descarga los datos
+  actuales con la misma estructura.
+- **Importar desde Excel** (.xlsx o .csv, con arrastrar y soltar) muestra primero una vista previa con las
+  filas válidas, los errores (hoja, fila, columna y motivo) y los duplicados; luego importa solo las filas
+  válidas. **Descargar errores** devuelve el archivo con una columna de observaciones.
+- Un código que ya existe actualiza el registro: exportar → editar → importar no pierde datos.
+- Regenerar la plantilla: `cd scripts && npm install && npm run plantilla`.
+
+Detalle completo en [backend/docs/EXCEL.md](backend/docs/EXCEL.md).
+
 ## Pruebas
 
 ```sh

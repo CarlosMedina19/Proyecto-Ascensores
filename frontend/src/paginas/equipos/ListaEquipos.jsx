@@ -4,6 +4,7 @@ import { equipos } from '../../api/servicios';
 import { useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import HerramientasExcel from '../../componentes/HerramientasExcel';
 import { ResumenAscensor } from '../../componentes/Despliegues';
 import { ESTADOS_EQUIPO, TIPOS_EDIFICIO, numero } from '../../utilidades/formato';
 
@@ -11,7 +12,7 @@ import { ESTADOS_EQUIPO, TIPOS_EDIFICIO, numero } from '../../utilidades/formato
 export default function ListaEquipos({ tipo }) {
   const { tienePermiso, esCliente } = useAutenticacion();
   const navegar = useNavigate();
-  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina } = useListado(equipos.listar, {
+  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina, recargar } = useListado(equipos.listar, {
     estado: '',
     tipo_edificio: tipo || '',
   });
@@ -34,6 +35,10 @@ export default function ListaEquipos({ tipo }) {
           </Link>
         )}
       </EncabezadoPagina>
+
+      <div className="barra-excel">
+        <HerramientasExcel modulo="ascensores" alImportar={recargar} />
+      </div>
 
       <Tarjeta sinRelleno>
         <div className="filtros">

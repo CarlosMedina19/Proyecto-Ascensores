@@ -60,6 +60,11 @@ class PermisoSeeder extends Seeder
         'ordenes.asignar' => 'Asignar técnicos a las órdenes',
         'ordenes.cancelar' => 'Cancelar órdenes con motivo',
         'ordenes.ejecutar' => 'Avanzar los estados de las órdenes asignadas (en camino, en proceso, pendiente, finalizada)',
+        // Cartera (facturas y pagos) y carga de datos desde Excel.
+        'cartera.ver' => 'Consultar facturas, pagos y saldos de cartera',
+        'facturas.crear' => 'Registrar facturas',
+        'pagos.registrar' => 'Registrar pagos de los clientes',
+        'datos.importar' => 'Importar datos desde la plantilla de Excel',
     ];
 
     public function run(): void
@@ -91,7 +96,7 @@ class PermisoSeeder extends Seeder
 
         $permisosPorRol = [
             'administrador' => array_keys(self::PERMISOS),
-            'coordinador' => array_merge(['resumen.ver', 'roles.ver', 'usuarios.ver'], $permisosCatalogo, $permisosPlanes),
+            'coordinador' => array_merge(['resumen.ver', 'roles.ver', 'usuarios.ver', 'cartera.ver', 'datos.importar'], $permisosCatalogo, $permisosPlanes),
             // El supervisor solo consulta; no modifica datos.
             'supervisor' => [
                 'resumen.ver',
@@ -132,6 +137,10 @@ class PermisoSeeder extends Seeder
                 'contratos.editar',
                 'contratos.renovacion',
                 'ordenes.ver',
+                'cartera.ver',
+                'facturas.crear',
+                'pagos.registrar',
+                'datos.importar',
             ],
             // El cliente consulta solo sus propios datos (las políticas filtran por cliente).
             'cliente' => [
@@ -143,6 +152,7 @@ class PermisoSeeder extends Seeder
                 'mantenimientos.ver',
                 'contratos.ver',
                 'ordenes.ver',
+                'cartera.ver',
             ],
         ];
 

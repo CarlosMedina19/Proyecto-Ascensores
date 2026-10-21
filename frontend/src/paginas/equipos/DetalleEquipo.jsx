@@ -172,8 +172,10 @@ export default function DetalleEquipo() {
           <Tarjeta titulo="Datos del equipo">
             <Datos
               elementos={[
+                ['Nombre', equipo.nombre],
                 ['Marca', equipo.marca],
                 ['Modelo', equipo.modelo],
+                ['Técnico asignado', equipo.tecnico?.nombre],
                 ['Número de serie', equipo.numero_serie],
                 ['Ubicación', equipo.ubicacion],
                 ['Fecha de instalación', fecha(equipo.fecha_instalacion)],
@@ -193,7 +195,7 @@ export default function DetalleEquipo() {
           <Tarjeta titulo="Ficha técnica">
             <Datos
               elementos={[
-                ['Capacidad', numero(ficha.capacidad_kg, ' kg')],
+                ['Capacidad', [numero(ficha.capacidad_kg, ' kg'), ficha.capacidad_personas ? `${ficha.capacidad_personas} personas` : null].filter(Boolean).join(' · ')],
                 ['Velocidad', numero(ficha.velocidad_mpm, ' m/min')],
                 ['Paradas', ficha.paradas],
                 ['Accionamiento', ficha.tipo_traccion],
@@ -211,9 +213,13 @@ export default function DetalleEquipo() {
                   Puertas de piso del ascensor
                 </p>
                 <div className="puertas">
-                  {Array.from({ length: Math.min(totalPuertasPiso, 60) }, (_, i) => (
-                    <span key={i}>P{i + 1}</span>
-                  ))}
+                  {equipo.puertas_piso?.length
+                    ? equipo.puertas_piso.map((p) => (
+                        <span key={p.id} className={`estado-${p.estado}`} title={`Piso ${p.piso} · ${p.tipo === 'manual' ? 'manual' : 'automática'} · ${{ B: 'Bueno', R: 'Regular', M: 'Malo', P: 'Pendiente' }[p.estado]}${p.observacion ? ` · ${p.observacion}` : ''}`}>
+                          P{p.piso}
+                        </span>
+                      ))
+                    : Array.from({ length: Math.min(totalPuertasPiso, 60) }, (_, i) => <span key={i}>P{i + 1}</span>)}
                 </div>
               </>
             )}

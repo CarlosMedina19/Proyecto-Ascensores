@@ -64,6 +64,7 @@ class EquipoService
             $equipo = Equipo::create($datosEquipo);
 
             $equipo->ascensor()->create($datos['ascensor']);
+            $this->sincronizarPuertas($equipo);
 
             $equipo->historial()->create([
                 'usuario_id' => Auth::id(),
@@ -73,7 +74,7 @@ class EquipoService
 
             RegistroAuditoriaService::registrar('creado', $equipo, $equipo->toArray());
 
-            return $equipo->load(['edificio.cliente', 'ascensor']);
+            return $equipo->load(['edificio.cliente', 'ascensor', 'puertasPiso']);
         });
     }
 
@@ -115,7 +116,9 @@ class EquipoService
 
             RegistroAuditoriaService::registrar('actualizado', $equipo, $cambios);
 
-            return $equipo->fresh(['edificio.cliente', 'ascensor']);
+            $this->sincronizarPuertas($equipo->fresh('ascensor'));
+
+            return $equipo->fresh(['edificio.cliente', 'ascensor', 'puertasPiso']);
         });
     }
 
@@ -149,6 +152,23 @@ class EquipoService
 
             return $historial->load('usuario');
         });
+    }
+
+    /**
+     * Una puerta de piso por parada: crea las que faltan y retira las que sobran si bajan las paradas.
+     */
+    public function sincronizarPuertas(Equipo $equipo): void
+    {
+        $paradas = (int) ($equipo->ascensor?->paradas ?? 0);
+        if ($paradas < 1) {
+            return;
+        }
+        $tipo = str_contains(mb_strtolower((string) $equipo->ascensor?->tipo_puerta), 'manual') ? 'manual' : 'automatica';
+        $existentes = $equipo->puertasPiso()->pluck('piso')->all();
+        foreach (array_diff(range(1, min($paradas, 300)), $existentes) as $piso) {
+            $equipo->puertasPiso()->create(['piso' => $piso, 'tipo' => $tipo, 'estado' => 'P']);
+        }
+        $equipo->puertasPiso()->where('piso', '>', $paradas)->delete();
     }
 
     private function validarEdificioActivo(int|string $edificioId): void

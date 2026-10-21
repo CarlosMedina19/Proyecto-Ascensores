@@ -6,6 +6,7 @@ import { useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { Alerta, Cargando, Confirmacion, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import HerramientasExcel from '../../componentes/HerramientasExcel';
 import { fechaHora, nombreRol } from '../../utilidades/formato';
 
 export default function ListaUsuarios() {
@@ -51,6 +52,10 @@ export default function ListaUsuarios() {
           </Link>
         )}
       </EncabezadoPagina>
+
+      <div className="barra-excel">
+        <HerramientasExcel modulo="usuarios" alImportar={recargar} />
+      </div>
 
       <Tarjeta sinRelleno>
         <div className="filtros">

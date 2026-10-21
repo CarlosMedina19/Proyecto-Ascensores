@@ -1,0 +1,12 @@
+{
+  "name": "sigma-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Herramientas de SIGMA: genera la plantilla de Excel de carga de datos.",
+  "scripts": {
+    "plantilla": "node generar-plantilla.mjs"
+  },
+  "dependencies": {
+    "exceljs": "4.4.0"
+  }
+}

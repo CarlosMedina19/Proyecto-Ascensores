@@ -3,7 +3,9 @@
 use App\Http\Controllers\Api\AsignacionPlanController;
 use App\Http\Controllers\Api\AutenticacionController;
 use App\Http\Controllers\Api\BusquedaController;
+use App\Http\Controllers\Api\CarteraController;
 use App\Http\Controllers\Api\ClienteController;
+use App\Http\Controllers\Api\ExcelController;
 use App\Http\Controllers\Api\ConfiguracionController;
 use App\Http\Controllers\Api\ContratoController;
 use App\Http\Controllers\Api\EdificioController;
@@ -130,6 +132,20 @@ Route::middleware('auth:sanctum')->group(function () {
         ->parameters(['ordenes' => 'orden']);
 
     // Fase 4 (RF-030 a RF-039): planilla, fotos, firmas, correctivo derivado e informe PDF.
+    // Carga y descarga en Excel (plantilla, exportación por módulo e importación en dos pasos).
+    Route::get('/excel/plantilla', [ExcelController::class, 'plantilla']);
+    Route::get('/excel/exportar/{modulo}', [ExcelController::class, 'exportar']);
+    Route::post('/excel/importaciones', [ExcelController::class, 'previsualizar']);
+    Route::post('/excel/importaciones/{id}/confirmar', [ExcelController::class, 'confirmar']);
+    Route::get('/excel/importaciones/{id}/errores', [ExcelController::class, 'errores']);
+
+    // Cartera mínima (la facturación completa llega en la fase 5).
+    Route::get('/cartera/resumen', [CarteraController::class, 'resumen']);
+    Route::get('/facturas', [CarteraController::class, 'facturas']);
+    Route::post('/facturas', [CarteraController::class, 'crearFactura']);
+    Route::get('/facturas/{factura}', [CarteraController::class, 'verFactura']);
+    Route::post('/pagos', [CarteraController::class, 'registrarPago']);
+
     Route::get('/checklist/items', [PlanillaController::class, 'catalogo']);
     Route::get('/ordenes/{orden}/planilla', [PlanillaController::class, 'show']);
     Route::put('/ordenes/{orden}/planilla', [PlanillaController::class, 'guardar']);

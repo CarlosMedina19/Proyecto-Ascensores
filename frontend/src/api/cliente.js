@@ -87,6 +87,32 @@ export async function urlArchivo(ruta) {
   return URL.createObjectURL(await respuesta.blob());
 }
 
+/**
+ * Descarga un archivo protegido (Excel, PDF) con el token y lo guarda con el nombre que envía el servidor.
+ */
+export async function descargarArchivo(ruta, nombrePorDefecto = 'archivo') {
+  const respuesta = await fetch(URL_API + ruta, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!respuesta.ok) {
+    let mensaje = 'No fue posible descargar el archivo. Intente de nuevo.';
+    try {
+      mensaje = (await respuesta.json()).mensaje || mensaje;
+    } catch {
+      // Respuesta sin JSON: se usa el mensaje general.
+    }
+    throw new ErrorApi(mensaje, respuesta.status);
+  }
+  const disposicion = respuesta.headers.get('Content-Disposition') || '';
+  const nombre = decodeURIComponent((disposicion.match(/filename\*=UTF-8''([^;]+)/i) || disposicion.match(/filename="?([^";]+)"?/i) || [])[1] || nombrePorDefecto);
+  const url = URL.createObjectURL(await respuesta.blob());
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombre;
+  document.body.appendChild(enlace);
+  enlace.click();
+  enlace.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export const api = {
   obtener: (ruta, consulta) => solicitar(ruta, { consulta }),
   crear: (ruta, cuerpo) => solicitar(ruta, { metodo: 'POST', cuerpo }),

@@ -14,6 +14,7 @@ class EquipoResource extends RecursoApi
             'edificio_id' => $this->edificio_id,
             'edificio' => new EdificioResource($this->whenLoaded('edificio')),
             'codigo' => $this->codigo,
+            'nombre' => $this->nombre,
             'tipo' => $this->tipo,
             'marca' => $this->marca,
             'modelo' => $this->modelo,
@@ -25,6 +26,15 @@ class EquipoResource extends RecursoApi
             'ascensor' => new AscensorResource($this->whenLoaded('ascensor')),
             'historial' => HistorialEquipoResource::collection($this->whenLoaded('historial')),
             'fotos' => FotoEquipoResource::collection($this->whenLoaded('fotos')),
+            'tecnico_id' => $this->tecnico_id,
+            'tecnico' => $this->whenLoaded('tecnico', fn () => $this->tecnico ? ['id' => $this->tecnico->id, 'nombre' => $this->tecnico->usuario?->nombre] : null),
+            'puertas_piso' => $this->whenLoaded('puertasPiso', fn () => $this->puertasPiso->map(fn ($p) => [
+                'id' => $p->id,
+                'piso' => $p->piso,
+                'tipo' => $p->tipo,
+                'estado' => $p->estado,
+                'observacion' => $p->observacion,
+            ])->values()),
             'ultima_revision' => $this->when(array_key_exists('ultima_revision', $this->resource->getAttributes()), fn () => $this->resource->getAttributes()['ultima_revision']),
             // Fase 2: plan vigente y próximo mantenimiento del ascensor.
             'asignacion_activa' => new AsignacionPlanResource($this->whenLoaded('asignacionActiva')),

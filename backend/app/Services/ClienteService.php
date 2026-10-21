@@ -26,6 +26,7 @@ class ClienteService
             $coincidencia = DB::getDriverName() === 'pgsql' ? 'ilike' : 'like';
             $consulta->where(function ($consulta) use ($busqueda, $coincidencia) {
                 $consulta->where('nombre', $coincidencia, "%{$busqueda}%")
+                    ->orWhere('codigo', $coincidencia, "%{$busqueda}%")
                     ->orWhere('nit', $coincidencia, "%{$busqueda}%")
                     ->orWhere('numero_documento', $coincidencia, "%{$busqueda}%")
                     ->orWhere('correo', $coincidencia, "%{$busqueda}%");

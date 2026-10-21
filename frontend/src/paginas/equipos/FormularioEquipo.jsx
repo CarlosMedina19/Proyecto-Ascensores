@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { edificios, equipos, fotosEquipo } from '../../api/servicios';
+import { edificios, equipos, fotosEquipo, tecnicos } from '../../api/servicios';
 import { limpiarVacios, useFormulario } from '../../hooks/useFormulario';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { Alerta, Cargando, EncabezadoPagina, Tarjeta } from '../../componentes/Basicos';
@@ -11,6 +11,8 @@ import { GaleriaFotos, SelectorFotos } from '../../componentes/FotosEquipo';
 const EQUIPO_VACIO = {
   edificio_id: '',
   codigo: '',
+  nombre: '',
+  tecnico_id: '',
   marca: '',
   modelo: '',
   numero_serie: '',
@@ -21,6 +23,7 @@ const EQUIPO_VACIO = {
 
 const FICHA_VACIA = {
   capacidad_kg: '',
+  capacidad_personas: '',
   velocidad_mpm: '',
   paradas: '',
   tipo_traccion: '',
@@ -33,7 +36,7 @@ const FICHA_VACIA = {
   especificaciones_tecnicas: '',
 };
 
-const NUMERICOS = ['capacidad_kg', 'velocidad_mpm', 'paradas', 'puertas_cabina', 'puertas_piso'];
+const NUMERICOS = ['capacidad_personas', 'capacidad_kg', 'velocidad_mpm', 'paradas', 'puertas_cabina', 'puertas_piso'];
 
 const ACCIONAMIENTOS = ['Eléctrico de tracción', 'Eléctrico sin cuarto de máquinas (MRL)', 'Hidráulico'];
 
@@ -45,6 +48,7 @@ export default function FormularioEquipo() {
   const notificar = useNotificar();
   const [cargando, setCargando] = useState(true);
   const [opcionesEdificios, setOpcionesEdificios] = useState([]);
+  const [opcionesTecnicos, setOpcionesTecnicos] = useState([]);
   const [fotosNuevas, setFotosNuevas] = useState([]);
   const [fotosGuardadas, setFotosGuardadas] = useState([]);
   const { datos, setDatos, cambiar, errores, error, mensajeError, enviando, enviar } = useFormulario({
@@ -54,7 +58,10 @@ export default function FormularioEquipo() {
   });
 
   useEffect(() => {
-    const solicitudes = [edificios.listar({ por_pagina: 100 }).then((r) => setOpcionesEdificios(r.datos))];
+    const solicitudes = [
+      edificios.listar({ por_pagina: 100 }).then((r) => setOpcionesEdificios(r.datos)),
+      tecnicos.listar({ por_pagina: 100 }).then((r) => setOpcionesTecnicos(r.datos.filter((t) => t.id))).catch(() => {}),
+    ];
     if (editando) {
       solicitudes.push(
         equipos.obtener(id).then(({ datos: equipo }) => {
@@ -82,6 +89,7 @@ export default function FormularioEquipo() {
       ...limpiarVacios({ ...datos, ascensor: undefined }),
       // La ubicación la asigna el servidor a partir del edificio.
       edificio_id: datos.edificio_id ? Number(datos.edificio_id) : null,
+      tecnico_id: datos.tecnico_id ? Number(datos.tecnico_id) : null,
       ascensor: ficha,
     };
     const respuesta = await enviar(() => (editando ? equipos.actualizar(id, cuerpo) : equipos.crear(cuerpo)));
@@ -127,6 +135,17 @@ export default function FormularioEquipo() {
             />
             <CampoTexto etiqueta="Código" obligatorio valor={datos.codigo} alCambiar={cambiar('codigo')} error={error('codigo')} ayuda="Código único del equipo. Ej. ASC-001" />
           </div>
+          <div className="formulario__fila">
+            <CampoTexto etiqueta="Nombre del equipo" valor={datos.nombre} alCambiar={cambiar('nombre')} error={error('nombre')} placeholder="Ascensor 1" ayuda="Nombre corto dentro del edificio." />
+            <CampoSelector
+              etiqueta="Técnico asignado"
+              valor={String(datos.tecnico_id ?? '')}
+              alCambiar={cambiar('tecnico_id')}
+              error={error('tecnico_id')}
+              vacio="Sin técnico de referencia"
+              opciones={opcionesTecnicos.map((t) => ({ valor: String(t.id), texto: t.nombre }))}
+            />
+          </div>
           <div className="formulario__fila formulario__fila--3">
             <CampoTexto etiqueta="Marca" valor={datos.marca} alCambiar={cambiar('marca')} error={error('marca')} />
             <CampoTexto etiqueta="Modelo" valor={datos.modelo} alCambiar={cambiar('modelo')} error={error('modelo')} />
@@ -153,9 +172,12 @@ export default function FormularioEquipo() {
 
           <div className="formulario__seccion">Ficha técnica del ascensor</div>
           <div className="formulario__fila formulario__fila--3">
-            <CampoTexto etiqueta="Capacidad (kg)" obligatorio tipo="number" min="1" valor={datos.ascensor.capacidad_kg} alCambiar={cambiarFicha('capacidad_kg')} error={errorFicha('capacidad_kg')} />
-            <CampoTexto etiqueta="Velocidad (m/min)" obligatorio tipo="number" min="0.1" step="0.1" valor={datos.ascensor.velocidad_mpm} alCambiar={cambiarFicha('velocidad_mpm')} error={errorFicha('velocidad_mpm')} />
-            <CampoTexto etiqueta="Número de paradas" obligatorio tipo="number" min="1" valor={datos.ascensor.paradas} alCambiar={cambiarFicha('paradas')} error={errorFicha('paradas')} />
+            <CampoTexto etiqueta="Capacidad (kg)" obligatorio tipo="number" min="100" max="5000" valor={datos.ascensor.capacidad_kg} alCambiar={cambiarFicha('capacidad_kg')} error={errorFicha('capacidad_kg')} ayuda="Entre 100 y 5.000 kg." />
+            <CampoTexto etiqueta="Velocidad (m/min)" obligatorio tipo="number" min="6" max="600" step="0.1" valor={datos.ascensor.velocidad_mpm} alCambiar={cambiarFicha('velocidad_mpm')} error={errorFicha('velocidad_mpm')} ayuda="Entre 6 y 600 m/min (0,1 a 10 m/s)." />
+            <CampoTexto etiqueta="Número de paradas" obligatorio tipo="number" min="2" max="60" valor={datos.ascensor.paradas} alCambiar={cambiarFicha('paradas')} error={errorFicha('paradas')} ayuda="Entre 2 y 60. Se crea una puerta de piso por parada." />
+          </div>
+          <div className="formulario__fila formulario__fila--3">
+            <CampoTexto etiqueta="Capacidad (personas)" tipo="number" min="1" max="100" valor={datos.ascensor.capacidad_personas} alCambiar={cambiarFicha('capacidad_personas')} error={errorFicha('capacidad_personas')} />
           </div>
           <div className="formulario__fila formulario__fila--3">
             <CampoSelector

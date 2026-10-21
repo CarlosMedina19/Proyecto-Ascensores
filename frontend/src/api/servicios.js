@@ -1,4 +1,4 @@
-import { api } from './cliente';
+import { api, descargarArchivo } from './cliente';
 
 // RF-001 Autenticación
 export const autenticacion = {
@@ -194,4 +194,26 @@ export const planilla = {
   firmar: (ordenId, datos) => api.crear(`/ordenes/${ordenId}/firmas`, datos),
   informes: (ordenId) => api.obtener(`/ordenes/${ordenId}/informes`),
   nuevaVersion: (ordenId, motivo) => api.crear(`/ordenes/${ordenId}/informes`, { motivo }),
+};
+
+// Plantilla, exportación e importación en Excel (vista previa y confirmación)
+export const excel = {
+  plantilla: () => descargarArchivo('/excel/plantilla', 'SIGMA_Plantilla_Datos.xlsx'),
+  exportar: (modulo) => descargarArchivo(`/excel/exportar/${modulo}`, `SIGMA_${modulo}.xlsx`),
+  previsualizar: (archivo) => {
+    const formulario = new FormData();
+    formulario.append('archivo', archivo);
+    return api.crear('/excel/importaciones', formulario);
+  },
+  confirmar: (id) => api.crear(`/excel/importaciones/${id}/confirmar`),
+  errores: (id) => descargarArchivo(`/excel/importaciones/${id}/errores`, 'errores.xlsx'),
+};
+
+// Cartera mínima: facturas, pagos y saldo por antigüedad
+export const cartera = {
+  resumen: () => api.obtener('/cartera/resumen'),
+  facturas: (filtros) => api.obtener('/facturas', filtros),
+  factura: (id) => api.obtener(`/facturas/${id}`),
+  crearFactura: (datos) => api.crear('/facturas', datos),
+  registrarPago: (datos) => api.crear('/pagos', datos),
 };

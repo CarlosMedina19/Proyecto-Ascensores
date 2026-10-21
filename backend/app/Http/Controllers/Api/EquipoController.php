@@ -43,7 +43,7 @@ class EquipoController extends Controller
     {
         $this->authorize('view', $equipo);
 
-        $equipo->load(['edificio.cliente', 'ascensor', 'asignacionActiva.plan', 'asignacionActiva.periodicidad', 'asignacionActiva.contrato', 'fotos']);
+        $equipo->load(['edificio.cliente', 'ascensor', 'asignacionActiva.plan', 'asignacionActiva.periodicidad', 'asignacionActiva.contrato', 'fotos', 'puertasPiso', 'tecnico.usuario']);
         // Fase 4: estado de cada sección según la última planilla completa (esquema del ascensor).
         $equipo->setAttribute('ultima_revision', app(PlanillaService::class)->ultimaRevision($equipo->id));
 

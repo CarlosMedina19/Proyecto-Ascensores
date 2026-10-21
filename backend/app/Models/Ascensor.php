@@ -17,6 +17,7 @@ class Ascensor extends Model
         'marca',
         'modelo',
         'capacidad_kg',
+        'capacidad_personas',
         'velocidad_mpm',
         'paradas',
         'tipo_traccion',

@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   Sun,
   Users,
+  Wallet,
 } from 'lucide-react';
 import { useAutenticacion } from '../contexto/AutenticacionContexto';
 import { useInactividad } from '../hooks/useInactividad';
@@ -54,6 +55,7 @@ function opcionesMenu(esCliente, esTecnico) {
     { ruta: '/tecnicos', texto: 'Técnicos', icono: HardHat, permiso: 'tecnicos.ver' },
     { ruta: '/contratos', texto: esCliente ? 'Mis contratos' : 'Contratos', icono: FileText, permiso: 'contratos.ver' },
     { ruta: '/planes', texto: 'Planes y precios', icono: ClipboardList, permiso: 'planes.ver' },
+    { ruta: '/cartera', texto: esCliente ? 'Mi estado de cuenta' : 'Cartera', icono: Wallet, permiso: 'cartera.ver' },
     { grupo: 'Administración' },
     { ruta: '/usuarios', texto: 'Usuarios', icono: Users, permiso: 'usuarios.ver' },
     { ruta: '/roles', texto: 'Roles y permisos', icono: ShieldCheck, permiso: 'roles.ver' },

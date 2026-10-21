@@ -4,6 +4,7 @@ import { ordenes } from '../../api/servicios';
 import { useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import HerramientasExcel from '../../componentes/HerramientasExcel';
 import { ESTADOS_ORDEN, PRIORIDADES_ORDEN, SERVICIOS_ORDEN, fecha } from '../../utilidades/formato';
 
 /** Convierte el filtro "activas" de la lista en el parámetro de la API. */
@@ -15,7 +16,7 @@ function consultar(filtros) {
 export default function ListaOrdenes() {
   const { tienePermiso, esTecnico } = useAutenticacion();
   const navegar = useNavigate();
-  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina } = useListado(consultar, {
+  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina, recargar } = useListado(consultar, {
     estado: 'activas',
     servicio: '',
     prioridad: '',
@@ -39,6 +40,10 @@ export default function ListaOrdenes() {
           </Link>
         )}
       </EncabezadoPagina>
+
+      <div className="barra-excel">
+        <HerramientasExcel modulo="ordenes" alImportar={recargar} />
+      </div>
 
       <Tarjeta sinRelleno>
         <div className="filtros">

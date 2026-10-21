@@ -30,6 +30,7 @@ class GuardarClienteRequest extends FormRequest
         $requerido = $this->clienteActual() ? ['sometimes', 'required'] : ['required'];
 
         return [
+            'codigo' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9-]+$/', Rule::unique('clientes', 'codigo')->ignore($ignorar)],
             'tipo' => [...$requerido, Rule::in(['natural', 'juridica'])],
             'nombre' => [...$requerido, 'string', 'max:255'],
             'tipo_documento' => ['nullable', Rule::in(self::TIPOS_DOCUMENTO)],

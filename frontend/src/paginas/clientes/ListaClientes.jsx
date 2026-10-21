@@ -4,13 +4,14 @@ import { clientes } from '../../api/servicios';
 import { useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import HerramientasExcel from '../../componentes/HerramientasExcel';
 import { ArbolCliente } from '../../componentes/Despliegues';
 import { TIPOS_CLIENTE } from '../../utilidades/formato';
 
 export default function ListaClientes() {
   const { tienePermiso, esCliente } = useAutenticacion();
   const navegar = useNavigate();
-  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina } = useListado(clientes.listar, {
+  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina, recargar } = useListado(clientes.listar, {
     tipo: '',
     estado: '',
   });
@@ -27,6 +28,10 @@ export default function ListaClientes() {
           </Link>
         )}
       </EncabezadoPagina>
+
+      <div className="barra-excel">
+        <HerramientasExcel modulo="clientes" alImportar={recargar} />
+      </div>
 
       <Tarjeta sinRelleno>
         {!esCliente && (

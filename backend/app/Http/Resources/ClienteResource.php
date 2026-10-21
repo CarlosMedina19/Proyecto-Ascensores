@@ -12,6 +12,7 @@ class ClienteResource extends RecursoApi
             'id' => $this->id,
             'identificador_uuid' => $this->identificador_uuid,
             'tipo' => $this->tipo,
+            'codigo' => $this->codigo,
             'nombre' => $this->nombre,
             'tipo_documento' => $this->tipo_documento,
             'numero_documento' => $this->numero_documento,
