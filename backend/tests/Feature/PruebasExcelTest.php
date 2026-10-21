@@ -160,6 +160,58 @@ class PruebasExcelTest extends TestCase
         $this->assertTrue(collect($vista->json('datos.errores'))->contains(fn ($e) => $e['hoja'] === 'Pagos' && str_contains($e['motivo'], 'supera el saldo')));
     }
 
+    public function test_importa_certificaciones_emergencias_y_cotizaciones_y_las_exporta(): void
+    {
+        $this->actingAs($this->administrador, 'sanctum');
+        $datos = $this->datosBasicos() + [
+            'certificaciones' => [
+                ['ascensor' => 'ASC-T1', 'organismo' => 'Inspecciones Andinas', 'fecha_inspeccion' => '10/03/2025', 'fecha_vencimiento' => '10/03/2026', 'resultado' => 'Conforme'],
+                // Inválido: el vencimiento es anterior a la inspección.
+                ['ascensor' => 'ASC-T1', 'organismo' => 'Otro', 'fecha_inspeccion' => '01/12/2025', 'fecha_vencimiento' => '01/11/2025', 'resultado' => 'Conforme'],
+            ],
+            'emergencias' => [
+                [
+                    'ascensor' => 'ASC-T1', 'tipo' => 'Personas atrapadas', 'fecha_reporte' => '02/01/2026', 'hora_reporte' => '19:40',
+                    'reportante' => 'Portería', 'hora_llegada' => '20:05', 'fecha_solucion' => '02/01/2026', 'hora_solucion' => '20:30', 'solucion' => 'Rescate.',
+                ],
+                // Inválido: tiene fecha de solución pero no dice qué se hizo.
+                ['ascensor' => 'ASC-T1', 'tipo' => 'Ruido o movimiento anormal', 'fecha_reporte' => '03/01/2026', 'hora_reporte' => '08:00', 'fecha_solucion' => '03/01/2026'],
+            ],
+            'cotizaciones' => [['ascensor' => 'ASC-T1', 'titulo' => 'Cambio de amortiguadores', 'valor' => 2000000, 'iva' => 19, 'vigente_hasta' => '31/01/2026']],
+        ];
+
+        $id = $this->post('/api/v1/excel/importaciones', ['archivo' => $this->archivo($datos)], ['Accept' => 'application/json'])
+            ->assertOk()
+            ->assertJsonPath('datos.totales.errores', 3)
+            ->json('datos.id');
+        $this->postJson("/api/v1/excel/importaciones/{$id}/confirmar")->assertOk();
+
+        $equipo = Equipo::where('codigo', 'ASC-T1')->firstOrFail();
+        $this->assertSame(1, $equipo->certificaciones()->count());
+        $emergencia = $equipo->emergencias()->firstOrFail();
+        $this->assertSame('resuelta', $emergencia->estado);
+        $this->assertSame(25, $emergencia->minutosRespuesta());
+        $this->assertEquals(2380000, (float) $equipo->cotizaciones()->value('total'));
+
+        $exportado = $this->get('/api/v1/excel/exportar/servicio')->assertOk();
+        $ruta = tempnam(sys_get_temp_dir(), 'servicio').'.xlsx';
+        file_put_contents($ruta, $exportado->streamedContent());
+        $libro = IOFactory::load($ruta);
+        $this->assertSame('ASC-T1', $libro->getSheetByName('Certificaciones')->getCell('A2')->getValue());
+        $this->assertSame('Personas atrapadas', $libro->getSheetByName('Emergencias')->getCell('C2')->getValue());
+        $this->assertSame('Cambio de amortiguadores', $libro->getSheetByName('Cotizaciones')->getCell('C2')->getValue());
+
+        // Reimportar lo exportado no duplica nada.
+        $vista = $this->post('/api/v1/excel/importaciones', ['archivo' => new UploadedFile($ruta, 'servicio.xlsx', null, null, true)], ['Accept' => 'application/json'])
+            ->assertOk();
+        $this->assertSame(0, $vista->json('datos.totales.errores'));
+        foreach (['Certificaciones', 'Emergencias', 'Cotizaciones'] as $hoja) {
+            $resumen = collect($vista->json('datos.hojas'))->firstWhere('nombre', $hoja);
+            $this->assertSame(0, $resumen['creados'], "La hoja {$hoja} no debe crear registros nuevos al reimportar.");
+            $this->assertSame(1, $resumen['existentes']);
+        }
+    }
+
     public function test_exportar_e_importar_de_nuevo_no_cambia_ni_pierde_datos(): void
     {
         $this->actingAs($this->administrador, 'sanctum');

@@ -161,6 +161,8 @@ class ExcelController extends Controller
             'clientes' => ['cliente', 'clientes'], 'edificios' => ['edificio', 'edificios'], 'ascensores' => ['ascensor', 'ascensores'],
             'puertas' => ['puerta de piso', 'puertas de piso'], 'ordenes' => ['orden de trabajo', 'órdenes de trabajo'],
             'checklist' => ['ítem del checklist', 'ítems del checklist'], 'facturas' => ['factura', 'facturas'],
+            'certificaciones' => ['certificación', 'certificaciones'], 'emergencias' => ['emergencia', 'emergencias'],
+            'cotizaciones' => ['cotización', 'cotizaciones'],
             'pagos' => ['pago', 'pagos'], 'usuarios' => ['usuario', 'usuarios'],
         ];
         $partes = [];

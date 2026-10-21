@@ -217,3 +217,38 @@ export const cartera = {
   crearFactura: (datos) => api.crear('/facturas', datos),
   registrarPago: (datos) => api.crear('/pagos', datos),
 };
+
+// Servicio comercial: certificación anual, emergencias 24/7, cotizaciones, indicadores y documentos.
+function conArchivo(datos) {
+  const formulario = new FormData();
+  Object.entries(datos).forEach(([clave, valor]) => {
+    if (valor !== null && valor !== undefined && valor !== '') formulario.append(clave, valor);
+  });
+  return formulario;
+}
+
+export const servicio = {
+  certificaciones: (filtros) => api.obtener('/certificaciones', filtros),
+  certificacionesEquipo: (equipoId) => api.obtener(`/equipos/${equipoId}/certificaciones`),
+  registrarCertificacion: (equipoId, datos) => api.crear(`/equipos/${equipoId}/certificaciones`, conArchivo(datos)),
+  adjuntarCertificado: (id, archivo) => api.crear(`/certificaciones/${id}/archivo`, conArchivo({ archivo })),
+  descargarCertificado: (c) => descargarArchivo(`/certificaciones/${c.id}/archivo`, c.archivo_nombre || 'certificado.pdf'),
+  descargarDocumento: (documento) => descargarArchivo(documento.enlace, `${documento.titulo}.pdf`),
+  qr: (equipoId) => api.obtener(`/equipos/${equipoId}/qr`),
+  documentos: (equipoId) => api.obtener(`/equipos/${equipoId}/documentos`),
+  emergencias: (filtros) => api.obtener('/emergencias', filtros),
+  emergencia: (id) => api.obtener(`/emergencias/${id}`),
+  reportarEmergencia: (datos) => api.crear('/emergencias', datos),
+  cambiarEstadoEmergencia: (id, datos) => api.crear(`/emergencias/${id}/estado`, datos),
+  cotizaciones: (filtros) => api.obtener('/cotizaciones', filtros),
+  cotizacion: (id) => api.obtener(`/cotizaciones/${id}`),
+  crearCotizacion: (datos) => api.crear('/cotizaciones', datos),
+  responderCotizacion: (id, datos) => api.crear(`/cotizaciones/${id}/respuesta`, datos),
+  indicadores: (filtros) => api.obtener('/indicadores/servicio', filtros),
+};
+
+// Reporte de fallas por el QR de la cabina (sin sesión).
+export const publico = {
+  ascensor: (codigo) => api.obtener(`/publico/ascensores/${codigo}`),
+  reportar: (codigo, datos) => api.crear(`/publico/ascensores/${codigo}/reportes`, datos),
+};

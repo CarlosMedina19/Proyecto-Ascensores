@@ -1,8 +1,21 @@
 {
-  "version": 1,
+  "version": 2,
   "nombre": "SIGMA_Plantilla_Datos.xlsx",
   "marcadorEjemplo": "EJEMPLO",
-  "orden": ["Clientes", "Edificios", "Ascensores", "Puertas de piso", "Órdenes de trabajo", "Checklist", "Facturas", "Pagos", "Usuarios"],
+  "orden": [
+    "Clientes",
+    "Edificios",
+    "Ascensores",
+    "Puertas de piso",
+    "Certificaciones",
+    "Órdenes de trabajo",
+    "Checklist",
+    "Emergencias",
+    "Cotizaciones",
+    "Facturas",
+    "Pagos",
+    "Usuarios"
+  ],
   "instrucciones": [
     "SIGMA · Plantilla de carga de datos",
     "",
@@ -11,10 +24,10 @@
     "2. Los encabezados con * son obligatorios. Pase el cursor sobre un encabezado para ver qué espera el campo.",
     "3. Use las listas desplegables cuando la celda las tenga. Los valores fuera de la lista se rechazan al importar.",
     "4. La fila 2 de cada hoja es un ejemplo: su primer valor empieza por EJEMPLO y SIGMA la ignora al importar. Puede borrarla o dejarla.",
-    "5. Los códigos relacionan las hojas: el código del cliente une Clientes, Edificios, Ascensores, Facturas y Pagos; el código del ascensor une Ascensores, Puertas de piso y Órdenes de trabajo.",
+    "5. Los códigos relacionan las hojas: el código del cliente une Clientes, Edificios, Ascensores, Facturas y Pagos; el código del ascensor une Ascensores, Puertas de piso, Certificaciones, Órdenes de trabajo, Emergencias y Cotizaciones.",
     "",
     "Orden de carga",
-    "Clientes → Edificios → Ascensores → Puertas de piso → Órdenes de trabajo → Checklist → Facturas → Pagos → Usuarios.",
+    "Clientes → Edificios → Ascensores → Puertas de piso → Certificaciones → Órdenes de trabajo → Checklist → Emergencias → Cotizaciones → Facturas → Pagos → Usuarios.",
     "Puede subir todas las hojas en un solo archivo: SIGMA las procesa en ese orden.",
     "",
     "Formatos",
@@ -25,182 +38,1280 @@
     "",
     "Actualizar datos",
     "Si un código ya existe en SIGMA, la fila actualiza ese registro en lugar de crear otro. Exporte, corrija en Excel y vuelva a importar sin perder información.",
-    "Las órdenes de trabajo, facturas y pagos que ya existen no se modifican desde Excel; se informan como existentes.",
+    "Las órdenes de trabajo, emergencias, cotizaciones, certificaciones, facturas y pagos que ya existen no se modifican desde Excel; se informan como existentes.",
     "",
-    "Al importar ascensores, SIGMA crea una puerta de piso por cada parada. La hoja Puertas de piso sirve para indicar su tipo y estado."
+    "Al importar ascensores, SIGMA crea una puerta de piso por cada parada. La hoja Puertas de piso sirve para indicar su tipo y estado.",
+    "",
+    "Certificación anual: en Bogotá la revisión general anual la exige el Acuerdo 470 de 2011 y se hace con la NTC 5926-1 por un organismo acreditado por ONAC. En otras ciudades registre la norma que aplique."
   ],
   "hojas": [
     {
       "nombre": "Clientes",
       "clave": "clientes",
       "columnas": [
-        { "clave": "codigo", "titulo": "Código", "obligatorio": true, "tipo": "texto", "ancho": 14, "ayuda": "Código único del cliente, por ejemplo CL-0001. Relaciona el cliente con sus edificios, ascensores y facturas." },
-        { "clave": "nombre", "titulo": "Nombre o razón social", "obligatorio": true, "tipo": "texto", "ancho": 34, "ayuda": "Nombre de la persona o razón social de la empresa." },
-        { "clave": "tipo", "titulo": "Tipo de persona", "obligatorio": true, "tipo": "lista", "lista": "tiposPersona", "ancho": 18, "ayuda": "Persona jurídica (con NIT) o persona natural (con documento)." },
-        { "clave": "documento", "titulo": "NIT o documento", "obligatorio": true, "tipo": "texto", "ancho": 18, "ayuda": "Persona jurídica: NIT con dígito de verificación (900123456-1). Persona natural: número de documento." },
-        { "clave": "tipo_documento", "titulo": "Tipo de documento", "tipo": "lista", "lista": "tiposDocumento", "ancho": 16, "ayuda": "Solo para persona natural: CC, CE, TI o PA." },
-        { "clave": "contacto", "titulo": "Contacto", "tipo": "texto", "ancho": 24, "ayuda": "Persona con quien se coordina el servicio." },
-        { "clave": "telefono", "titulo": "Teléfono", "tipo": "texto", "ancho": 16, "ayuda": "Teléfono fijo o celular." },
-        { "clave": "correo", "titulo": "Correo", "tipo": "correo", "ancho": 28, "ayuda": "Correo de la administración o del contacto." },
-        { "clave": "direccion", "titulo": "Dirección", "tipo": "texto", "ancho": 26, "ayuda": "Dirección principal del cliente." },
-        { "clave": "contrato", "titulo": "Contrato", "tipo": "texto", "ancho": 16, "soloLectura": true, "ayuda": "Número del contrato vigente. Lo asigna SIGMA; déjelo vacío para crear uno nuevo con las fechas y el valor." },
-        { "clave": "vigencia_desde", "titulo": "Vigencia desde", "tipo": "fecha", "ancho": 15, "ayuda": "Inicio del contrato. Si llena las dos fechas y el valor, SIGMA crea el contrato con los ascensores del cliente." },
-        { "clave": "vigencia_hasta", "titulo": "Vigencia hasta", "tipo": "fecha", "ancho": 15, "ayuda": "Fin del contrato. Debe ser posterior al inicio." },
-        { "clave": "valor_contrato", "titulo": "Valor del contrato (COP)", "tipo": "moneda", "min": 0, "ancho": 20, "ayuda": "Valor total del contrato en pesos colombianos." },
-        { "clave": "estado", "titulo": "Estado", "tipo": "lista", "lista": "estadosRegistro", "ancho": 12, "ayuda": "Activo o Inactivo. Si lo deja vacío, el cliente queda activo." }
+        {
+          "clave": "codigo",
+          "titulo": "Código",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 14,
+          "ayuda": "Código único del cliente, por ejemplo CL-0001. Relaciona el cliente con sus edificios, ascensores y facturas."
+        },
+        {
+          "clave": "nombre",
+          "titulo": "Nombre o razón social",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 34,
+          "ayuda": "Nombre de la persona o razón social de la empresa."
+        },
+        {
+          "clave": "tipo",
+          "titulo": "Tipo de persona",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "tiposPersona",
+          "ancho": 18,
+          "ayuda": "Persona jurídica (con NIT) o persona natural (con documento)."
+        },
+        {
+          "clave": "documento",
+          "titulo": "NIT o documento",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 18,
+          "ayuda": "Persona jurídica: NIT con dígito de verificación (900123456-1). Persona natural: número de documento."
+        },
+        {
+          "clave": "tipo_documento",
+          "titulo": "Tipo de documento",
+          "tipo": "lista",
+          "lista": "tiposDocumento",
+          "ancho": 16,
+          "ayuda": "Solo para persona natural: CC, CE, TI o PA."
+        },
+        {
+          "clave": "contacto",
+          "titulo": "Contacto",
+          "tipo": "texto",
+          "ancho": 24,
+          "ayuda": "Persona con quien se coordina el servicio."
+        },
+        {
+          "clave": "telefono",
+          "titulo": "Teléfono",
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Teléfono fijo o celular."
+        },
+        {
+          "clave": "correo",
+          "titulo": "Correo",
+          "tipo": "correo",
+          "ancho": 28,
+          "ayuda": "Correo de la administración o del contacto."
+        },
+        {
+          "clave": "direccion",
+          "titulo": "Dirección",
+          "tipo": "texto",
+          "ancho": 26,
+          "ayuda": "Dirección principal del cliente."
+        },
+        {
+          "clave": "contrato",
+          "titulo": "Contrato",
+          "tipo": "texto",
+          "ancho": 16,
+          "soloLectura": true,
+          "ayuda": "Número del contrato vigente. Lo asigna SIGMA; déjelo vacío para crear uno nuevo con las fechas y el valor."
+        },
+        {
+          "clave": "vigencia_desde",
+          "titulo": "Vigencia desde",
+          "tipo": "fecha",
+          "ancho": 15,
+          "ayuda": "Inicio del contrato. Si llena las dos fechas y el valor, SIGMA crea el contrato con los ascensores del cliente."
+        },
+        {
+          "clave": "vigencia_hasta",
+          "titulo": "Vigencia hasta",
+          "tipo": "fecha",
+          "ancho": 15,
+          "ayuda": "Fin del contrato. Debe ser posterior al inicio."
+        },
+        {
+          "clave": "valor_contrato",
+          "titulo": "Valor del contrato (COP)",
+          "tipo": "moneda",
+          "min": 0,
+          "ancho": 20,
+          "ayuda": "Valor total del contrato en pesos colombianos."
+        },
+        {
+          "clave": "estado",
+          "titulo": "Estado",
+          "tipo": "lista",
+          "lista": "estadosRegistro",
+          "ancho": 12,
+          "ayuda": "Activo o Inactivo. Si lo deja vacío, el cliente queda activo."
+        }
       ],
-      "ejemplo": { "codigo": "EJEMPLO-CL-001", "nombre": "Conjunto Residencial Mirador del Parque", "tipo": "Persona jurídica", "documento": "900123456-1", "contacto": "Laura Gómez", "telefono": "6017001122", "correo": "administracion@mirador.co", "direccion": "Cra 15 # 100-20", "vigencia_desde": "2026-01-01", "vigencia_hasta": "2026-12-31", "valor_contrato": 18000000, "estado": "Activo" }
+      "ejemplo": {
+        "codigo": "EJEMPLO-CL-001",
+        "nombre": "Conjunto Residencial Mirador del Parque",
+        "tipo": "Persona jurídica",
+        "documento": "900123456-1",
+        "contacto": "Laura Gómez",
+        "telefono": "6017001122",
+        "correo": "administracion@mirador.co",
+        "direccion": "Cra 15 # 100-20",
+        "vigencia_desde": "2026-01-01",
+        "vigencia_hasta": "2026-12-31",
+        "valor_contrato": 18000000,
+        "estado": "Activo"
+      }
     },
     {
       "nombre": "Edificios",
       "clave": "edificios",
       "columnas": [
-        { "clave": "cliente", "titulo": "Código del cliente", "obligatorio": true, "tipo": "texto", "ancho": 16, "ayuda": "Código del cliente dueño del edificio (hoja Clientes)." },
-        { "clave": "nombre", "titulo": "Edificio o sede", "obligatorio": true, "tipo": "texto", "ancho": 26, "ayuda": "Nombre del edificio, torre o sede. Debe ser único dentro del cliente." },
-        { "clave": "tipo", "titulo": "Tipo", "obligatorio": true, "tipo": "lista", "lista": "tiposEdificio", "ancho": 15, "ayuda": "Conjunto, Institucional o Residencial." },
-        { "clave": "direccion", "titulo": "Dirección", "obligatorio": true, "tipo": "texto", "ancho": 26, "ayuda": "Dirección del edificio. También es la ubicación de sus ascensores." },
-        { "clave": "ciudad", "titulo": "Ciudad", "obligatorio": true, "tipo": "texto", "ancho": 16, "ayuda": "Ciudad o municipio." },
-        { "clave": "departamento", "titulo": "Departamento", "tipo": "texto", "ancho": 16, "ayuda": "Departamento." },
-        { "clave": "pisos", "titulo": "Pisos", "tipo": "entero", "min": 1, "max": 300, "ancho": 8, "ayuda": "Número de pisos del edificio." },
-        { "clave": "contacto", "titulo": "Contacto", "obligatorio": true, "tipo": "texto", "ancho": 22, "ayuda": "Persona de contacto en el edificio." },
-        { "clave": "telefono", "titulo": "Teléfono del contacto", "tipo": "texto", "ancho": 18, "ayuda": "Indique teléfono o correo del contacto (al menos uno)." },
-        { "clave": "correo", "titulo": "Correo del contacto", "tipo": "correo", "ancho": 26, "ayuda": "Indique teléfono o correo del contacto (al menos uno)." },
-        { "clave": "estado", "titulo": "Estado", "tipo": "lista", "lista": "estadosRegistro", "ancho": 12, "ayuda": "Activo o Inactivo." }
+        {
+          "clave": "cliente",
+          "titulo": "Código del cliente",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Código del cliente dueño del edificio (hoja Clientes)."
+        },
+        {
+          "clave": "nombre",
+          "titulo": "Edificio o sede",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 26,
+          "ayuda": "Nombre del edificio, torre o sede. Debe ser único dentro del cliente."
+        },
+        {
+          "clave": "tipo",
+          "titulo": "Tipo",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "tiposEdificio",
+          "ancho": 15,
+          "ayuda": "Conjunto, Institucional o Residencial."
+        },
+        {
+          "clave": "direccion",
+          "titulo": "Dirección",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 26,
+          "ayuda": "Dirección del edificio. También es la ubicación de sus ascensores."
+        },
+        {
+          "clave": "ciudad",
+          "titulo": "Ciudad",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Ciudad o municipio."
+        },
+        {
+          "clave": "departamento",
+          "titulo": "Departamento",
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Departamento."
+        },
+        {
+          "clave": "pisos",
+          "titulo": "Pisos",
+          "tipo": "entero",
+          "min": 1,
+          "max": 300,
+          "ancho": 8,
+          "ayuda": "Número de pisos del edificio."
+        },
+        {
+          "clave": "contacto",
+          "titulo": "Contacto",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 22,
+          "ayuda": "Persona de contacto en el edificio."
+        },
+        {
+          "clave": "telefono",
+          "titulo": "Teléfono del contacto",
+          "tipo": "texto",
+          "ancho": 18,
+          "ayuda": "Indique teléfono o correo del contacto (al menos uno)."
+        },
+        {
+          "clave": "correo",
+          "titulo": "Correo del contacto",
+          "tipo": "correo",
+          "ancho": 26,
+          "ayuda": "Indique teléfono o correo del contacto (al menos uno)."
+        },
+        {
+          "clave": "estado",
+          "titulo": "Estado",
+          "tipo": "lista",
+          "lista": "estadosRegistro",
+          "ancho": 12,
+          "ayuda": "Activo o Inactivo."
+        }
       ],
-      "ejemplo": { "cliente": "EJEMPLO-CL-001", "nombre": "Torre A", "tipo": "Conjunto", "direccion": "Cra 15 # 100-20", "ciudad": "Bogotá", "departamento": "Cundinamarca", "pisos": 18, "contacto": "Laura Gómez", "telefono": "3101234567", "estado": "Activo" }
+      "ejemplo": {
+        "cliente": "EJEMPLO-CL-001",
+        "nombre": "Torre A",
+        "tipo": "Conjunto",
+        "direccion": "Cra 15 # 100-20",
+        "ciudad": "Bogotá",
+        "departamento": "Cundinamarca",
+        "pisos": 18,
+        "contacto": "Laura Gómez",
+        "telefono": "3101234567",
+        "estado": "Activo"
+      }
     },
     {
       "nombre": "Ascensores",
       "clave": "ascensores",
       "columnas": [
-        { "clave": "codigo", "titulo": "Código", "obligatorio": true, "tipo": "texto", "ancho": 13, "ayuda": "Código único del ascensor, por ejemplo ASC-001." },
-        { "clave": "cliente", "titulo": "Código del cliente", "obligatorio": true, "tipo": "texto", "ancho": 16, "ayuda": "Código del cliente (hoja Clientes)." },
-        { "clave": "edificio", "titulo": "Edificio o sede", "obligatorio": true, "tipo": "texto", "ancho": 22, "ayuda": "Nombre del edificio tal como aparece en la hoja Edificios." },
-        { "clave": "nombre", "titulo": "Nombre del equipo", "tipo": "texto", "ancho": 18, "ayuda": "Nombre corto dentro del edificio, por ejemplo Ascensor 1." },
-        { "clave": "marca", "titulo": "Marca", "tipo": "lista", "lista": "marcas", "libre": true, "ancho": 16, "ayuda": "Elija de la lista o escriba otra marca." },
-        { "clave": "modelo", "titulo": "Modelo", "tipo": "texto", "ancho": 16, "ayuda": "Modelo del fabricante." },
-        { "clave": "anio_instalacion", "titulo": "Año de instalación", "tipo": "entero", "min": 1960, "max": 2026, "ancho": 12, "ayuda": "Año entre 1960 y 2026." },
-        { "clave": "numero_serie", "titulo": "Número de serie", "tipo": "texto", "ancho": 16, "ayuda": "Número de serie del fabricante." },
-        { "clave": "capacidad_kg", "titulo": "Capacidad (kg)", "obligatorio": true, "tipo": "entero", "min": 100, "max": 5000, "ancho": 12, "ayuda": "Carga nominal entre 100 y 5.000 kg." },
-        { "clave": "personas", "titulo": "Personas", "tipo": "entero", "min": 1, "max": 100, "ancho": 10, "ayuda": "Capacidad en personas." },
-        { "clave": "velocidad_ms", "titulo": "Velocidad (m/s)", "obligatorio": true, "tipo": "decimal", "min": 0.1, "max": 10, "ancho": 12, "ayuda": "Velocidad nominal entre 0,1 y 10 m/s." },
-        { "clave": "paradas", "titulo": "Paradas", "obligatorio": true, "tipo": "entero", "min": 2, "max": 60, "ancho": 10, "ayuda": "Número de paradas entre 2 y 60. SIGMA crea una puerta de piso por parada." },
-        { "clave": "accionamiento", "titulo": "Accionamiento", "tipo": "lista", "lista": "accionamientos", "libre": true, "ancho": 26, "ayuda": "Elija de la lista o escriba el tipo de accionamiento." },
-        { "clave": "controlador", "titulo": "Controlador", "tipo": "texto", "ancho": 18, "ayuda": "Controlador o tablero de maniobra." },
-        { "clave": "tipo_puerta", "titulo": "Tipo de puerta de cabina", "tipo": "lista", "lista": "tiposPuerta", "libre": true, "ancho": 26, "ayuda": "Elija de la lista o escriba el tipo de la puerta de cabina." },
-        { "clave": "periodicidad", "titulo": "Periodicidad (meses)", "tipo": "entero", "min": 1, "max": 6, "ancho": 13, "ayuda": "Cada cuántos meses se hace el mantenimiento preventivo (1 a 6). Si la llena, también llene la fecha del primer mantenimiento." },
-        { "clave": "plan", "titulo": "Plan", "tipo": "lista", "lista": "planes", "ancho": 24, "ayuda": "Plan de mantenimiento. Si lo deja vacío, se usa el primer plan activo con esa periodicidad." },
-        { "clave": "fecha_primer_mantenimiento", "titulo": "Fecha del primer mantenimiento", "tipo": "fecha", "ancho": 16, "ayuda": "Fecha desde la que se programan las visitas." },
-        { "clave": "tecnico", "titulo": "Técnico asignado", "tipo": "lista", "lista": "tecnicos", "ancho": 22, "ayuda": "Técnico de referencia del ascensor (debe estar registrado en SIGMA)." },
-        { "clave": "valor_visita", "titulo": "Valor por visita (COP)", "tipo": "moneda", "min": 1, "ancho": 18, "ayuda": "Precio pactado por visita. Si lo deja vacío, se usa el precio del plan." },
-        { "clave": "estado", "titulo": "Estado", "tipo": "lista", "lista": "estadosEquipo", "ancho": 16, "ayuda": "Activo, En mantenimiento o Inactivo." },
-        { "clave": "observaciones", "titulo": "Observaciones", "tipo": "texto", "ancho": 30, "ayuda": "Notas generales del equipo." }
+        {
+          "clave": "codigo",
+          "titulo": "Código",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 13,
+          "ayuda": "Código único del ascensor, por ejemplo ASC-001."
+        },
+        {
+          "clave": "cliente",
+          "titulo": "Código del cliente",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Código del cliente (hoja Clientes)."
+        },
+        {
+          "clave": "edificio",
+          "titulo": "Edificio o sede",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 22,
+          "ayuda": "Nombre del edificio tal como aparece en la hoja Edificios."
+        },
+        {
+          "clave": "nombre",
+          "titulo": "Nombre del equipo",
+          "tipo": "texto",
+          "ancho": 18,
+          "ayuda": "Nombre corto dentro del edificio, por ejemplo Ascensor 1."
+        },
+        {
+          "clave": "marca",
+          "titulo": "Marca",
+          "tipo": "lista",
+          "lista": "marcas",
+          "libre": true,
+          "ancho": 16,
+          "ayuda": "Elija de la lista o escriba otra marca."
+        },
+        {
+          "clave": "modelo",
+          "titulo": "Modelo",
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Modelo del fabricante."
+        },
+        {
+          "clave": "anio_instalacion",
+          "titulo": "Año de instalación",
+          "tipo": "entero",
+          "min": 1960,
+          "max": 2026,
+          "ancho": 12,
+          "ayuda": "Año entre 1960 y 2026."
+        },
+        {
+          "clave": "numero_serie",
+          "titulo": "Número de serie",
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Número de serie del fabricante."
+        },
+        {
+          "clave": "capacidad_kg",
+          "titulo": "Capacidad (kg)",
+          "obligatorio": true,
+          "tipo": "entero",
+          "min": 100,
+          "max": 5000,
+          "ancho": 12,
+          "ayuda": "Carga nominal entre 100 y 5.000 kg."
+        },
+        {
+          "clave": "personas",
+          "titulo": "Personas",
+          "tipo": "entero",
+          "min": 1,
+          "max": 100,
+          "ancho": 10,
+          "ayuda": "Capacidad en personas."
+        },
+        {
+          "clave": "velocidad_ms",
+          "titulo": "Velocidad (m/s)",
+          "obligatorio": true,
+          "tipo": "decimal",
+          "min": 0.1,
+          "max": 10,
+          "ancho": 12,
+          "ayuda": "Velocidad nominal entre 0,1 y 10 m/s."
+        },
+        {
+          "clave": "paradas",
+          "titulo": "Paradas",
+          "obligatorio": true,
+          "tipo": "entero",
+          "min": 2,
+          "max": 60,
+          "ancho": 10,
+          "ayuda": "Número de paradas entre 2 y 60. SIGMA crea una puerta de piso por parada."
+        },
+        {
+          "clave": "accionamiento",
+          "titulo": "Accionamiento",
+          "tipo": "lista",
+          "lista": "accionamientos",
+          "libre": true,
+          "ancho": 26,
+          "ayuda": "Elija de la lista o escriba el tipo de accionamiento."
+        },
+        {
+          "clave": "controlador",
+          "titulo": "Controlador",
+          "tipo": "texto",
+          "ancho": 18,
+          "ayuda": "Controlador o tablero de maniobra."
+        },
+        {
+          "clave": "tipo_puerta",
+          "titulo": "Tipo de puerta de cabina",
+          "tipo": "lista",
+          "lista": "tiposPuerta",
+          "libre": true,
+          "ancho": 26,
+          "ayuda": "Elija de la lista o escriba el tipo de la puerta de cabina."
+        },
+        {
+          "clave": "periodicidad",
+          "titulo": "Periodicidad (meses)",
+          "tipo": "entero",
+          "min": 1,
+          "max": 6,
+          "ancho": 13,
+          "ayuda": "Cada cuántos meses se hace el mantenimiento preventivo (1 a 6). Si la llena, también llene la fecha del primer mantenimiento."
+        },
+        {
+          "clave": "plan",
+          "titulo": "Plan",
+          "tipo": "lista",
+          "lista": "planes",
+          "ancho": 24,
+          "ayuda": "Plan de mantenimiento. Si lo deja vacío, se usa el primer plan activo con esa periodicidad."
+        },
+        {
+          "clave": "fecha_primer_mantenimiento",
+          "titulo": "Fecha del primer mantenimiento",
+          "tipo": "fecha",
+          "ancho": 16,
+          "ayuda": "Fecha desde la que se programan las visitas."
+        },
+        {
+          "clave": "tecnico",
+          "titulo": "Técnico asignado",
+          "tipo": "lista",
+          "lista": "tecnicos",
+          "ancho": 22,
+          "ayuda": "Técnico de referencia del ascensor (debe estar registrado en SIGMA)."
+        },
+        {
+          "clave": "valor_visita",
+          "titulo": "Valor por visita (COP)",
+          "tipo": "moneda",
+          "min": 1,
+          "ancho": 18,
+          "ayuda": "Precio pactado por visita. Si lo deja vacío, se usa el precio del plan."
+        },
+        {
+          "clave": "estado",
+          "titulo": "Estado",
+          "tipo": "lista",
+          "lista": "estadosEquipo",
+          "ancho": 16,
+          "ayuda": "Activo, En mantenimiento o Inactivo."
+        },
+        {
+          "clave": "observaciones",
+          "titulo": "Observaciones",
+          "tipo": "texto",
+          "ancho": 30,
+          "ayuda": "Notas generales del equipo."
+        }
       ],
-      "ejemplo": { "codigo": "EJEMPLO-ASC-001", "cliente": "EJEMPLO-CL-001", "edificio": "Torre A", "nombre": "Ascensor 1", "marca": "Schindler", "modelo": "3300", "anio_instalacion": 2018, "numero_serie": "SN-4471", "capacidad_kg": 630, "personas": 8, "velocidad_ms": 1, "paradas": 7, "accionamiento": "Eléctrico de tracción", "controlador": "Microprocesado", "tipo_puerta": "Automática de apertura central", "periodicidad": 1, "fecha_primer_mantenimiento": "2026-11-03", "valor_visita": 380000, "estado": "Activo" }
+      "ejemplo": {
+        "codigo": "EJEMPLO-ASC-001",
+        "cliente": "EJEMPLO-CL-001",
+        "edificio": "Torre A",
+        "nombre": "Ascensor 1",
+        "marca": "Schindler",
+        "modelo": "3300",
+        "anio_instalacion": 2018,
+        "numero_serie": "SN-4471",
+        "capacidad_kg": 630,
+        "personas": 8,
+        "velocidad_ms": 1,
+        "paradas": 7,
+        "accionamiento": "Eléctrico de tracción",
+        "controlador": "Microprocesado",
+        "tipo_puerta": "Automática de apertura central",
+        "periodicidad": 1,
+        "fecha_primer_mantenimiento": "2026-11-03",
+        "valor_visita": 380000,
+        "estado": "Activo"
+      }
     },
     {
       "nombre": "Puertas de piso",
       "clave": "puertas",
       "columnas": [
-        { "clave": "ascensor", "titulo": "Código del ascensor", "obligatorio": true, "tipo": "texto", "ancho": 18, "ayuda": "Código del ascensor (hoja Ascensores)." },
-        { "clave": "piso", "titulo": "Piso", "obligatorio": true, "tipo": "entero", "min": 1, "max": 60, "ancho": 8, "ayuda": "Número de la parada. Debe estar entre 1 y las paradas del ascensor." },
-        { "clave": "tipo", "titulo": "Tipo", "obligatorio": true, "tipo": "lista", "lista": "tiposPuertaPiso", "ancho": 14, "ayuda": "Automática o Manual." },
-        { "clave": "estado", "titulo": "Estado", "obligatorio": true, "tipo": "lista", "lista": "estadosPuerta", "ancho": 13, "ayuda": "Bueno, Regular, Malo o Pendiente." },
-        { "clave": "observacion", "titulo": "Observación", "tipo": "texto", "ancho": 36, "ayuda": "Obligatoria si el estado es Regular o Malo." }
+        {
+          "clave": "ascensor",
+          "titulo": "Código del ascensor",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 18,
+          "ayuda": "Código del ascensor (hoja Ascensores)."
+        },
+        {
+          "clave": "piso",
+          "titulo": "Piso",
+          "obligatorio": true,
+          "tipo": "entero",
+          "min": 1,
+          "max": 60,
+          "ancho": 8,
+          "ayuda": "Número de la parada. Debe estar entre 1 y las paradas del ascensor."
+        },
+        {
+          "clave": "tipo",
+          "titulo": "Tipo",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "tiposPuertaPiso",
+          "ancho": 14,
+          "ayuda": "Automática o Manual."
+        },
+        {
+          "clave": "estado",
+          "titulo": "Estado",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "estadosPuerta",
+          "ancho": 13,
+          "ayuda": "Bueno, Regular, Malo o Pendiente."
+        },
+        {
+          "clave": "observacion",
+          "titulo": "Observación",
+          "tipo": "texto",
+          "ancho": 36,
+          "ayuda": "Obligatoria si el estado es Regular o Malo."
+        }
       ],
-      "ejemplo": { "ascensor": "EJEMPLO-ASC-001", "piso": 6, "tipo": "Automática", "estado": "Regular", "observacion": "Cierre lento, roce en la zapata." }
+      "ejemplo": {
+        "ascensor": "EJEMPLO-ASC-001",
+        "piso": 6,
+        "tipo": "Automática",
+        "estado": "Regular",
+        "observacion": "Cierre lento, roce en la zapata."
+      }
+    },
+    {
+      "nombre": "Certificaciones",
+      "clave": "certificaciones",
+      "columnas": [
+        {
+          "clave": "ascensor",
+          "titulo": "Código del ascensor",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 18,
+          "ayuda": "Código del ascensor (hoja Ascensores)."
+        },
+        {
+          "clave": "organismo",
+          "titulo": "Organismo de inspección",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 30,
+          "ayuda": "Organismo acreditado por ONAC que hizo la revisión."
+        },
+        {
+          "clave": "numero_certificado",
+          "titulo": "Número del certificado",
+          "tipo": "texto",
+          "ancho": 18,
+          "ayuda": "Número que aparece en el certificado."
+        },
+        {
+          "clave": "norma",
+          "titulo": "Norma",
+          "tipo": "texto",
+          "ancho": 14,
+          "ayuda": "Norma técnica aplicada. Si la deja vacía, queda NTC 5926-1."
+        },
+        {
+          "clave": "fecha_inspeccion",
+          "titulo": "Fecha de inspección",
+          "obligatorio": true,
+          "tipo": "fecha",
+          "ancho": 14,
+          "ayuda": "Día de la revisión. No puede ser futura."
+        },
+        {
+          "clave": "fecha_vencimiento",
+          "titulo": "Fecha de vencimiento",
+          "obligatorio": true,
+          "tipo": "fecha",
+          "ancho": 14,
+          "ayuda": "Posterior a la inspección; normalmente un año después."
+        },
+        {
+          "clave": "resultado",
+          "titulo": "Resultado",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "resultadosCertificacion",
+          "ancho": 26,
+          "ayuda": "Conforme, Conforme con observaciones o No conforme."
+        },
+        {
+          "clave": "observaciones",
+          "titulo": "Observaciones",
+          "tipo": "texto",
+          "ancho": 34,
+          "ayuda": "No conformidades o recomendaciones del organismo."
+        },
+        {
+          "clave": "estado",
+          "titulo": "Estado",
+          "tipo": "texto",
+          "ancho": 14,
+          "soloLectura": true,
+          "ayuda": "Vigente, Por vencer, Vencida o No conforme. Lo calcula SIGMA."
+        }
+      ],
+      "ejemplo": {
+        "ascensor": "EJEMPLO-ASC-001",
+        "organismo": "Inspecciones Andinas S.A.S.",
+        "numero_certificado": "RA-2026-118",
+        "norma": "NTC 5926-1",
+        "fecha_inspeccion": "2026-03-10",
+        "fecha_vencimiento": "2027-03-10",
+        "resultado": "Conforme"
+      }
     },
     {
       "nombre": "Órdenes de trabajo",
       "clave": "ordenes",
       "columnas": [
-        { "clave": "numero", "titulo": "Número", "tipo": "texto", "ancho": 16, "soloLectura": true, "ayuda": "Lo asigna SIGMA (OT-AAAA-00001). Déjelo vacío para crear una orden nueva." },
-        { "clave": "ascensor", "titulo": "Código del ascensor", "obligatorio": true, "tipo": "texto", "ancho": 18, "ayuda": "Código del ascensor (hoja Ascensores)." },
-        { "clave": "tipo", "titulo": "Tipo", "obligatorio": true, "tipo": "lista", "lista": "tiposOrden", "ancho": 26, "ayuda": "Mantenimiento preventivo, mantenimiento correctivo o inspección." },
-        { "clave": "prioridad", "titulo": "Prioridad", "tipo": "lista", "lista": "prioridades", "ancho": 12, "ayuda": "Baja, Media, Alta o Crítica. Si la deja vacía, queda Media." },
-        { "clave": "tecnico", "titulo": "Técnico", "tipo": "lista", "lista": "tecnicos", "ancho": 22, "ayuda": "Técnico asignado. Debe estar disponible y sin otra orden en ese horario." },
-        { "clave": "fecha", "titulo": "Fecha", "obligatorio": true, "tipo": "fecha", "ancho": 13, "ayuda": "Fecha programada. No puede ser anterior a hoy." },
-        { "clave": "hora_inicio", "titulo": "Hora de inicio", "obligatorio": true, "tipo": "hora", "ancho": 12, "ayuda": "Hora programada (24 horas)." },
-        { "clave": "hora_fin", "titulo": "Hora de fin", "tipo": "hora", "ancho": 12, "ayuda": "Hora estimada de fin. Define la duración (entre 15 minutos y 12 horas)." },
-        { "clave": "estado", "titulo": "Estado", "tipo": "texto", "ancho": 14, "soloLectura": true, "ayuda": "Lo asigna SIGMA: las órdenes nuevas quedan programadas o asignadas." },
-        { "clave": "descripcion", "titulo": "Trabajo a realizar", "tipo": "texto", "ancho": 34, "ayuda": "Qué se debe hacer o qué falla reporta el cliente." },
-        { "clave": "observaciones", "titulo": "Observaciones", "tipo": "texto", "ancho": 30, "ayuda": "Notas adicionales." }
+        {
+          "clave": "numero",
+          "titulo": "Número",
+          "tipo": "texto",
+          "ancho": 16,
+          "soloLectura": true,
+          "ayuda": "Lo asigna SIGMA (OT-AAAA-00001). Déjelo vacío para crear una orden nueva."
+        },
+        {
+          "clave": "ascensor",
+          "titulo": "Código del ascensor",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 18,
+          "ayuda": "Código del ascensor (hoja Ascensores)."
+        },
+        {
+          "clave": "tipo",
+          "titulo": "Tipo",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "tiposOrden",
+          "ancho": 26,
+          "ayuda": "Mantenimiento preventivo, mantenimiento correctivo o inspección."
+        },
+        {
+          "clave": "prioridad",
+          "titulo": "Prioridad",
+          "tipo": "lista",
+          "lista": "prioridades",
+          "ancho": 12,
+          "ayuda": "Baja, Media, Alta o Crítica. Si la deja vacía, queda Media."
+        },
+        {
+          "clave": "tecnico",
+          "titulo": "Técnico",
+          "tipo": "lista",
+          "lista": "tecnicos",
+          "ancho": 22,
+          "ayuda": "Técnico asignado. Debe estar disponible y sin otra orden en ese horario."
+        },
+        {
+          "clave": "fecha",
+          "titulo": "Fecha",
+          "obligatorio": true,
+          "tipo": "fecha",
+          "ancho": 13,
+          "ayuda": "Fecha programada. No puede ser anterior a hoy."
+        },
+        {
+          "clave": "hora_inicio",
+          "titulo": "Hora de inicio",
+          "obligatorio": true,
+          "tipo": "hora",
+          "ancho": 12,
+          "ayuda": "Hora programada (24 horas)."
+        },
+        {
+          "clave": "hora_fin",
+          "titulo": "Hora de fin",
+          "tipo": "hora",
+          "ancho": 12,
+          "ayuda": "Hora estimada de fin. Define la duración (entre 15 minutos y 12 horas)."
+        },
+        {
+          "clave": "estado",
+          "titulo": "Estado",
+          "tipo": "texto",
+          "ancho": 14,
+          "soloLectura": true,
+          "ayuda": "Lo asigna SIGMA: las órdenes nuevas quedan programadas o asignadas."
+        },
+        {
+          "clave": "descripcion",
+          "titulo": "Trabajo a realizar",
+          "tipo": "texto",
+          "ancho": 34,
+          "ayuda": "Qué se debe hacer o qué falla reporta el cliente."
+        },
+        {
+          "clave": "observaciones",
+          "titulo": "Observaciones",
+          "tipo": "texto",
+          "ancho": 30,
+          "ayuda": "Notas adicionales."
+        }
       ],
-      "ejemplo": { "ascensor": "EJEMPLO-ASC-001", "tipo": "Mantenimiento correctivo", "prioridad": "Alta", "fecha": "2026-11-05", "hora_inicio": "08:00", "hora_fin": "10:00", "descripcion": "Cambio de zapatas de la puerta del piso 6." }
+      "ejemplo": {
+        "ascensor": "EJEMPLO-ASC-001",
+        "tipo": "Mantenimiento correctivo",
+        "prioridad": "Alta",
+        "fecha": "2026-11-05",
+        "hora_inicio": "08:00",
+        "hora_fin": "10:00",
+        "descripcion": "Cambio de zapatas de la puerta del piso 6."
+      }
     },
     {
       "nombre": "Checklist",
       "clave": "checklist",
       "columnas": [
-        { "clave": "orden", "titulo": "Número de orden", "obligatorio": true, "tipo": "texto", "ancho": 16, "ayuda": "Orden de mantenimiento preventivo en proceso." },
-        { "clave": "zona", "titulo": "Zona", "obligatorio": true, "tipo": "lista", "lista": "zonas", "ancho": 20, "ayuda": "Zona del ascensor." },
-        { "clave": "item", "titulo": "Ítem", "obligatorio": true, "tipo": "texto", "ancho": 34, "ayuda": "Código del ítem (CM-01) o su nombre exacto." },
-        { "clave": "resultado", "titulo": "Resultado", "obligatorio": true, "tipo": "lista", "lista": "resultados", "ancho": 11, "ayuda": "B (bueno), R (regular) o M (malo)." },
-        { "clave": "tipo", "titulo": "Tipo", "obligatorio": true, "tipo": "lista", "lista": "tiposRevision", "ancho": 10, "ayuda": "INS, EST o N.A." },
-        { "clave": "observacion", "titulo": "Observación", "tipo": "texto", "ancho": 36, "ayuda": "Obligatoria si el resultado es R o M." }
+        {
+          "clave": "orden",
+          "titulo": "Número de orden",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Orden de mantenimiento preventivo en proceso."
+        },
+        {
+          "clave": "zona",
+          "titulo": "Zona",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "zonas",
+          "ancho": 20,
+          "ayuda": "Zona del ascensor."
+        },
+        {
+          "clave": "item",
+          "titulo": "Ítem",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 34,
+          "ayuda": "Código del ítem (CM-01) o su nombre exacto."
+        },
+        {
+          "clave": "resultado",
+          "titulo": "Resultado",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "resultados",
+          "ancho": 11,
+          "ayuda": "B (bueno), R (regular) o M (malo)."
+        },
+        {
+          "clave": "tipo",
+          "titulo": "Tipo",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "tiposRevision",
+          "ancho": 10,
+          "ayuda": "INS, EST o N.A."
+        },
+        {
+          "clave": "observacion",
+          "titulo": "Observación",
+          "tipo": "texto",
+          "ancho": 36,
+          "ayuda": "Obligatoria si el resultado es R o M."
+        }
       ],
-      "ejemplo": { "orden": "EJEMPLO-OT-2026-00004", "zona": "Cuarto de máquinas", "item": "CM-01", "resultado": "B", "tipo": "INS" }
+      "ejemplo": {
+        "orden": "EJEMPLO-OT-2026-00004",
+        "zona": "Cuarto de máquinas",
+        "item": "CM-01",
+        "resultado": "B",
+        "tipo": "INS"
+      }
+    },
+    {
+      "nombre": "Emergencias",
+      "clave": "emergencias",
+      "columnas": [
+        {
+          "clave": "numero",
+          "titulo": "Número",
+          "tipo": "texto",
+          "ancho": 16,
+          "soloLectura": true,
+          "ayuda": "Lo asigna SIGMA (EM-AAAA-00001). Déjelo vacío para registrar una emergencia pasada."
+        },
+        {
+          "clave": "ascensor",
+          "titulo": "Código del ascensor",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 18,
+          "ayuda": "Código del ascensor (hoja Ascensores)."
+        },
+        {
+          "clave": "tipo",
+          "titulo": "Tipo",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "tiposEmergencia",
+          "ancho": 28,
+          "ayuda": "Personas atrapadas, ascensor detenido o con falla, ruido o movimiento anormal, u otro."
+        },
+        {
+          "clave": "fecha_reporte",
+          "titulo": "Fecha del reporte",
+          "obligatorio": true,
+          "tipo": "fecha",
+          "ancho": 14,
+          "ayuda": "Día en que se reportó. No puede ser futura."
+        },
+        {
+          "clave": "hora_reporte",
+          "titulo": "Hora del reporte",
+          "obligatorio": true,
+          "tipo": "hora",
+          "ancho": 12,
+          "ayuda": "Hora del reporte (24 horas)."
+        },
+        {
+          "clave": "reportante",
+          "titulo": "Quién reportó",
+          "tipo": "texto",
+          "ancho": 22,
+          "ayuda": "Nombre de quien avisó (portería, residente, administrador)."
+        },
+        {
+          "clave": "telefono",
+          "titulo": "Teléfono",
+          "tipo": "texto",
+          "ancho": 14,
+          "ayuda": "Teléfono de contacto."
+        },
+        {
+          "clave": "descripcion",
+          "titulo": "Descripción",
+          "tipo": "texto",
+          "ancho": 34,
+          "ayuda": "Qué pasó."
+        },
+        {
+          "clave": "tecnico",
+          "titulo": "Técnico",
+          "tipo": "lista",
+          "lista": "tecnicos",
+          "ancho": 22,
+          "ayuda": "Técnico que atendió."
+        },
+        {
+          "clave": "hora_llegada",
+          "titulo": "Hora de llegada",
+          "tipo": "hora",
+          "ancho": 12,
+          "ayuda": "Hora en que llegó el técnico, el mismo día del reporte. Sirve para el tiempo de respuesta."
+        },
+        {
+          "clave": "fecha_solucion",
+          "titulo": "Fecha de solución",
+          "tipo": "fecha",
+          "ancho": 14,
+          "ayuda": "Día en que quedó resuelta. Si la deja vacía, la emergencia queda abierta."
+        },
+        {
+          "clave": "hora_solucion",
+          "titulo": "Hora de solución",
+          "tipo": "hora",
+          "ancho": 12,
+          "ayuda": "Hora en que quedó resuelta."
+        },
+        {
+          "clave": "solucion",
+          "titulo": "Solución",
+          "tipo": "texto",
+          "ancho": 34,
+          "ayuda": "Qué se hizo. Obligatoria si escribe la fecha de solución."
+        },
+        {
+          "clave": "estado",
+          "titulo": "Estado",
+          "tipo": "texto",
+          "ancho": 16,
+          "soloLectura": true,
+          "ayuda": "Lo calcula SIGMA."
+        }
+      ],
+      "ejemplo": {
+        "ascensor": "EJEMPLO-ASC-001",
+        "tipo": "Personas atrapadas",
+        "fecha_reporte": "2026-10-12",
+        "hora_reporte": "19:40",
+        "reportante": "Portería Torre A",
+        "telefono": "601 555 1234",
+        "descripcion": "Cabina detenida entre los pisos 3 y 4.",
+        "hora_llegada": "20:05",
+        "fecha_solucion": "2026-10-12",
+        "hora_solucion": "20:30",
+        "solucion": "Rescate y ajuste del freno."
+      }
+    },
+    {
+      "nombre": "Cotizaciones",
+      "clave": "cotizaciones",
+      "columnas": [
+        {
+          "clave": "numero",
+          "titulo": "Número",
+          "tipo": "texto",
+          "ancho": 16,
+          "soloLectura": true,
+          "ayuda": "Lo asigna SIGMA (CT-AAAA-00001). Déjelo vacío para crear una cotización."
+        },
+        {
+          "clave": "ascensor",
+          "titulo": "Código del ascensor",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 18,
+          "ayuda": "Código del ascensor (hoja Ascensores). El cliente sale del edificio."
+        },
+        {
+          "clave": "titulo",
+          "titulo": "Trabajo cotizado",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 32,
+          "ayuda": "Nombre corto del correctivo."
+        },
+        {
+          "clave": "descripcion",
+          "titulo": "Detalle",
+          "tipo": "texto",
+          "ancho": 34,
+          "ayuda": "Alcance, repuestos y condiciones."
+        },
+        {
+          "clave": "valor",
+          "titulo": "Valor antes de IVA (COP)",
+          "obligatorio": true,
+          "tipo": "moneda",
+          "min": 0,
+          "ancho": 18,
+          "ayuda": "Valor del trabajo sin IVA."
+        },
+        {
+          "clave": "iva",
+          "titulo": "IVA (%)",
+          "tipo": "decimal",
+          "min": 0,
+          "max": 100,
+          "ancho": 10,
+          "ayuda": "Porcentaje de IVA. Si lo deja vacío, se usa el de la configuración."
+        },
+        {
+          "clave": "vigente_hasta",
+          "titulo": "Vigente hasta",
+          "tipo": "fecha",
+          "ancho": 14,
+          "ayuda": "Último día para aprobarla. Si la deja vacía, 30 días."
+        },
+        {
+          "clave": "total",
+          "titulo": "Total (COP)",
+          "tipo": "moneda",
+          "ancho": 16,
+          "soloLectura": true,
+          "ayuda": "Lo calcula SIGMA."
+        },
+        {
+          "clave": "estado",
+          "titulo": "Estado",
+          "tipo": "texto",
+          "ancho": 18,
+          "soloLectura": true,
+          "ayuda": "Esperando respuesta, Aprobada, Rechazada o Vencida."
+        }
+      ],
+      "ejemplo": {
+        "ascensor": "EJEMPLO-ASC-001",
+        "titulo": "Cambio de amortiguadores del foso",
+        "descripcion": "Incluye dos amortiguadores hidráulicos y mano de obra.",
+        "valor": 2000000,
+        "iva": 19,
+        "vigente_hasta": "2026-11-30"
+      }
     },
     {
       "nombre": "Facturas",
       "clave": "facturas",
       "columnas": [
-        { "clave": "cliente", "titulo": "Código del cliente", "obligatorio": true, "tipo": "texto", "ancho": 16, "ayuda": "Código del cliente (hoja Clientes)." },
-        { "clave": "numero", "titulo": "Factura", "obligatorio": true, "tipo": "texto", "ancho": 14, "ayuda": "Número único de la factura, por ejemplo FV-2210." },
-        { "clave": "concepto", "titulo": "Concepto", "tipo": "texto", "ancho": 30, "ayuda": "Descripción del cobro." },
-        { "clave": "fecha_emision", "titulo": "Fecha de emisión", "obligatorio": true, "tipo": "fecha", "ancho": 14, "ayuda": "Fecha de la factura." },
-        { "clave": "fecha_vencimiento", "titulo": "Fecha de vencimiento", "obligatorio": true, "tipo": "fecha", "ancho": 14, "ayuda": "No puede ser anterior a la emisión." },
-        { "clave": "valor", "titulo": "Valor (COP)", "obligatorio": true, "tipo": "moneda", "min": 1, "ancho": 16, "ayuda": "Valor total de la factura." },
-        { "clave": "saldo", "titulo": "Saldo (COP)", "tipo": "moneda", "ancho": 16, "soloLectura": true, "ayuda": "Lo calcula SIGMA con los pagos registrados." },
-        { "clave": "estado", "titulo": "Estado", "tipo": "texto", "ancho": 12, "soloLectura": true, "ayuda": "Pendiente, Abono o Pagada. Lo calcula SIGMA." }
+        {
+          "clave": "cliente",
+          "titulo": "Código del cliente",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Código del cliente (hoja Clientes)."
+        },
+        {
+          "clave": "numero",
+          "titulo": "Factura",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 14,
+          "ayuda": "Número único de la factura, por ejemplo FV-2210."
+        },
+        {
+          "clave": "concepto",
+          "titulo": "Concepto",
+          "tipo": "texto",
+          "ancho": 30,
+          "ayuda": "Descripción del cobro."
+        },
+        {
+          "clave": "fecha_emision",
+          "titulo": "Fecha de emisión",
+          "obligatorio": true,
+          "tipo": "fecha",
+          "ancho": 14,
+          "ayuda": "Fecha de la factura."
+        },
+        {
+          "clave": "fecha_vencimiento",
+          "titulo": "Fecha de vencimiento",
+          "obligatorio": true,
+          "tipo": "fecha",
+          "ancho": 14,
+          "ayuda": "No puede ser anterior a la emisión."
+        },
+        {
+          "clave": "valor",
+          "titulo": "Valor (COP)",
+          "obligatorio": true,
+          "tipo": "moneda",
+          "min": 1,
+          "ancho": 16,
+          "ayuda": "Valor total de la factura."
+        },
+        {
+          "clave": "saldo",
+          "titulo": "Saldo (COP)",
+          "tipo": "moneda",
+          "ancho": 16,
+          "soloLectura": true,
+          "ayuda": "Lo calcula SIGMA con los pagos registrados."
+        },
+        {
+          "clave": "estado",
+          "titulo": "Estado",
+          "tipo": "texto",
+          "ancho": 12,
+          "soloLectura": true,
+          "ayuda": "Pendiente, Abono o Pagada. Lo calcula SIGMA."
+        }
       ],
-      "ejemplo": { "cliente": "EJEMPLO-CL-001", "numero": "FV-2210", "concepto": "Mantenimiento preventivo octubre", "fecha_emision": "2026-10-05", "fecha_vencimiento": "2026-10-20", "valor": 850000 }
+      "ejemplo": {
+        "cliente": "EJEMPLO-CL-001",
+        "numero": "FV-2210",
+        "concepto": "Mantenimiento preventivo octubre",
+        "fecha_emision": "2026-10-05",
+        "fecha_vencimiento": "2026-10-20",
+        "valor": 850000
+      }
     },
     {
       "nombre": "Pagos",
       "clave": "pagos",
       "columnas": [
-        { "clave": "cliente", "titulo": "Código del cliente", "obligatorio": true, "tipo": "texto", "ancho": 16, "ayuda": "Código del cliente que paga." },
-        { "clave": "factura", "titulo": "Factura", "obligatorio": true, "tipo": "texto", "ancho": 14, "ayuda": "Número de la factura a la que se aplica el pago." },
-        { "clave": "valor", "titulo": "Valor (COP)", "obligatorio": true, "tipo": "moneda", "min": 1, "ancho": 16, "ayuda": "No puede superar el saldo de la factura." },
-        { "clave": "fecha", "titulo": "Fecha", "obligatorio": true, "tipo": "fecha", "ancho": 13, "ayuda": "Fecha del pago. No puede ser futura." },
-        { "clave": "medio", "titulo": "Medio de pago", "obligatorio": true, "tipo": "lista", "lista": "mediosPago", "ancho": 16, "ayuda": "Transferencia, Consignación, Cheque o Efectivo." },
-        { "clave": "referencia", "titulo": "Referencia", "obligatorio": true, "tipo": "texto", "ancho": 20, "ayuda": "Número de la transacción o del recibo. No se puede repetir en la misma factura." }
+        {
+          "clave": "cliente",
+          "titulo": "Código del cliente",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Código del cliente que paga."
+        },
+        {
+          "clave": "factura",
+          "titulo": "Factura",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 14,
+          "ayuda": "Número de la factura a la que se aplica el pago."
+        },
+        {
+          "clave": "valor",
+          "titulo": "Valor (COP)",
+          "obligatorio": true,
+          "tipo": "moneda",
+          "min": 1,
+          "ancho": 16,
+          "ayuda": "No puede superar el saldo de la factura."
+        },
+        {
+          "clave": "fecha",
+          "titulo": "Fecha",
+          "obligatorio": true,
+          "tipo": "fecha",
+          "ancho": 13,
+          "ayuda": "Fecha del pago. No puede ser futura."
+        },
+        {
+          "clave": "medio",
+          "titulo": "Medio de pago",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "mediosPago",
+          "ancho": 16,
+          "ayuda": "Transferencia, Consignación, Cheque o Efectivo."
+        },
+        {
+          "clave": "referencia",
+          "titulo": "Referencia",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 20,
+          "ayuda": "Número de la transacción o del recibo. No se puede repetir en la misma factura."
+        }
       ],
-      "ejemplo": { "cliente": "EJEMPLO-CL-001", "factura": "FV-2210", "valor": 850000, "fecha": "2026-10-18", "medio": "Transferencia", "referencia": "TRF-88213" }
+      "ejemplo": {
+        "cliente": "EJEMPLO-CL-001",
+        "factura": "FV-2210",
+        "valor": 850000,
+        "fecha": "2026-10-18",
+        "medio": "Transferencia",
+        "referencia": "TRF-88213"
+      }
     },
     {
       "nombre": "Usuarios",
       "clave": "usuarios",
       "columnas": [
-        { "clave": "nombre", "titulo": "Nombre", "obligatorio": true, "tipo": "texto", "ancho": 28, "ayuda": "Nombre completo." },
-        { "clave": "correo", "titulo": "Correo", "obligatorio": true, "tipo": "correo", "ancho": 30, "ayuda": "Correo de ingreso. Si ya existe, se actualiza el usuario." },
-        { "clave": "rol", "titulo": "Rol", "obligatorio": true, "tipo": "lista", "lista": "roles", "ancho": 16, "ayuda": "Administrador, Coordinador, Técnico, Contador, Supervisor o Cliente." },
-        { "clave": "estado", "titulo": "Estado", "obligatorio": true, "tipo": "lista", "lista": "estadosRegistro", "ancho": 12, "ayuda": "Activo o Inactivo." },
-        { "clave": "cliente", "titulo": "Código del cliente", "tipo": "texto", "ancho": 16, "ayuda": "Obligatorio para el rol Cliente: empresa a la que pertenece." }
+        {
+          "clave": "nombre",
+          "titulo": "Nombre",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 28,
+          "ayuda": "Nombre completo."
+        },
+        {
+          "clave": "correo",
+          "titulo": "Correo",
+          "obligatorio": true,
+          "tipo": "correo",
+          "ancho": 30,
+          "ayuda": "Correo de ingreso. Si ya existe, se actualiza el usuario."
+        },
+        {
+          "clave": "rol",
+          "titulo": "Rol",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "roles",
+          "ancho": 16,
+          "ayuda": "Administrador, Coordinador, Técnico, Contador, Supervisor o Cliente."
+        },
+        {
+          "clave": "estado",
+          "titulo": "Estado",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "estadosRegistro",
+          "ancho": 12,
+          "ayuda": "Activo o Inactivo."
+        },
+        {
+          "clave": "cliente",
+          "titulo": "Código del cliente",
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Obligatorio para el rol Cliente: empresa a la que pertenece."
+        }
       ],
-      "ejemplo": { "nombre": "EJEMPLO · Ana Pérez", "correo": "ana.perez@mirador.co", "rol": "Cliente", "estado": "Activo", "cliente": "EJEMPLO-CL-001" }
+      "ejemplo": {
+        "nombre": "EJEMPLO · Ana Pérez",
+        "correo": "ana.perez@mirador.co",
+        "rol": "Cliente",
+        "estado": "Activo",
+        "cliente": "EJEMPLO-CL-001"
+      }
     }
   ],
   "listas": {
-    "tiposPersona": ["Persona jurídica", "Persona natural"],
-    "tiposDocumento": ["CC", "CE", "TI", "PA"],
-    "estadosRegistro": ["Activo", "Inactivo"],
-    "tiposEdificio": ["Conjunto", "Institucional", "Residencial"],
-    "marcas": ["Otis", "Schindler", "Kone", "TK Elevator", "Mitsubishi", "Orona", "Hyundai", "Fujitec", "Sigma", "Otra"],
-    "accionamientos": ["Eléctrico de tracción", "Eléctrico sin cuarto de máquinas (MRL)", "Hidráulico"],
-    "tiposPuerta": ["Automática de apertura central", "Automática de apertura lateral", "Manual batiente", "Manual de tijera"],
-    "estadosEquipo": ["Activo", "En mantenimiento", "Inactivo"],
-    "tiposPuertaPiso": ["Automática", "Manual"],
-    "estadosPuerta": ["Bueno", "Regular", "Malo", "Pendiente"],
-    "tiposOrden": ["Mantenimiento preventivo", "Mantenimiento correctivo", "Inspección"],
-    "prioridades": ["Baja", "Media", "Alta", "Crítica"],
-    "zonas": ["Cuarto de máquinas", "Cabina", "Contrapeso", "Puertas", "Hueco y recorrido", "Foso"],
-    "resultados": ["B", "R", "M"],
-    "tiposRevision": ["INS", "EST", "N.A."],
-    "mediosPago": ["Transferencia", "Consignación", "Cheque", "Efectivo"],
-    "roles": ["Administrador", "Coordinador", "Técnico", "Contador", "Supervisor", "Cliente"],
+    "tiposPersona": [
+      "Persona jurídica",
+      "Persona natural"
+    ],
+    "tiposDocumento": [
+      "CC",
+      "CE",
+      "TI",
+      "PA"
+    ],
+    "estadosRegistro": [
+      "Activo",
+      "Inactivo"
+    ],
+    "tiposEdificio": [
+      "Conjunto",
+      "Institucional",
+      "Residencial"
+    ],
+    "marcas": [
+      "Otis",
+      "Schindler",
+      "Kone",
+      "TK Elevator",
+      "Mitsubishi",
+      "Orona",
+      "Hyundai",
+      "Fujitec",
+      "Sigma",
+      "Otra"
+    ],
+    "accionamientos": [
+      "Eléctrico de tracción",
+      "Eléctrico sin cuarto de máquinas (MRL)",
+      "Hidráulico"
+    ],
+    "tiposPuerta": [
+      "Automática de apertura central",
+      "Automática de apertura lateral",
+      "Manual batiente",
+      "Manual de tijera"
+    ],
+    "estadosEquipo": [
+      "Activo",
+      "En mantenimiento",
+      "Inactivo"
+    ],
+    "tiposPuertaPiso": [
+      "Automática",
+      "Manual"
+    ],
+    "estadosPuerta": [
+      "Bueno",
+      "Regular",
+      "Malo",
+      "Pendiente"
+    ],
+    "tiposOrden": [
+      "Mantenimiento preventivo",
+      "Mantenimiento correctivo",
+      "Inspección"
+    ],
+    "prioridades": [
+      "Baja",
+      "Media",
+      "Alta",
+      "Crítica"
+    ],
+    "zonas": [
+      "Cuarto de máquinas",
+      "Cabina",
+      "Contrapeso",
+      "Puertas",
+      "Hueco y recorrido",
+      "Foso"
+    ],
+    "resultados": [
+      "B",
+      "R",
+      "M"
+    ],
+    "tiposRevision": [
+      "INS",
+      "EST",
+      "N.A."
+    ],
+    "mediosPago": [
+      "Transferencia",
+      "Consignación",
+      "Cheque",
+      "Efectivo"
+    ],
+    "roles": [
+      "Administrador",
+      "Coordinador",
+      "Técnico",
+      "Contador",
+      "Supervisor",
+      "Cliente"
+    ],
     "tecnicos": [],
-    "planes": []
+    "planes": [],
+    "tiposEmergencia": [
+      "Personas atrapadas",
+      "Ascensor detenido o con falla",
+      "Ruido o movimiento anormal",
+      "Otro"
+    ],
+    "resultadosCertificacion": [
+      "Conforme",
+      "Conforme con observaciones",
+      "No conforme"
+    ]
   }
 }

@@ -14,12 +14,18 @@ use App\Http\Requests\Edificio\GuardarEdificioRequest;
 use App\Http\Requests\Equipo\ActualizarEquipoRequest;
 use App\Http\Requests\Equipo\GuardarEquipoRequest;
 use App\Http\Requests\Orden\GuardarOrdenRequest;
+use App\Http\Requests\Servicio\GuardarCertificacionRequest;
+use App\Http\Requests\Servicio\GuardarCotizacionRequest;
+use App\Http\Requests\Servicio\ReportarEmergenciaRequest;
 use App\Http\Requests\Usuario\ActualizarUsuarioRequest;
 use App\Http\Requests\Usuario\GuardarUsuarioRequest;
+use App\Models\Certificacion;
 use App\Models\ChecklistItem;
 use App\Models\Cliente;
 use App\Models\Contrato;
+use App\Models\Cotizacion;
 use App\Models\Edificio;
+use App\Models\Emergencia;
 use App\Models\Equipo;
 use App\Models\Factura;
 use App\Models\OrdenTrabajo;
@@ -32,9 +38,12 @@ use App\Models\Usuario;
 use App\Services\AsignacionPlanService;
 use App\Services\AutenticacionService;
 use App\Services\CarteraService;
+use App\Services\CertificacionService;
 use App\Services\ClienteService;
 use App\Services\ContratoService;
+use App\Services\CotizacionService;
 use App\Services\EdificioService;
+use App\Services\EmergenciaService;
 use App\Services\EquipoService;
 use App\Services\OrdenTrabajoService;
 use App\Services\PlanillaService;
@@ -68,6 +77,9 @@ class ImportacionService
         'edificios' => ['edificios.crear', 'edificios.editar'],
         'ascensores' => ['equipos.crear', 'equipos.editar'],
         'puertas' => ['equipos.editar', 'equipos.editar'],
+        'certificaciones' => ['certificaciones.gestionar', 'certificaciones.gestionar'],
+        'emergencias' => ['emergencias.gestionar', 'emergencias.gestionar'],
+        'cotizaciones' => ['cotizaciones.crear', 'cotizaciones.crear'],
         'ordenes' => ['ordenes.crear', 'ordenes.crear'],
         'checklist' => ['ordenes.ejecutar', 'ordenes.ejecutar'],
         'facturas' => ['facturas.crear', 'facturas.crear'],
@@ -88,6 +100,9 @@ class ImportacionService
         ],
         'ordenes' => ['equipo_id' => 'ascensor', 'servicio' => 'tipo', 'hora' => 'hora_inicio', 'duracion_estimada' => 'hora_fin', 'tecnicos' => 'tecnico', 'tecnicos.0' => 'tecnico'],
         'facturas' => ['cliente_id' => 'cliente'],
+        'certificaciones' => [],
+        'emergencias' => ['equipo_id' => 'ascensor', 'reportante_nombre' => 'reportante', 'reportante_telefono' => 'telefono', 'tecnico_id' => 'tecnico'],
+        'cotizaciones' => ['equipo_id' => 'ascensor', 'iva_porcentaje' => 'iva', 'items' => 'valor', 'items.0.valor_unitario' => 'valor', 'items.0.descripcion' => 'titulo'],
         'pagos' => ['factura_id' => 'factura'],
         'usuarios' => ['rol_id' => 'rol', 'activo' => 'estado', 'cliente_id' => 'cliente'],
     ];
@@ -113,6 +128,9 @@ class ImportacionService
         private readonly CarteraService $cartera,
         private readonly UsuarioService $usuarios,
         private readonly AutenticacionService $autenticacion,
+        private readonly CertificacionService $certificaciones,
+        private readonly EmergenciaService $emergencias,
+        private readonly CotizacionService $cotizaciones,
     ) {}
 
     /**
@@ -704,6 +722,93 @@ class ImportacionService
         $this->planillas->guardar($orden, ['resultados' => [['item_id' => $item->id, 'resultado' => $resultado, 'estado' => $estado, 'observacion' => $observacion]]]);
 
         return $existia ? 'actualizado' : 'creado';
+    }
+
+    private function importarCertificaciones(array $v, int $fila): string
+    {
+        $equipo = $this->equipo(Plantilla::texto($v['ascensor']));
+        $inspeccion = Plantilla::fecha($v['fecha_inspeccion']);
+        $this->unico('certificaciones', $equipo->codigo.'|'.$inspeccion, 'fecha_inspeccion', $fila, 'La certificación del ascensor con esa fecha de inspección');
+        if (Certificacion::where('equipo_id', $equipo->id)->whereDate('fecha_inspeccion', $inspeccion)->exists()) {
+            return 'existente';
+        }
+        $this->exigirPermiso('certificaciones', false);
+        $datos = array_filter([
+            'organismo' => Plantilla::texto($v['organismo']),
+            'numero_certificado' => Plantilla::texto($v['numero_certificado'] ?? null),
+            'norma' => Plantilla::texto($v['norma'] ?? null),
+            'fecha_inspeccion' => $inspeccion,
+            'fecha_vencimiento' => Plantilla::fecha($v['fecha_vencimiento']),
+            'resultado' => Plantilla::opcion($v['resultado'], Certificacion::RESULTADOS),
+            'observaciones' => Plantilla::texto($v['observaciones'] ?? null),
+        ], fn ($x) => $x !== null);
+        $this->certificaciones->registrar($equipo, $this->validar(GuardarCertificacionRequest::class, $datos));
+
+        return 'creado';
+    }
+
+    private function importarEmergencias(array $v, int $fila): string
+    {
+        $numero = Plantilla::texto($v['numero'] ?? null);
+        if ($numero !== null) {
+            $this->unico('emergencias', $numero, 'numero', $fila, 'La emergencia');
+            if (Emergencia::where('numero', $numero)->exists()) {
+                return 'existente';
+            }
+        }
+        $equipo = $this->equipo(Plantilla::texto($v['ascensor']));
+        $fecha = Plantilla::fecha($v['fecha_reporte']);
+        $reportada = $fecha.' '.Plantilla::hora($v['hora_reporte']);
+        $this->unico('emergencias', $equipo->codigo.'|'.$reportada, 'hora_reporte', $fila, 'La emergencia del ascensor a esa hora');
+        if (Emergencia::where('equipo_id', $equipo->id)->where('reportada_en', $reportada)->exists()) {
+            return 'existente';
+        }
+        $this->exigirPermiso('emergencias', false);
+        $tecnico = $this->tecnico(Plantilla::texto($v['tecnico'] ?? null));
+        $datos = $this->validar(ReportarEmergenciaRequest::class, array_filter([
+            'equipo_id' => $equipo->id,
+            'tipo' => Plantilla::opcion($v['tipo'], Emergencia::TIPOS),
+            'descripcion' => Plantilla::texto($v['descripcion'] ?? null),
+            'reportante_nombre' => Plantilla::texto($v['reportante'] ?? null),
+            'reportante_telefono' => Plantilla::texto($v['telefono'] ?? null),
+            'tecnico_id' => $tecnico?->id,
+        ], fn ($x) => $x !== null));
+        $llegada = Plantilla::hora($v['hora_llegada'] ?? null);
+        $fechaSolucion = Plantilla::fecha($v['fecha_solucion'] ?? null);
+        $this->emergencias->registrarHistorica($equipo, $datos + [
+            'reportada_en' => $reportada,
+            'llegada_en' => $llegada ? "{$fecha} {$llegada}" : null,
+            'resuelta_en' => $fechaSolucion ? $fechaSolucion.' '.(Plantilla::hora($v['hora_solucion'] ?? null) ?? '23:59') : null,
+            'solucion' => Plantilla::texto($v['solucion'] ?? null),
+            'tecnico_id' => $tecnico?->id,
+        ]);
+
+        return 'creado';
+    }
+
+    private function importarCotizaciones(array $v, int $fila): string
+    {
+        $numero = Plantilla::texto($v['numero'] ?? null);
+        if ($numero !== null) {
+            $this->unico('cotizaciones', $numero, 'numero', $fila, 'La cotización');
+            if (Cotizacion::where('numero', $numero)->exists()) {
+                return 'existente';
+            }
+        }
+        $equipo = $this->equipo(Plantilla::texto($v['ascensor']));
+        $titulo = Plantilla::texto($v['titulo']);
+        $this->exigirPermiso('cotizaciones', false);
+        $datos = array_filter([
+            'equipo_id' => $equipo->id,
+            'titulo' => $titulo,
+            'descripcion' => Plantilla::texto($v['descripcion'] ?? null),
+            'iva_porcentaje' => Plantilla::numero($v['iva'] ?? null),
+            'vigente_hasta' => Plantilla::fecha($v['vigente_hasta'] ?? null),
+            'items' => [['descripcion' => mb_substr((string) $titulo, 0, 200), 'cantidad' => 1, 'valor_unitario' => Plantilla::numero($v['valor'])]],
+        ], fn ($x) => $x !== null);
+        $this->cotizaciones->crear($this->validar(GuardarCotizacionRequest::class, $datos));
+
+        return 'creado';
     }
 
     private function importarFacturas(array $v, int $fila): string

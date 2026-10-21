@@ -7,7 +7,7 @@ SIGMA importa y exporta su información con una sola plantilla:
 
 Tiene una hoja por formulario, en el orden de carga:
 
-**Clientes → Edificios → Ascensores → Puertas de piso → Órdenes de trabajo → Checklist → Facturas → Pagos → Usuarios**
+**Clientes → Edificios → Ascensores → Puertas de piso → Certificaciones → Órdenes de trabajo → Checklist → Emergencias → Cotizaciones → Facturas → Pagos → Usuarios**
 
 más una hoja de **Instrucciones** y una hoja oculta de **Listas** (valores de las listas desplegables).
 
@@ -33,21 +33,22 @@ npm run plantilla   # escribe plantillas/ y backend/resources/plantillas/
 
 ## Exportar
 
-Botón **Exportar a Excel** en Ascensores, Clientes, Órdenes de trabajo, Cartera y Usuarios. Descarga los
+Botón **Exportar a Excel** en Ascensores, Clientes, Órdenes de trabajo, Cartera, Usuarios, Emergencias y Certificación anual. Descarga los
 datos actuales con la estructura de la plantilla (mismas validaciones y listas; técnicos y planes reales):
 
 | Módulo | Hojas con datos |
 | --- | --- |
 | Clientes | Clientes, Edificios |
-| Ascensores | Ascensores, Puertas de piso |
+| Ascensores | Ascensores, Puertas de piso, Certificaciones |
 | Órdenes de trabajo | Órdenes de trabajo, Checklist |
 | Cartera | Facturas, Pagos |
 | Usuarios | Usuarios |
+| Servicio (Emergencias, Certificación anual) | Certificaciones, Emergencias, Cotizaciones |
 
 Cada rol exporta solo lo que puede ver (el cliente, solo lo de su empresa; el técnico, solo sus órdenes).
 **Descargar plantilla vacía** baja la plantilla con los ejemplos.
 
-API: `GET /api/v1/excel/exportar/{clientes|ascensores|ordenes|cartera|usuarios|todo}` y
+API: `GET /api/v1/excel/exportar/{clientes|ascensores|ordenes|cartera|usuarios|servicio|todo}` y
 `GET /api/v1/excel/plantilla`.
 
 ## Importar
@@ -85,3 +86,12 @@ Reglas de la carga:
 
 Código: `app/Support/Excel` (estructura, lector y opciones), `app/Services/Excel` (importación y
 exportación) y `app/Http/Controllers/Api/ExcelController.php`. Pruebas: `tests/Feature/PruebasExcelTest.php`.
+
+## Hojas del servicio comercial (fase 6)
+
+| Hoja | Clave para no duplicar | Notas |
+| --- | --- | --- |
+| Certificaciones | Ascensor + fecha de inspección | Resultado: Conforme, Conforme con observaciones o No conforme. Norma vacía = NTC 5926-1. El certificado (PDF) se adjunta desde la ficha del ascensor. |
+| Emergencias | Número, o ascensor + fecha y hora del reporte | Carga emergencias pasadas con sus horas de llegada y solución; no envía avisos. Si trae fecha de solución, exige la solución. |
+| Cotizaciones | Número | Cada fila crea una cotización de un renglón (valor antes de IVA) y la envía al cliente. |
+

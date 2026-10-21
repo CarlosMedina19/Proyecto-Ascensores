@@ -13,6 +13,7 @@ import LineaTiempo from '../../componentes/LineaTiempo';
 import PlanDelEquipo from './PlanDelEquipo';
 import OrdenesDelEquipo from './OrdenesDelEquipo';
 import { GaleriaFotos } from '../../componentes/FotosEquipo';
+import { CertificacionAscensor, CodigoQrAscensor, DocumentosAscensor, EmergenciasAscensor } from '../../componentes/ServicioAscensor';
 
 // Sin planilla, el esquema refleja el estado general del equipo; con planilla, el resultado de cada zona.
 const ESTADO_A_ZONA = { activo: 'B', mantenimiento: 'R', inactivo: 'P' };
@@ -192,6 +193,7 @@ export default function DetalleEquipo() {
               alCambiar={cargar}
             />
           </Tarjeta>
+          {tienePermiso('certificaciones.ver') && <CertificacionAscensor equipo={equipo} />}
           <Tarjeta titulo="Ficha técnica">
             <Datos
               elementos={[
@@ -236,6 +238,7 @@ export default function DetalleEquipo() {
         <div className="rejilla">
         <PlanDelEquipo equipo={equipo} alCambiar={cargar} />
         {tienePermiso('ordenes.ver') && <OrdenesDelEquipo equipoId={equipo.id} />}
+        <EmergenciasAscensor equipo={equipo} />
         <Tarjeta titulo="Esquema del ascensor" acciones={<Insignia tipo={estado?.tipo}>{estado?.texto}</Insignia>}>
           <div style={{ maxWidth: 260, margin: '0 auto' }}>
             <CorteAscensor
@@ -277,6 +280,8 @@ export default function DetalleEquipo() {
             )}
           </Tarjeta>
         )}
+        {puedeVerHistorial && <DocumentosAscensor equipo={equipo} />}
+        <CodigoQrAscensor equipo={equipo} />
         </div>
       </div>
 

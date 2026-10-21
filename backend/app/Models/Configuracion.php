@@ -28,6 +28,18 @@ class Configuracion extends Model
             'valor' => 30,
             'descripcion' => 'Días antes del vencimiento de un contrato en que se genera la alerta de renovación.',
         ],
+        'emergencias.minutos_objetivo' => [
+            'valor' => 60,
+            'descripcion' => 'Tiempo objetivo de llegada a una emergencia sin personas atrapadas (minutos).',
+        ],
+        'emergencias.minutos_atrapamiento' => [
+            'valor' => 30,
+            'descripcion' => 'Tiempo objetivo de llegada cuando hay personas atrapadas (minutos).',
+        ],
+        'certificaciones.dias_alerta' => [
+            'valor' => [60, 30, 15],
+            'descripcion' => 'Días antes del vencimiento de la certificación anual en que se avisa.',
+        ],
         'iva.porcentaje' => [
             'valor' => 19,
             'descripcion' => 'Porcentaje de IVA sugerido para las nuevas asignaciones de plan.',

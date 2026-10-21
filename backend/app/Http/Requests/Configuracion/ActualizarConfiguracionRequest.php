@@ -24,6 +24,10 @@ class ActualizarConfiguracionRequest extends FormRequest
             'notificaciones_dias_aviso.*' => ['integer', 'distinct', 'min:0', 'max:90'],
             'contratos_dias_alerta_vencimiento' => ['sometimes', 'integer', 'min:1', 'max:365'],
             'iva_porcentaje' => ['sometimes', 'numeric', 'min:0', 'max:100'],
+            'emergencias_minutos_objetivo' => ['sometimes', 'integer', 'min:5', 'max:1440'],
+            'emergencias_minutos_atrapamiento' => ['sometimes', 'integer', 'min:5', 'max:1440'],
+            'certificaciones_dias_alerta' => ['sometimes', 'array', 'min:1', 'max:6'],
+            'certificaciones_dias_alerta.*' => ['integer', 'distinct', 'min:1', 'max:180'],
         ];
     }
 
@@ -34,6 +38,9 @@ class ActualizarConfiguracionRequest extends FormRequest
             'notificaciones_dias_aviso' => 'días de aviso',
             'contratos_dias_alerta_vencimiento' => 'días de alerta de vencimiento',
             'iva_porcentaje' => 'porcentaje de IVA',
+            'emergencias_minutos_objetivo' => 'tiempo objetivo de emergencias',
+            'emergencias_minutos_atrapamiento' => 'tiempo objetivo con personas atrapadas',
+            'certificaciones_dias_alerta' => 'días de alerta de la certificación',
         ];
     }
 

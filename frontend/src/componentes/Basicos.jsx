@@ -107,7 +107,7 @@ export function Tabla({ columnas, filas, alSeleccionar, claveFila = 'id', vacio,
         </thead>
         <tbody>
           {filas.map((fila) => {
-            const clave = fila[claveFila];
+            const clave = typeof claveFila === 'function' ? claveFila(fila) : fila[claveFila];
             const abierta = abiertas.has(clave);
             return (
               <Fragment key={clave}>

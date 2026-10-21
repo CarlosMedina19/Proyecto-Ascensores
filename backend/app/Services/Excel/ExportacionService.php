@@ -3,8 +3,11 @@
 namespace App\Services\Excel;
 
 use App\Exceptions\ReglaNegocioException;
+use App\Models\Certificacion;
 use App\Models\Cliente;
+use App\Models\Cotizacion;
 use App\Models\Edificio;
+use App\Models\Emergencia;
 use App\Models\Equipo;
 use App\Models\Factura;
 use App\Models\Pago;
@@ -29,16 +32,18 @@ class ExportacionService
     /** Hojas que descarga cada módulo. */
     public const MODULOS = [
         'clientes' => ['clientes', 'edificios'],
-        'ascensores' => ['ascensores', 'puertas'],
+        'ascensores' => ['ascensores', 'puertas', 'certificaciones'],
         'ordenes' => ['ordenes', 'checklist'],
+        'servicio' => ['certificaciones', 'emergencias', 'cotizaciones'],
         'cartera' => ['facturas', 'pagos'],
         'usuarios' => ['usuarios'],
-        'todo' => ['clientes', 'edificios', 'ascensores', 'puertas', 'ordenes', 'checklist', 'facturas', 'pagos', 'usuarios'],
+        'todo' => ['clientes', 'edificios', 'ascensores', 'puertas', 'certificaciones', 'ordenes', 'checklist', 'emergencias', 'cotizaciones', 'facturas', 'pagos', 'usuarios'],
     ];
 
     private const PERMISOS = [
         'clientes' => 'clientes.ver', 'edificios' => 'edificios.ver', 'ascensores' => 'equipos.ver', 'puertas' => 'equipos.ver',
         'ordenes' => 'ordenes.ver', 'checklist' => 'ordenes.ver', 'facturas' => 'cartera.ver', 'pagos' => 'cartera.ver', 'usuarios' => 'usuarios.ver',
+        'certificaciones' => 'certificaciones.ver', 'emergencias' => 'emergencias.ver', 'cotizaciones' => 'cotizaciones.ver',
     ];
 
     public function __construct(private readonly OrdenTrabajoService $ordenes) {}
@@ -69,7 +74,7 @@ class ExportacionService
     /** Nombre del archivo descargado: SIGMA_Ascensores_2026-10-20.xlsx */
     public static function nombreArchivo(string $modulo): string
     {
-        $nombres = ['clientes' => 'Clientes', 'ascensores' => 'Ascensores', 'ordenes' => 'Ordenes', 'cartera' => 'Cartera', 'usuarios' => 'Usuarios', 'todo' => 'Datos'];
+        $nombres = ['clientes' => 'Clientes', 'ascensores' => 'Ascensores', 'ordenes' => 'Ordenes', 'cartera' => 'Cartera', 'usuarios' => 'Usuarios', 'servicio' => 'Servicio', 'todo' => 'Datos'];
 
         return 'SIGMA_'.($nombres[$modulo] ?? 'Datos').'_'.now()->toDateString().'.xlsx';
     }
@@ -267,6 +272,72 @@ class ExportacionService
                 'resultado' => $resultado->estado,
                 'tipo' => Opciones::TIPOS_REVISION[$resultado->resultado] ?? $resultado->resultado,
                 'observacion' => $resultado->observacion,
+            ];
+        }
+    }
+
+    /** Ascensores visibles para el usuario (el cliente, solo los suyos). */
+    private function deEquipo(Builder $consulta, Usuario $usuario): Builder
+    {
+        return $usuario->esCliente() ? $consulta->whereHas('equipo.edificio', fn ($e) => $e->where('cliente_id', $usuario->cliente_id)) : $consulta;
+    }
+
+    private function filasCertificaciones(Usuario $usuario): iterable
+    {
+        $estados = ['vigente' => 'Vigente', 'por_vencer' => 'Por vencer', 'vencida' => 'Vencida', 'no_conforme' => 'No conforme'];
+        $consulta = Certificacion::with('equipo')->orderBy('equipo_id')->orderBy('fecha_inspeccion');
+        foreach ($this->deEquipo($consulta, $usuario)->cursor() as $c) {
+            yield [
+                'ascensor' => $c->equipo?->codigo,
+                'organismo' => $c->organismo,
+                'numero_certificado' => $c->numero_certificado,
+                'norma' => $c->norma,
+                'fecha_inspeccion' => $c->fecha_inspeccion?->toDateString(),
+                'fecha_vencimiento' => $c->fecha_vencimiento?->toDateString(),
+                'resultado' => Certificacion::RESULTADOS[$c->resultado] ?? $c->resultado,
+                'observaciones' => $c->observaciones,
+                'estado' => $estados[$c->estado()] ?? $c->estado(),
+            ];
+        }
+    }
+
+    private function filasEmergencias(Usuario $usuario): iterable
+    {
+        $consulta = Emergencia::with(['equipo', 'tecnico.usuario'])->orderBy('reportada_en');
+        foreach ($this->deEquipo($consulta, $usuario)->cursor() as $e) {
+            yield [
+                'numero' => $e->numero,
+                'ascensor' => $e->equipo?->codigo,
+                'tipo' => Emergencia::TIPOS[$e->tipo] ?? $e->tipo,
+                'fecha_reporte' => $e->reportada_en?->toDateString(),
+                'hora_reporte' => $e->reportada_en?->format('H:i'),
+                'reportante' => $e->reportante_nombre,
+                'telefono' => $e->reportante_telefono,
+                'descripcion' => $e->descripcion,
+                'tecnico' => $e->tecnico?->usuario?->nombre,
+                'hora_llegada' => $e->llegada_en?->format('H:i'),
+                'fecha_solucion' => $e->resuelta_en?->toDateString(),
+                'hora_solucion' => $e->resuelta_en?->format('H:i'),
+                'solucion' => $e->solucion,
+                'estado' => Emergencia::ESTADOS[$e->estado] ?? $e->estado,
+            ];
+        }
+    }
+
+    private function filasCotizaciones(Usuario $usuario): iterable
+    {
+        $consulta = Cotizacion::with('equipo')->orderBy('fecha_emision')->orderBy('numero');
+        foreach ($this->deCliente($consulta, $usuario)->cursor() as $c) {
+            yield [
+                'numero' => $c->numero,
+                'ascensor' => $c->equipo?->codigo,
+                'titulo' => $c->titulo,
+                'descripcion' => $c->descripcion,
+                'valor' => (float) $c->subtotal,
+                'iva' => (float) $c->subtotal > 0 ? round((float) $c->iva * 100 / (float) $c->subtotal, 2) : 0,
+                'vigente_hasta' => $c->vigente_hasta?->toDateString(),
+                'total' => (float) $c->total,
+                'estado' => Cotizacion::ESTADOS[$c->estadoActual()] ?? $c->estadoActual(),
             ];
         }
     }

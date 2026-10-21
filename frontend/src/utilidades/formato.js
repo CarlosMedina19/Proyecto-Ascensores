@@ -63,6 +63,8 @@ export function horaCorta(valor) {
 
 /** Color del punto en la línea de tiempo según el tipo de evento del historial. */
 export function tipoEvento(evento = '') {
+  if (evento === 'emergencia_resuelta' || evento === 'certificacion_registrada' || evento === 'cotizacion_aprobada') return 'exito';
+  if (evento.startsWith('emergencia') || evento === 'cotizacion_rechazada') return 'peligro';
   if (evento.startsWith('alta') || evento === 'plan_asignado') return 'cian';
   if (evento === 'cambio_plan') return 'alerta';
   if (evento.includes('baja') || evento === 'incidente') return 'peligro';
@@ -86,7 +88,20 @@ export function iniciales(nombre = '') {
 }
 
 /** "cambio_estado" → "Cambio estado" */
+/** Nombres de los eventos del historial que no salen bien de reemplazar los guiones. */
+const NOMBRES_EVENTO = {
+  certificacion_registrada: 'Certificación anual registrada',
+  emergencia_reportada: 'Emergencia reportada',
+  emergencia_registrada: 'Emergencia registrada',
+  emergencia_resuelta: 'Emergencia resuelta',
+  emergencia_cancelada: 'Emergencia cancelada',
+  cotizacion_enviada: 'Cotización enviada',
+  cotizacion_aprobada: 'Cotización aprobada por el cliente',
+  cotizacion_rechazada: 'Cotización rechazada por el cliente',
+};
+
 export function humanizar(texto = '') {
+  if (NOMBRES_EVENTO[texto]) return NOMBRES_EVENTO[texto];
   const limpio = String(texto).replace(/_/g, ' ').trim();
   return limpio.charAt(0).toUpperCase() + limpio.slice(1);
 }

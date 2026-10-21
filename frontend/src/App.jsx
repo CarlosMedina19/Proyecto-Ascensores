@@ -39,6 +39,14 @@ import DetalleTecnico from './paginas/tecnicos/DetalleTecnico';
 import ListaOrdenes from './paginas/ordenes/ListaOrdenes';
 import FormularioOrden from './paginas/ordenes/FormularioOrden';
 import DetalleOrden from './paginas/ordenes/DetalleOrden';
+import Emergencias from './paginas/servicio/Emergencias';
+import DetalleEmergencia from './paginas/servicio/DetalleEmergencia';
+import Cotizaciones from './paginas/servicio/Cotizaciones';
+import DetalleCotizacion from './paginas/servicio/DetalleCotizacion';
+import Certificaciones from './paginas/servicio/Certificaciones';
+import Indicadores from './paginas/servicio/Indicadores';
+import Proximamente from './paginas/servicio/Proximamente';
+import ReportarFalla from './paginas/publico/ReportarFalla';
 
 const conPermiso = (permiso, elemento) => <ConPermiso permiso={permiso}>{elemento}</ConPermiso>;
 
@@ -52,6 +60,9 @@ export default function App() {
             <Route path="/iniciar-sesion" element={<RutaPublica><IniciarSesion /></RutaPublica>} />
             <Route path="/recuperar-contrasena" element={<RutaPublica><RecuperarContrasena /></RutaPublica>} />
             <Route path="/restablecer-contrasena" element={<RutaPublica><RestablecerContrasena /></RutaPublica>} />
+
+            {/* Reporte de fallas desde el QR de la cabina: no pide sesión. */}
+            <Route path="/reportar/:codigo" element={<ReportarFalla />} />
 
             <Route element={<RutaPrivada><Estructura /></RutaPrivada>}>
               <Route index element={<Navigate to="/inicio" replace />} />
@@ -115,6 +126,14 @@ export default function App() {
               <Route path="/tecnicos/nuevo" element={conPermiso('tecnicos.crear', <FormularioTecnico />)} />
               <Route path="/tecnicos/:id" element={conPermiso('tecnicos.ver', <DetalleTecnico />)} />
               <Route path="/tecnicos/:id/editar" element={conPermiso('tecnicos.editar', <FormularioTecnico />)} />
+
+              <Route path="/emergencias" element={conPermiso('emergencias.ver', <Emergencias />)} />
+              <Route path="/emergencias/:id" element={conPermiso('emergencias.ver', <DetalleEmergencia />)} />
+              <Route path="/cotizaciones" element={conPermiso('cotizaciones.ver', <Cotizaciones />)} />
+              <Route path="/cotizaciones/:id" element={conPermiso('cotizaciones.ver', <DetalleCotizacion />)} />
+              <Route path="/certificaciones" element={conPermiso('certificaciones.ver', <Certificaciones />)} />
+              <Route path="/indicadores" element={conPermiso('indicadores.ver', <Indicadores />)} />
+              <Route path="/proximamente" element={<Proximamente />} />
 
               <Route
                 path="*"

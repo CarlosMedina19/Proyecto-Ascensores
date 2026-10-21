@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Certificacion;
 use App\Models\Cliente;
 use App\Models\Contrato;
 use App\Models\Edificio;
@@ -15,7 +16,10 @@ use App\Models\Rol;
 use App\Models\Tecnico;
 use App\Models\Usuario;
 use App\Services\AsignacionPlanService;
+use App\Services\CertificacionService;
 use App\Services\ContratoService;
+use App\Services\CotizacionService;
+use App\Services\EmergenciaService;
 use App\Services\OrdenTrabajoService;
 use App\Services\PlanService;
 use Illuminate\Database\Seeder;
@@ -153,6 +157,7 @@ class DatosDemoSeeder extends Seeder
 
         $this->crearPlanesYContratos($primerCliente);
         $this->crearTecnicosYOrdenes($password);
+        $this->crearServicioComercial();
     }
 
     /**
@@ -315,5 +320,82 @@ class DatosDemoSeeder extends Seeder
                 'tecnicos' => [$perfiles['tecnico@gmail.com']->id, $perfiles['diana.mora@gmail.com']->id],
             ]);
         }
+    }
+
+    /** Certificaciones, emergencias y una cotización de ejemplo para mostrar el servicio comercial. */
+    private function crearServicioComercial(): void
+    {
+        if (Certificacion::exists()) {
+            return;
+        }
+        $equipos = Equipo::with('edificio')->get()->keyBy('codigo');
+        $coordinador = Usuario::where('correo', 'coordinador@gmail.com')->first() ?? Usuario::first();
+        Auth::setUser($coordinador);
+        $hoy = now()->startOfDay();
+
+        // Certificación anual: una vigente, una por vencer, una vencida; el resto queda sin certificar.
+        $certificaciones = app(CertificacionService::class);
+        foreach ([
+            'ASC-001' => [-120, 245, 'conforme', null],
+            'ASC-002' => [-340, 25, 'condicionado', 'Ajustar el limitador de velocidad antes de la próxima revisión.'],
+            'ASC-003' => [-380, -15, 'conforme', null],
+        ] as $codigo => [$desde, $hasta, $resultado, $observaciones]) {
+            // En la base de demostración ASC-003 puede no existir; se usa ASC-005 para la vencida.
+            if ($equipo = $equipos->get($codigo) ?? ($codigo === 'ASC-003' ? $equipos->get('ASC-005') : null)) {
+                $certificaciones->registrar($equipo, [
+                    'organismo' => 'Inspecciones Técnicas Andinas S.A.S.',
+                    'numero_certificado' => 'RA-'.$hoy->year.'-'.substr($codigo, -3),
+                    'fecha_inspeccion' => $hoy->copy()->addDays($desde)->toDateString(),
+                    'fecha_vencimiento' => $hoy->copy()->addDays($hasta)->toDateString(),
+                    'resultado' => $resultado,
+                    'observaciones' => $observaciones,
+                ]);
+            }
+        }
+
+        // Emergencias: dos resueltas (una a tiempo y otra tarde) y una abierta.
+        $emergencias = app(EmergenciaService::class);
+        $tecnico = Tecnico::whereHas('usuario', fn ($u) => $u->where('correo', 'andres.rojas@gmail.com'))->first();
+        if ($equipo = $equipos->get('ASC-002')) {
+            $emergencias->registrarHistorica($equipo, [
+                'tipo' => 'atrapamiento', 'reportante_nombre' => 'Portería Torre A', 'reportante_telefono' => '601 555 1234',
+                'descripcion' => 'Cabina detenida entre los pisos 3 y 4 con dos personas.', 'tecnico_id' => $tecnico?->id,
+                'reportada_en' => $hoy->copy()->subDays(12)->setTime(19, 40)->toDateTimeString(),
+                'llegada_en' => $hoy->copy()->subDays(12)->setTime(20, 5)->toDateTimeString(),
+                'resuelta_en' => $hoy->copy()->subDays(12)->setTime(20, 35)->toDateTimeString(),
+                'solucion' => 'Rescate de los pasajeros y ajuste del freno de la máquina.',
+            ]);
+        }
+        if ($equipo = $equipos->get('ASC-004') ?? $equipos->get('ASC-001')) {
+            $emergencias->registrarHistorica($equipo, [
+                'tipo' => 'falla', 'reportante_nombre' => 'Administración', 'descripcion' => 'El ascensor no responde a las llamadas.',
+                'tecnico_id' => $tecnico?->id,
+                'reportada_en' => $hoy->copy()->subDays(30)->setTime(8, 15)->toDateTimeString(),
+                'llegada_en' => $hoy->copy()->subDays(30)->setTime(9, 40)->toDateTimeString(),
+                'resuelta_en' => $hoy->copy()->subDays(30)->setTime(11, 0)->toDateTimeString(),
+                'solucion' => 'Cambio del contactor principal.',
+            ]);
+        }
+        if ($equipo = $equipos->get('ASC-006') ?? $equipos->get('ASC-003')) {
+            $emergencias->reportar($equipo, [
+                'tipo' => 'ruido', 'reportante_nombre' => 'Residente apto 502',
+                'descripcion' => 'Golpe fuerte al frenar en el piso 5.',
+            ], 'qr');
+        }
+
+        // Cotización enviada al cliente, esperando su respuesta.
+        if ($equipo = $equipos->get('ASC-002')) {
+            app(CotizacionService::class)->crear([
+                'equipo_id' => $equipo->id,
+                'titulo' => 'Cambio de amortiguadores del foso',
+                'descripcion' => 'Hallazgo del último preventivo. Incluye dos amortiguadores hidráulicos, instalación y prueba.',
+                'iva_porcentaje' => 19,
+                'items' => [
+                    ['descripcion' => 'Amortiguador hidráulico', 'cantidad' => 2, 'valor_unitario' => 850000],
+                    ['descripcion' => 'Mano de obra e instalación', 'cantidad' => 1, 'valor_unitario' => 300000],
+                ],
+            ]);
+        }
+        Auth::forgetUser();
     }
 }

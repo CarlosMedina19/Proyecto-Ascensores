@@ -65,6 +65,17 @@ class PermisoSeeder extends Seeder
         'facturas.crear' => 'Registrar facturas',
         'pagos.registrar' => 'Registrar pagos de los clientes',
         'datos.importar' => 'Importar datos desde la plantilla de Excel',
+        // Servicio comercial.
+        'certificaciones.ver' => 'Consultar la certificación anual de los ascensores',
+        'certificaciones.gestionar' => 'Registrar certificaciones anuales y adjuntar certificados',
+        'emergencias.ver' => 'Consultar emergencias y atrapamientos',
+        'emergencias.reportar' => 'Reportar emergencias y atrapamientos',
+        'emergencias.atender' => 'Marcar la llegada y la solución de las emergencias asignadas',
+        'emergencias.gestionar' => 'Asignar técnicos, cancelar y cerrar cualquier emergencia',
+        'cotizaciones.ver' => 'Consultar cotizaciones de correctivos',
+        'cotizaciones.crear' => 'Crear y enviar cotizaciones a los clientes',
+        'cotizaciones.responder' => 'Aprobar o rechazar cotizaciones (cliente)',
+        'indicadores.ver' => 'Consultar los indicadores del servicio',
     ];
 
     public function run(): void
@@ -96,7 +107,10 @@ class PermisoSeeder extends Seeder
 
         $permisosPorRol = [
             'administrador' => array_keys(self::PERMISOS),
-            'coordinador' => array_merge(['resumen.ver', 'roles.ver', 'usuarios.ver', 'cartera.ver', 'datos.importar'], $permisosCatalogo, $permisosPlanes),
+            'coordinador' => array_merge(['resumen.ver', 'roles.ver', 'usuarios.ver', 'cartera.ver', 'datos.importar'], $permisosCatalogo, $permisosPlanes, [
+                'certificaciones.ver', 'certificaciones.gestionar', 'emergencias.ver', 'emergencias.reportar', 'emergencias.gestionar',
+                'cotizaciones.ver', 'cotizaciones.crear', 'indicadores.ver',
+            ]),
             // El supervisor solo consulta; no modifica datos.
             'supervisor' => [
                 'resumen.ver',
@@ -110,6 +124,10 @@ class PermisoSeeder extends Seeder
                 'contratos.ver',
                 'tecnicos.ver',
                 'ordenes.ver',
+                'certificaciones.ver',
+                'emergencias.ver',
+                'cotizaciones.ver',
+                'indicadores.ver',
             ],
             'tecnico' => [
                 'edificios.ver',
@@ -121,6 +139,10 @@ class PermisoSeeder extends Seeder
                 // RF-023: el técnico ve solo sus órdenes y avanza sus estados.
                 'ordenes.ver',
                 'ordenes.ejecutar',
+                'certificaciones.ver',
+                'emergencias.ver',
+                'emergencias.reportar',
+                'emergencias.atender',
             ],
             // RF-015: solo el contador y el administrador cambian precios.
             'contador' => [
@@ -141,6 +163,9 @@ class PermisoSeeder extends Seeder
                 'facturas.crear',
                 'pagos.registrar',
                 'datos.importar',
+                'cotizaciones.ver',
+                'cotizaciones.crear',
+                'indicadores.ver',
             ],
             // El cliente consulta solo sus propios datos (las políticas filtran por cliente).
             'cliente' => [
@@ -153,6 +178,12 @@ class PermisoSeeder extends Seeder
                 'contratos.ver',
                 'ordenes.ver',
                 'cartera.ver',
+                'certificaciones.ver',
+                'emergencias.ver',
+                'emergencias.reportar',
+                'cotizaciones.ver',
+                'cotizaciones.responder',
+                'indicadores.ver',
             ],
         ];
 

@@ -25,7 +25,7 @@ export default function OrdenesDelEquipo({ equipoId }) {
       acciones={
         tienePermiso('ordenes.crear') && (
           <Link to={`/ordenes/nueva?equipo_id=${equipoId}`} className="boton boton--secundario boton--pequeno">
-            <Plus size={15} /> Nueva orden
+            <Plus size={15} /> Crear orden de trabajo
           </Link>
         )
       }

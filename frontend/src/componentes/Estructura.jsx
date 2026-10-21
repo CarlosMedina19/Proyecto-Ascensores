@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
+  Activity,
+  BadgeCheck,
   Briefcase,
   Building2,
   CalendarDays,
   ChevronDown,
+  CircleHelp,
   CircleUser,
   ClipboardCheck,
   ClipboardList,
@@ -16,8 +19,11 @@ import {
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
+  ReceiptText,
   ScrollText,
   Settings,
+  Siren,
+  Sparkles,
   ShieldCheck,
   Sun,
   Users,
@@ -33,6 +39,7 @@ import CampanaNotificaciones from './CampanaNotificaciones';
 import BuscadorGlobal from './BuscadorGlobal';
 import { Marca } from './Marca';
 import { RamaTipo } from './ArbolLateral';
+import RecorridoGuiado, { abrirRecorrido, recorridoVisto } from './RecorridoGuiado';
 import { useDemostracion } from '../hooks/useDemostracion';
 
 /** Opciones del menú lateral y el permiso que requiere cada una (RF-002). */
@@ -57,6 +64,12 @@ function opcionesMenu(esCliente, esTecnico) {
     { ruta: '/contratos', texto: esCliente ? 'Mis contratos' : 'Contratos', icono: FileText, permiso: 'contratos.ver' },
     { ruta: '/planes', texto: 'Planes y precios', icono: ClipboardList, permiso: 'planes.ver' },
     { ruta: '/cartera', texto: esCliente ? 'Mi estado de cuenta' : 'Cartera', icono: Wallet, permiso: 'cartera.ver' },
+    { grupo: 'Servicio' },
+    { ruta: '/emergencias', texto: 'Emergencias', icono: Siren, permiso: 'emergencias.ver', recorrido: 'emergencias' },
+    { ruta: '/certificaciones', texto: 'Certificación anual', icono: BadgeCheck, permiso: 'certificaciones.ver', recorrido: 'certificaciones' },
+    { ruta: '/cotizaciones', texto: esCliente ? 'Mis cotizaciones' : 'Cotizaciones', icono: ReceiptText, permiso: 'cotizaciones.ver' },
+    { ruta: '/indicadores', texto: 'Indicadores', icono: Activity, permiso: 'indicadores.ver', recorrido: 'indicadores' },
+    { ruta: '/proximamente', texto: 'Próximamente', icono: Sparkles, permiso: 'resumen.ver' },
     { grupo: 'Administración' },
     { ruta: '/usuarios', texto: 'Usuarios', icono: Users, permiso: 'usuarios.ver' },
     { ruta: '/roles', texto: 'Roles y permisos', icono: ShieldCheck, permiso: 'roles.ver' },
@@ -94,6 +107,13 @@ export default function Estructura() {
 
   useEffect(() => setMenuAbierto(false), [ubicacion.pathname]);
 
+  // En modo demostración, el recorrido se abre solo la primera vez.
+  useEffect(() => {
+    if (!demostracion || recorridoVisto()) return undefined;
+    const espera = setTimeout(abrirRecorrido, 900);
+    return () => clearTimeout(espera);
+  }, [demostracion]);
+
   // Mantiene vivo el token mientras el usuario trabaja (el servidor cuenta la inactividad por solicitudes).
   const alPing = useCallback(() => {
     autenticacion.perfil().catch(() => {});
@@ -130,7 +150,7 @@ export default function Estructura() {
     <div className={`estructura${contraido ? ' estructura--contraida' : ''}`}>
       <aside className={`lateral${menuAbierto ? ' abierto' : ''}`} aria-label="Menú principal">
         <Marca />
-        <nav className="lateral__navegacion">
+        <nav className="lateral__navegacion" data-recorrido="menu">
           {menu.map((opcion) =>
             opcion.grupo ? (
               <div key={opcion.grupo} className="lateral__grupo">
@@ -174,6 +194,7 @@ export default function Estructura() {
               <NavLink
                 key={opcion.ruta}
                 to={opcion.ruta}
+                data-recorrido={opcion.recorrido}
                 className={({ isActive }) => `lateral__enlace${isActive ? ' activo' : ''}`}
                 title={contraido ? opcion.texto : undefined}
               >
@@ -221,7 +242,12 @@ export default function Estructura() {
               Demostración
             </span>
           )}
-          <BuscadorGlobal />
+          <span data-recorrido="buscador" style={{ display: 'contents' }}>
+            <BuscadorGlobal />
+          </span>
+          <button type="button" className="boton-icono" onClick={abrirRecorrido} aria-label="Ver el recorrido guiado" title="Recorrido guiado">
+            <CircleHelp size={18} />
+          </button>
           <CampanaNotificaciones />
           <button
             type="button"
@@ -237,6 +263,7 @@ export default function Estructura() {
         <main className="contenido" key={ubicacion.pathname}>
           <Outlet />
         </main>
+        <RecorridoGuiado />
       </div>
 
       <Modal

@@ -70,10 +70,11 @@ puertas de cabina y de piso de cada ascensor.
 ## Carga y descarga en Excel
 
 La plantilla [`plantillas/SIGMA_Plantilla_Datos.xlsx`](plantillas/SIGMA_Plantilla_Datos.xlsx) tiene una hoja
-por formulario (Clientes, Edificios, Ascensores, Puertas de piso, Órdenes de trabajo, Checklist, Facturas,
-Pagos y Usuarios) con listas desplegables, rangos validados y una fila de ejemplo.
+por formulario (Clientes, Edificios, Ascensores, Puertas de piso, Certificaciones, Órdenes de trabajo, Checklist,
+Emergencias, Cotizaciones, Facturas, Pagos y Usuarios) con listas desplegables, rangos validados y una fila de ejemplo.
 
-- **Exportar a Excel** en Ascensores, Clientes, Órdenes de trabajo, Cartera y Usuarios descarga los datos
+- **Exportar a Excel** en Ascensores, Clientes, Órdenes de trabajo, Cartera, Usuarios, Emergencias y
+  Certificación anual descarga los datos
   actuales con la misma estructura.
 - **Importar desde Excel** (.xlsx o .csv, con arrastrar y soltar) muestra primero una vista previa con las
   filas válidas, los errores (hoja, fila, columna y motivo) y los duplicados; luego importa solo las filas
@@ -83,10 +84,24 @@ Pagos y Usuarios) con listas desplegables, rangos validados y una fila de ejempl
 
 Detalle completo en [backend/docs/EXCEL.md](backend/docs/EXCEL.md).
 
+## Servicio comercial
+
+- **Certificación anual** de cada ascensor con su certificado, estado (vigente, por vencer, vencida) y avisos
+  60, 30 y 15 días antes. Referencia: en Bogotá, Acuerdo 470 de 2011 con la NTC 5926-1 (organismos acreditados
+  por ONAC); en otras ciudades se registra la norma local.
+- **Emergencias 24/7**: reporte desde el panel, la app o el **QR de la cabina sin iniciar sesión**
+  (`/reportar/{código}`), tiempo objetivo de llegada configurable y seguimiento por estados.
+- **Cotizaciones** de correctivos que el cliente aprueba o rechaza desde su portal.
+- **Indicadores**: disponibilidad, MTBF, tiempo medio de respuesta y cumplimiento del plan.
+- Historial del ascensor con línea de tiempo y documentos; sección **Próximamente** (IoT y predictivo);
+  **recorrido guiado** de 5 pasos.
+
+Pendientes y decisiones abiertas en [docs/PENDIENTES.md](docs/PENDIENTES.md).
+
 ## Pruebas
 
 ```sh
-docker exec ascensores_app php artisan test     # backend: 90 pruebas (base ascensores_test)
-cd frontend && npm test                          # 27 pruebas
+docker exec ascensores_app php artisan test     # backend: 111 pruebas (base ascensores_test)
+cd frontend && npm test                          # 38 pruebas
 cd app/flutter_application_1 && flutter test     # 28 pruebas
 ```

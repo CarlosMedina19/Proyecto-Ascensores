@@ -48,6 +48,9 @@ class Equipo extends Model
             if (empty($modelo->identificador_uuid)) {
                 $modelo->identificador_uuid = (string) Str::uuid();
             }
+            if (empty($modelo->codigo_qr)) {
+                $modelo->codigo_qr = Str::lower(Str::random(20));
+            }
         });
     }
 
@@ -75,6 +78,22 @@ class Equipo extends Model
     public function fotos(): HasMany
     {
         return $this->hasMany(FotoEquipo::class)->orderBy('orden')->orderBy('id');
+    }
+
+    /** Revisiones generales anuales (la más reciente primero). */
+    public function certificaciones(): HasMany
+    {
+        return $this->hasMany(Certificacion::class, 'equipo_id')->orderByDesc('fecha_vencimiento')->orderByDesc('id');
+    }
+
+    public function emergencias(): HasMany
+    {
+        return $this->hasMany(Emergencia::class, 'equipo_id')->orderByDesc('reportada_en');
+    }
+
+    public function cotizaciones(): HasMany
+    {
+        return $this->hasMany(Cotizacion::class, 'equipo_id')->orderByDesc('fecha_emision')->orderByDesc('id');
     }
 
     public function historial(): HasMany

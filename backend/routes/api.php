@@ -5,22 +5,23 @@ use App\Http\Controllers\Api\AutenticacionController;
 use App\Http\Controllers\Api\BusquedaController;
 use App\Http\Controllers\Api\CarteraController;
 use App\Http\Controllers\Api\ClienteController;
-use App\Http\Controllers\Api\ExcelController;
 use App\Http\Controllers\Api\ConfiguracionController;
 use App\Http\Controllers\Api\ContratoController;
 use App\Http\Controllers\Api\EdificioController;
 use App\Http\Controllers\Api\EquipoController;
+use App\Http\Controllers\Api\ExcelController;
 use App\Http\Controllers\Api\FotoEquipoController;
 use App\Http\Controllers\Api\MantenimientoController;
 use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\OrdenTrabajoController;
 use App\Http\Controllers\Api\PanelController;
 use App\Http\Controllers\Api\PermisoController;
-use App\Http\Controllers\Api\PlanillaController;
 use App\Http\Controllers\Api\PlanController;
+use App\Http\Controllers\Api\PlanillaController;
 use App\Http\Controllers\Api\RegistroAuditoriaController;
 use App\Http\Controllers\Api\ResumenController;
 use App\Http\Controllers\Api\RolController;
+use App\Http\Controllers\Api\ServicioController;
 use App\Http\Controllers\Api\TecnicoController;
 use App\Http\Controllers\Api\UsuarioController;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +33,10 @@ Route::post('/restablecer-contrasena', [AutenticacionController::class, 'restabl
 Route::get('/verificar-correo/{usuario}/{hash}', [AutenticacionController::class, 'verificarCorreo'])
     ->middleware(['signed', 'throttle:6,1'])
     ->name('verificacion.verificar');
+
+// Reporte de fallas por el QR de la cabina, sin iniciar sesión.
+Route::get('/publico/ascensores/{codigo}', [ServicioController::class, 'ascensorPublico'])->middleware('throttle:30,1');
+Route::post('/publico/ascensores/{codigo}/reportes', [ServicioController::class, 'reportarPorQr'])->middleware('throttle:reporte-qr');
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -140,6 +145,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/excel/importaciones/{id}/errores', [ExcelController::class, 'errores']);
 
     // Cartera mínima (la facturación completa llega en la fase 5).
+    // Servicio comercial: certificación anual, emergencias 24/7, cotizaciones, indicadores y documentos.
+    Route::get('/certificaciones', [ServicioController::class, 'tableroCertificaciones']);
+    Route::get('/equipos/{equipo}/certificaciones', [ServicioController::class, 'certificacionesEquipo']);
+    Route::post('/equipos/{equipo}/certificaciones', [ServicioController::class, 'registrarCertificacion']);
+    Route::post('/certificaciones/{certificacion}/archivo', [ServicioController::class, 'adjuntarCertificado']);
+    Route::get('/certificaciones/{certificacion}/archivo', [ServicioController::class, 'archivoCertificado']);
+    Route::get('/equipos/{equipo}/qr', [ServicioController::class, 'codigoQr']);
+    Route::get('/equipos/{equipo}/documentos', [ServicioController::class, 'documentosEquipo']);
+    Route::get('/emergencias', [ServicioController::class, 'emergencias']);
+    Route::post('/emergencias', [ServicioController::class, 'reportarEmergencia']);
+    Route::get('/emergencias/{emergencia}', [ServicioController::class, 'verEmergencia']);
+    Route::post('/emergencias/{emergencia}/estado', [ServicioController::class, 'cambiarEstadoEmergencia']);
+    Route::get('/cotizaciones', [ServicioController::class, 'cotizaciones']);
+    Route::post('/cotizaciones', [ServicioController::class, 'crearCotizacion']);
+    Route::get('/cotizaciones/{cotizacion}', [ServicioController::class, 'verCotizacion']);
+    Route::post('/cotizaciones/{cotizacion}/respuesta', [ServicioController::class, 'responderCotizacion']);
+    Route::get('/indicadores/servicio', [ServicioController::class, 'indicadores']);
+
     Route::get('/cartera/resumen', [CarteraController::class, 'resumen']);
     Route::get('/facturas', [CarteraController::class, 'facturas']);
     Route::post('/facturas', [CarteraController::class, 'crearFactura']);

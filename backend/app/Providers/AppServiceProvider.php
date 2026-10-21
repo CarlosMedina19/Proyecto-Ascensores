@@ -106,6 +106,14 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        // Reporte por QR sin sesión: pocos envíos por dirección y por ascensor para evitar abusos.
+        RateLimiter::for('reporte-qr', function (Request $solicitud) {
+            return [
+                Limit::perMinute(3)->by('qr-ip|'.$solicitud->ip()),
+                Limit::perHour(20)->by('qr-ascensor|'.$solicitud->route('codigo')),
+            ];
+        });
+
         RateLimiter::for('recuperar-contrasena', function (Request $solicitud) {
             return Limit::perMinute(3)->by($solicitud->ip())->response(
                 fn () => response()->json(['mensaje' => 'Demasiadas solicitudes. Espere un minuto.'], 429)

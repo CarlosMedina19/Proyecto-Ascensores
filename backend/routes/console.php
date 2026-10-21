@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\CertificacionService;
 use App\Services\TareasProgramadasService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -21,6 +22,11 @@ Artisan::command('sigma:enviar-avisos', function (TareasProgramadasService $tare
     $this->info("Avisos de mantenimiento encolados: {$avisos}. Alertas de vencimiento de contratos: {$alertas}.");
 })->purpose('Envía los avisos de mantenimiento y las alertas de renovación (RF-020, RF-021)');
 
+Artisan::command('sigma:alertar-certificaciones', function (CertificacionService $certificaciones) {
+    $this->info('Alertas de certificación anual encoladas: '.$certificaciones->enviarAlertas().'.');
+})->purpose('Avisa 60, 30 y 15 días antes del vencimiento de la certificación anual de cada ascensor');
+
+Schedule::command('sigma:alertar-certificaciones')->dailyAt('07:10')->withoutOverlapping();
 Schedule::command('sigma:procesar-vigencias')->dailyAt('00:15')->withoutOverlapping();
 Schedule::command('sigma:enviar-avisos')->dailyAt('07:00')->withoutOverlapping();
 Schedule::command('queue:prune-failed --hours=720')->weekly();

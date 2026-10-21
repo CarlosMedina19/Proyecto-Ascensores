@@ -24,6 +24,9 @@ export default function Configuracion() {
     dias: '',
     alerta: '',
     iva: '',
+    objetivo: '',
+    atrapamiento: '',
+    certificacion: '',
   });
 
   useEffect(() => {
@@ -34,6 +37,9 @@ export default function Configuracion() {
         dias: (valor('notificaciones.dias_aviso') || []).join(', '),
         alerta: String(valor('contratos.dias_alerta_vencimiento') ?? ''),
         iva: String(valor('iva.porcentaje') ?? ''),
+        objetivo: String(valor('emergencias.minutos_objetivo') ?? ''),
+        atrapamiento: String(valor('emergencias.minutos_atrapamiento') ?? ''),
+        certificacion: (valor('certificaciones.dias_alerta') || []).join(', '),
       });
       setPeriodicidades(lista);
       setCargado(true);
@@ -59,6 +65,12 @@ export default function Configuracion() {
         notificaciones_dias_aviso: dias,
         contratos_dias_alerta_vencimiento: Number(datos.alerta),
         iva_porcentaje: Number(datos.iva),
+        emergencias_minutos_objetivo: Number(datos.objetivo),
+        emergencias_minutos_atrapamiento: Number(datos.atrapamiento),
+        certificaciones_dias_alerta: datos.certificacion
+          .split(/[,\s]+/)
+          .filter(Boolean)
+          .map(Number),
       }),
     );
     if (respuesta) notificar(respuesta.mensaje);
@@ -70,7 +82,7 @@ export default function Configuracion() {
 
   return (
     <>
-      <EncabezadoPagina titulo="Configuración" descripcion="Parámetros generales de avisos, contratos e impuestos." />
+      <EncabezadoPagina titulo="Configuración" descripcion="Parámetros generales de avisos, contratos, emergencias, certificación anual e impuestos." />
       <form className="formulario" onSubmit={guardar} noValidate>
         <Alerta>{mensajeError}</Alerta>
 
@@ -115,6 +127,40 @@ export default function Configuracion() {
               valor={datos.iva}
               alCambiar={cambiar('iva')}
               error={error('iva_porcentaje')}
+            />
+          </Tarjeta>
+        </div>
+
+        <div className="rejilla rejilla--2">
+          <Tarjeta titulo="Emergencias">
+            <div className="formulario__fila">
+              <CampoTexto
+                etiqueta="Tiempo objetivo de llegada (min)"
+                tipo="number"
+                min="5"
+                max="1440"
+                valor={datos.objetivo}
+                alCambiar={cambiar('objetivo')}
+                error={error('emergencias_minutos_objetivo')}
+              />
+              <CampoTexto
+                etiqueta="Con personas atrapadas (min)"
+                tipo="number"
+                min="5"
+                max="1440"
+                valor={datos.atrapamiento}
+                alCambiar={cambiar('atrapamiento')}
+                error={error('emergencias_minutos_atrapamiento')}
+              />
+            </div>
+          </Tarjeta>
+          <Tarjeta titulo="Certificación anual">
+            <CampoTexto
+              etiqueta="Días de alerta antes del vencimiento"
+              ayuda="Separados por coma. Por defecto: 60, 30, 15."
+              valor={datos.certificacion}
+              alCambiar={cambiar('certificacion')}
+              error={error('certificaciones_dias_alerta') || Object.entries(errores).find(([c]) => c.startsWith('certificaciones_dias_alerta.'))?.[1]?.[0]}
             />
           </Tarjeta>
         </div>
