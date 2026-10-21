@@ -76,7 +76,7 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion> {
                       decoration: ShapeDecoration(
                         color: esquema.surface,
                         shape: BordeLuminoso(degradado: degradadoBorde(Theme.of(context).brightness), radio: 20),
-                        shadows: const [BoxShadow(color: Color(0x334E29AA), blurRadius: 28, offset: Offset(0, 14), spreadRadius: -16)],
+                        shadows: const [BoxShadow(color: Color(0x335B34C4), blurRadius: 28, offset: Offset(0, 14), spreadRadius: -16)],
                       ),
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
@@ -190,7 +190,7 @@ class _Presentacion extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: const BoxDecoration(
-          gradient: RadialGradient(center: Alignment(1, -1), radius: 1.5, colors: [Color(0x805A30C5), Color(0x005A30C5)]),
+          gradient: RadialGradient(center: Alignment(1, -1), radius: 1.5, colors: [Color(0x40A58BFF), Color(0x00A58BFF)]),
           color: SigmaColores.tinta,
         ),
         child: Padding(
@@ -216,7 +216,7 @@ class _Presentacion extends StatelessWidget {
               const SizedBox(height: 10),
               const Text(
                 'Programación de mantenimientos, checklist digital en campo e informes firmados en PDF.',
-                style: TextStyle(color: Color(0xFFCDC0ED), fontSize: 13.5),
+                style: TextStyle(color: SigmaColores.escenaTextoSuave, fontSize: 13.5),
               ),
             ],
           ),

@@ -510,7 +510,7 @@ class EncabezadoSigma extends StatelessWidget {
         gradient: RadialGradient(
           center: const Alignment(1, -1),
           radius: 1.3,
-          colors: [oscuro ? const Color(0x299A7FE0) : const Color(0x1A5A30C5), tema.colorScheme.surface],
+          colors: [oscuro ? const Color(0x1FA58BFF) : const Color(0x125B34C4), tema.colorScheme.surface],
           stops: const [0, .62],
         ),
       ),
@@ -770,7 +770,7 @@ class TarjetaDestacada extends StatelessWidget {
           gradient: const RadialGradient(
             center: Alignment(1, -1),
             radius: 1.6,
-            colors: [Color(0xFF8161D1), Color(0xFF4E29AA), Color(0xFF22124A)],
+            colors: [Color(0xFF2E2648), SigmaColores.escenaPanel, Color(0xFF141218)],
             stops: [0, .55, 1],
           ),
         ),

@@ -5,26 +5,32 @@ import 'package:flutter/material.dart';
 class SigmaColores {
   SigmaColores._();
 
-  static const primario = Color(0xFF4E29AA);
-  static const primarioClaro = Color(0xFF5A30C5);
-  static const primarioOscuroModo = Color(0xFF9A7FE0);
-  static const cian = Color(0xFF5C7A12);
-  static const cianOscuroModo = Color(0xFF85AA29);
-  static const lima = Color(0xFFB5D65A);
-  static const bueno = Color(0xFF1F8A43);
-  static const regular = Color(0xFFB86E06);
-  static const malo = Color(0xFFC2362B);
-  static const tinta = Color(0xFF150B2D);
-  static const tintaTexto = Color(0xFFF2EFFA);
-  static const tintaSuave = Color(0xFFAA94E0);
-  static const superficieSuave = Color(0xFFF7F4FC);
-  static const borde = Color(0xFFE6DFF6);
-  static const textoSuave = Color(0xFF6B5B95);
+  static const primario = Color(0xFF5B34C4);
+  static const primarioClaro = Color(0xFF6A45D3);
+  static const primarioOscuroModo = Color(0xFFA58BFF);
+  static const cian = Color(0xFF1E7A3E);
+  static const cianOscuroModo = Color(0xFF6FD08F);
+  static const lima = Color(0xFF6FD08F);
+  static const bueno = Color(0xFF1E7A3E);
+  static const regular = Color(0xFF8A5300);
+  static const malo = Color(0xFFB42318);
+  static const tinta = Color(0xFF141218);
+  static const tintaTexto = Color(0xFFECEAF2);
+  static const tintaSuave = Color(0xFFA9A3B8);
+  static const superficieSuave = Color(0xFFF8F7FA);
+  static const borde = Color(0xFFE1DEE8);
+  static const textoSuave = Color(0xFF534F63);
 
   /// Fondo de la página y de las tarjetas en cada modo.
-  static const paginaClaro = Color(0xFFF2EFFA);
-  static const paginaOscuro = Color(0xFF160B33);
-  static const tarjetaOscuro = Color(0xFF251452);
+  static const paginaClaro = Color(0xFFF4F3F7);
+  static const paginaOscuro = Color(0xFF0F0E13);
+  static const tarjetaOscuro = Color(0xFF17151C);
+
+  /// Escena del ingreso, tarjeta destacada y puertas: casi negro con el acento violeta.
+  static const escenaFondo = Color(0xFF0F0E13);
+  static const escenaPanel = Color(0xFF1C1A23);
+  static const escenaTextoSuave = Color(0xFFA9A3B8);
+  static const acentoEscena = Color(0xFFA58BFF);
 }
 
 /// En modo oscuro los colores de estado y de marca pasan a sus variantes claras (prototipo),
@@ -34,10 +40,10 @@ Color colorSegunModo(BuildContext context, Color color) {
   return switch (color) {
     SigmaColores.primario || SigmaColores.primarioClaro => SigmaColores.primarioOscuroModo,
     SigmaColores.cian => SigmaColores.cianOscuroModo,
-    SigmaColores.bueno => const Color(0xFF7FD69A),
-    SigmaColores.regular => const Color(0xFFF2AE3D),
-    SigmaColores.malo => const Color(0xFFFF8A80),
-    SigmaColores.textoSuave => const Color(0xFFAA94E0),
+    SigmaColores.bueno => const Color(0xFF6FD08F),
+    SigmaColores.regular => const Color(0xFFF2B84B),
+    SigmaColores.malo => const Color(0xFFFF8F80),
+    SigmaColores.textoSuave => const Color(0xFFAFA9BE),
     _ => color,
   };
 }
@@ -57,14 +63,14 @@ LinearGradient degradadoBorde(Brightness brillo) => brillo == Brightness.dark
     ? const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xD9CDC0ED), Color(0xBF5A30C5), Color(0xD93E2188), Color(0xBF5A30C5), Color(0xBF85AA29)],
-        stops: [0, .28, .5, .72, 1],
+        colors: [Color(0x80A58BFF), Color(0xFF2C2936), Color(0xFF2C2936), Color(0x4DA58BFF)],
+        stops: [0, .35, .65, 1],
       )
     : const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xBF5A30C5), Color(0x99CDC0ED), Color(0xE6E6DFF6), Color(0x99CDC0ED), Color(0x9985AA29)],
-        stops: [0, .28, .5, .72, 1],
+        colors: [Color(0x8C5B34C4), Color(0xFFE1DEE8), Color(0xFFE1DEE8), Color(0x595B34C4)],
+        stops: [0, .35, .65, 1],
       );
 
 /// Borde redondeado pintado con un degradado (el "borde luminoso" del prototipo).
@@ -109,12 +115,12 @@ ThemeData temaSigma(Brightness brillo) {
   final oscuro = brillo == Brightness.dark;
   final tarjeta = oscuro ? SigmaColores.tarjetaOscuro : Colors.white;
   final pagina = oscuro ? SigmaColores.paginaOscuro : SigmaColores.paginaClaro;
-  final texto = oscuro ? const Color(0xFFF2EFFA) : const Color(0xFF22124A);
-  final suave = oscuro ? const Color(0xFFAA94E0) : SigmaColores.textoSuave;
-  final borde = oscuro ? const Color(0xFF3E2188) : SigmaColores.borde;
-  final bordeFuerte = oscuro ? const Color(0xFF4E29AA) : const Color(0xFFCDC0ED);
+  final texto = oscuro ? const Color(0xFFECEAF2) : const Color(0xFF1A1822);
+  final suave = oscuro ? const Color(0xFFAFA9BE) : SigmaColores.textoSuave;
+  final borde = oscuro ? const Color(0xFF2C2936) : SigmaColores.borde;
+  final bordeFuerte = oscuro ? const Color(0xFF6E687D) : const Color(0xFF8A8597);
   final primario = oscuro ? SigmaColores.primarioOscuroModo : SigmaColores.primario;
-  final primarioSuave = oscuro ? const Color(0xFF3E2188) : const Color(0xFFE6DFF6);
+  final primarioSuave = oscuro ? const Color(0xFF2A2342) : const Color(0xFFEFEAFB);
 
   final esquema = ColorScheme.fromSeed(
     seedColor: SigmaColores.primario,
@@ -124,11 +130,11 @@ ThemeData temaSigma(Brightness brillo) {
     primaryContainer: primarioSuave,
     onPrimaryContainer: primario,
     secondary: oscuro ? SigmaColores.cianOscuroModo : SigmaColores.cian,
-    error: oscuro ? const Color(0xFFFF8A80) : SigmaColores.malo,
+    error: oscuro ? const Color(0xFFFF8F80) : SigmaColores.malo,
     surface: tarjeta,
     onSurface: texto,
     onSurfaceVariant: suave,
-    surfaceContainerHighest: oscuro ? const Color(0xFF2F1967) : const Color(0xFFEEEAF8),
+    surfaceContainerHighest: oscuro ? const Color(0xFF24212D) : const Color(0xFFEEECF3),
     outline: bordeFuerte,
     outlineVariant: borde,
   );
@@ -181,7 +187,7 @@ ThemeData temaSigma(Brightness brillo) {
         borderSide: BorderSide(color: primario, width: 1.6),
       ),
       filled: true,
-      fillColor: oscuro ? const Color(0xFF21114A) : SigmaColores.superficieSuave,
+      fillColor: oscuro ? const Color(0xFF1C1A23) : SigmaColores.superficieSuave,
       labelStyle: TextStyle(color: suave),
     ),
     filledButtonTheme: FilledButtonThemeData(
@@ -254,7 +260,7 @@ ThemeData temaSigma(Brightness brillo) {
     snackBarTheme: SnackBarThemeData(
       backgroundColor: SigmaColores.tinta,
       contentTextStyle: const TextStyle(fontFamily: SigmaFuentes.texto, color: SigmaColores.tintaTexto, fontWeight: FontWeight.w500),
-      actionTextColor: const Color(0xFFCDC0ED),
+      actionTextColor: const Color(0xFFBBA6FF),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
@@ -267,7 +273,7 @@ ThemeData temaSigma(Brightness brillo) {
     bottomSheetTheme: BottomSheetThemeData(backgroundColor: tarjeta, surfaceTintColor: Colors.transparent),
     progressIndicatorTheme: ProgressIndicatorThemeData(
       color: primario,
-      linearTrackColor: oscuro ? const Color(0xFF2F1967) : const Color(0xFFEEEAF8),
+      linearTrackColor: oscuro ? const Color(0xFF24212D) : const Color(0xFFEEECF3),
     ),
     dividerTheme: DividerThemeData(color: borde, space: 1),
   );

@@ -72,7 +72,7 @@ function Indicador({ icono: Icono, tono, etiqueta, valor, detalle, tipoDetalle, 
   );
 }
 
-/** Programados frente a ejecutados por semana; la semana actual se resalta en cian. */
+/** Programados frente a ejecutados por semana; la semana actual se resalta con el tercer color de la gráfica. */
 function GraficoSemanas({ semanas }) {
   // Tope múltiplo de 3 para que las cuatro líneas guía queden en números enteros y parejos.
   const maximo = Math.max(3, ...semanas.map((s) => s.programados));
@@ -338,13 +338,13 @@ export default function PanelOperacion({ nombre }) {
                 </div>
                 <div className="leyenda">
                   <span>
-                    <i style={{ background: 'var(--color-primario-oscuro)' }} /> Programados
+                    <i style={{ background: 'var(--grafica-1)' }} /> Programados
                   </span>
                   <span>
-                    <i style={{ background: 'var(--color-primario-medio)' }} /> Ejecutados
+                    <i style={{ background: 'var(--grafica-2)' }} /> Ejecutados
                   </span>
                   <span>
-                    <i style={{ background: 'var(--color-cian)' }} /> Semana actual
+                    <i style={{ background: 'var(--grafica-3)' }} /> Semana actual
                   </span>
                 </div>
               </div>

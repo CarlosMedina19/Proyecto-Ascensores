@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../tema.dart';
 import 'comunes.dart';
 
 /// Puertas de ascensor que se cierran al ingresar y se abren ya dentro de la app (prototipo).
@@ -76,12 +77,12 @@ class _PuertasSigmaState extends State<PuertasSigma> with SingleTickerProviderSt
                                   width: ancho,
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFF150B2D), Color(0xFF2F1967), Color(0xFF22124A)],
+                                      colors: [SigmaColores.escenaFondo, SigmaColores.escenaPanel, SigmaColores.escenaFondo],
                                       stops: [0, .55, 1],
                                     ),
                                     border: Border(
-                                      right: izquierda ? const BorderSide(color: Color(0x8CB5D65A), width: 2) : BorderSide.none,
-                                      left: izquierda ? BorderSide.none : const BorderSide(color: Color(0x8CB5D65A), width: 2),
+                                      right: izquierda ? const BorderSide(color: Color(0x8C6FD08F), width: 2) : BorderSide.none,
+                                      left: izquierda ? BorderSide.none : const BorderSide(color: Color(0x8C6FD08F), width: 2),
                                     ),
                                   ),
                                 ),
