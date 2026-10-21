@@ -67,6 +67,27 @@ fase de puertas eléctricas de `FASES.pdf`.
 Las puertas eléctricas independientes quedaron fuera del alcance: solo se gestionan las
 puertas de cabina y de piso de cada ascensor.
 
+## Contenedores y base de datos
+
+En Docker Desktop el proyecto se llama **proyecto_ascensores** (`backend/docker-compose.yml`). Todos sus
+contenedores se usan:
+
+| Contenedor | Para qué sirve |
+| --- | --- |
+| `ascensores_app` | API de Laravel en http://localhost:8000 |
+| `ascensores_db` | PostgreSQL 16 (puerto 5433 en el equipo) |
+| `ascensores_queue` | Envía los correos y avisos encolados |
+| `ascensores_scheduler` | Tareas diarias: vigencias, avisos de mantenimiento, contratos y certificación anual |
+| `ascensores_pgadmin` | Visor de la base de datos en http://localhost:5050 |
+
+**Ver las tablas y el diagrama:** abra http://localhost:5050 (usuario `admin@ascensores.com`, contraseña
+`admin123`). El servidor **SIGMA** ya está registrado; al abrirlo pide la contraseña de la base
+(`ascensores_pass`). Luego: *SIGMA → Databases → ascensores → clic derecho → ERD For Database* para el
+diagrama de tablas, o *Schemas → public → Tables* para ver cada tabla (*View/Edit Data*).
+
+Desde otro programa (DBeaver, DataGrip): host `localhost`, puerto `5433`, base `ascensores`, usuario
+`ascensores_user`, contraseña `ascensores_pass`.
+
 ## Carga y descarga en Excel
 
 La plantilla [`plantillas/SIGMA_Plantilla_Datos.xlsx`](plantillas/SIGMA_Plantilla_Datos.xlsx) tiene una hoja

@@ -1,3 +1,7 @@
+# SIGMA · Gestión y mantenimiento de ascensores.
+# En Docker Desktop aparece como "proyecto_ascensores" (Compose solo admite minúsculas en el nombre).
+name: proyecto_ascensores
+
 services:
   app:
     build:
@@ -25,7 +29,7 @@ services:
       PHP_CLI_SERVER_WORKERS: 6
     command: sh -c "php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=8000 --no-reload"
 
-  # Fase 2: procesa la cola de avisos (correo y notificaciones en la aplicación).
+  # Cola de avisos: envía los correos y las notificaciones de la aplicación.
   queue:
     build:
       context: .
@@ -47,7 +51,7 @@ services:
       DB_CONNECTION: pgsql
     command: php artisan queue:work --tries=3 --sleep=3 --max-time=3600
 
-  # Fase 2: tareas diarias (vigencias a las 00:15, avisos y alertas de contratos a las 07:00).
+  # Tareas diarias: vigencias (00:15), avisos de mantenimiento y contratos (07:00) y certificación anual (07:10).
   scheduler:
     build:
       context: .
@@ -89,6 +93,7 @@ services:
       timeout: 5s
       retries: 10
 
+  # Visor de la base de datos (http://localhost:5050). Ya trae registrada la conexión "SIGMA".
   pgadmin:
     image: dpage/pgadmin4
     container_name: ascensores_pgadmin
@@ -96,6 +101,10 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@ascensores.com
       PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    volumes:
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - pgadmin_data:/var/lib/pgadmin
     ports:
       - "5050:80"
     depends_on:
@@ -104,7 +113,10 @@ services:
       - app_network
 
 volumes:
+  # Se fija el nombre del volumen para conservar los datos de antes del cambio de nombre del proyecto.
   db_data:
+    name: backend_db_data
+  pgadmin_data:
 
 networks:
   app_network:

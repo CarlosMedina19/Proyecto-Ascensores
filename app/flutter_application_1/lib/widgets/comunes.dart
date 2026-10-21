@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 
 import '../datos/modelos.dart';
 import '../tema.dart';
@@ -66,6 +66,18 @@ class _PintorLogo extends CustomPainter {
         ..color = Colors.white.withValues(alpha: .55),
     );
 
+    // Rieles de guía a la derecha.
+    for (final riel in const [Rect.fromLTWH(103, 22, 4.5, 50), Rect.fromLTWH(110, 32, 4.5, 40)]) {
+      canvas.drawRect(riel, Paint()..shader = _metal.createShader(riel));
+      canvas.drawRect(
+        riel,
+        Paint()
+          ..color = const Color(0xFFAA94E0)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2,
+      );
+    }
+
     final recorrido = Path()
       ..moveTo(96, 12)
       ..lineTo(24, 36)
@@ -93,7 +105,13 @@ class _PintorLogo extends CustomPainter {
       );
     }
 
-    // Cabina con su visor, la luz interior y las dos hojas de puerta.
+    // Cabina con su resplandor, el visor, la luz interior con el nombre y las dos hojas de puerta.
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(const Rect.fromLTWH(40, 30, 40, 78), const Radius.circular(4)),
+      Paint()
+        ..color = const Color(0xFF9A7FE0).withValues(alpha: .6)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.4),
+    );
     const cabina = Rect.fromLTWH(42, 32, 36, 74);
     canvas.drawRRect(RRect.fromRectAndRadius(cabina, const Radius.circular(3)), Paint()..shader = _metal.createShader(cabina));
     canvas.drawRRect(
@@ -125,6 +143,19 @@ class _PintorLogo extends CustomPainter {
           stops: [0, .55, 1],
         ).createShader(luz),
     );
+    // "SIGMA" en vertical dentro de la cabina, con la fuente de la marca.
+    var y = 49.0 + 9.2;
+    for (final letra in 'SIGMA'.split('')) {
+      final texto = TextPainter(
+        text: TextSpan(
+          text: letra,
+          style: const TextStyle(fontFamily: SigmaFuentes.marca, fontSize: 8.4, color: Color(0xFF2F1967), height: 1),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      texto.paint(canvas, Offset(60 - texto.width / 2, y - texto.height * .8));
+      y += 9.6;
+    }
     for (final x in [45.5, 66.5]) {
       final hoja = Rect.fromLTWH(x, 48, 8, 55);
       canvas.drawRect(hoja, Paint()..shader = _metal.createShader(hoja));

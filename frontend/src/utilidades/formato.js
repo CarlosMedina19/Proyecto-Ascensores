@@ -38,10 +38,12 @@ export function velocidad(metrosPorMinuto) {
   return `${(Number(metrosPorMinuto) / 60).toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 2 })} m/s`;
 }
 
-/** Primer nombre para saludar; las cuentas genéricas (administrador) se saludan sin nombre. */
+/** Nombre para el saludo: el primer nombre de la persona, o el nombre completo de una cuenta genérica. */
 export function nombreSaludo(nombreCompleto = '') {
-  if (/administrador|admin\b|sistema/i.test(nombreCompleto)) return '';
-  return nombreCompleto.trim().split(/\s+/)[0] || '';
+  const nombre = (nombreCompleto || '').trim();
+  // "Super Administrador" o "Coordinador Demo" no tienen un primer nombre que sirva solo.
+  if (/administrador|admin\b|sistema|coordinador|demo/i.test(nombre)) return nombre;
+  return nombre.split(/\s+/)[0] || '';
 }
 
 const formatoDia = new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short' });
