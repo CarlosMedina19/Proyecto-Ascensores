@@ -125,7 +125,7 @@ class OrdenTrabajo extends Model
 
     public function creador(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'creado_por');
+        return $this->belongsTo(Usuario::class, 'creado_por')->withTrashed();
     }
 
     public function esFinal(): bool

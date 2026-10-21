@@ -32,7 +32,7 @@ class EnviarNotificacionJob implements ShouldQueue
             return;
         }
 
-        $envio->usuario->notifyNow($this->notificacion->porCanal($envio->canal));
+        $envio->usuario?->notifyNow($this->notificacion->porCanal($envio->canal));
         $envio->update(['estado' => 'enviado', 'enviado_en' => now(), 'error' => null]);
     }
 

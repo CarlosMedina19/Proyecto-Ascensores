@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AlertTriangle, ArrowRight, ArrowUpDown, CalendarCheck, FileText, Plus, Wrench } from 'lucide-react';
-import { panel as servicioPanel, resumen as servicioResumen } from '../../api/servicios';
+import { AlertTriangle, ArrowRight, ArrowUpDown, CalendarCheck, ClipboardCheck, FileText, Plus, Siren, Wrench } from 'lucide-react';
+import { panel as servicioPanel, resumen as servicioResumen, servicio } from '../../api/servicios';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
-import { Alerta, Cargando, EstadoVacio, Insignia, Tarjeta } from '../../componentes/Basicos';
+import { Alerta, Cargando, EstadoVacio, Insignia, ListaDescripcion, Tarjeta } from '../../componentes/Basicos';
+import AvisosDelDia from '../../componentes/AvisosDelDia';
 import CorteAscensor from '../../componentes/CorteAscensor';
 import LineaTiempo from '../../componentes/LineaTiempo';
 import { ESTADOS_EQUIPO, ESTADOS_ORDEN, SERVICIOS_ORDEN, dinero, fecha, fechaIso, humanizar, iniciales } from '../../utilidades/formato';
@@ -209,6 +210,17 @@ export default function PanelOperacion({ nombre }) {
   const [datos, setDatos] = useState(null);
   const [error, setError] = useState('');
 
+  const [emergencias, setEmergencias] = useState(null);
+
+  // Emergencias abiertas para el aviso del encabezado.
+  useEffect(() => {
+    if (!tienePermiso('emergencias.ver')) return;
+    servicio
+      .emergencias({ estado: 'abiertas', por_pagina: 1 })
+      .then((r) => setEmergencias(r.metadatos?.total ?? 0))
+      .catch(() => setEmergencias(null));
+  }, [tienePermiso]);
+
   useEffect(() => {
     Promise.all([servicioResumen.obtener(), servicioPanel.obtener()])
       .then(([r, p]) => {
@@ -231,47 +243,61 @@ export default function PanelOperacion({ nombre }) {
 
   return (
     <>
-      <div className="pagina__encabezado">
+      <div className="pagina__encabezado panel__encabezado">
         <div>
           <p className="etiqueta-superior">{fechaLarga()}</p>
           <h1 className="pagina__titulo">
             {saludo()}
-            {nombre ? `, ${nombre}` : ''}.{' '}
-            {ordenesHoy ? (
-              <>
-                Hoy hay <span className="resalte">{ordenesHoy} {ordenesHoy === 1 ? 'orden' : 'órdenes'}</span> de trabajo
-              </>
-            ) : (
-              'Hoy no hay órdenes de trabajo'
-            )}
-            {atrasados.total ? (
-              <>
-                {' '}
-                y <span className="resalte">{atrasados.total} {atrasados.total === 1 ? 'visita del plan atrasada' : 'visitas del plan atrasadas'}</span>.
-              </>
-            ) : (
-              '.'
-            )}
+            {nombre ? `, ${nombre}` : ''}.
           </h1>
-          <p className="pagina__descripcion">Operación de mantenimiento: órdenes, técnicos, ascensores, planes y contratos.</p>
+          <ListaDescripcion elementos={['Órdenes y técnicos', 'Ascensores y planes', 'Contratos']} />
+          <div className="pagina__acciones panel__acciones">
+            {tienePermiso('equipos.crear') && (
+              <Link to="/equipos/nuevo" className="boton boton--secundario">
+                <Plus size={16} /> Registrar ascensor
+              </Link>
+            )}
+            {tienePermiso('ordenes.crear') && (
+              <Link to="/ordenes/nueva" className="boton boton--secundario">
+                <Plus size={16} /> Crear orden de trabajo
+              </Link>
+            )}
+            {tienePermiso('mantenimientos.ver') && (
+              <Link to="/calendario" className="boton">
+                Ver calendario <ArrowRight size={16} />
+              </Link>
+            )}
+          </div>
         </div>
-        <div className="pagina__acciones">
-          {tienePermiso('equipos.crear') && (
-            <Link to="/equipos/nuevo" className="boton boton--secundario">
-              <Plus size={16} /> Registrar ascensor
-            </Link>
-          )}
-          {tienePermiso('ordenes.crear') && (
-            <Link to="/ordenes/nueva" className="boton boton--secundario">
-              <Plus size={16} /> Crear orden de trabajo
-            </Link>
-          )}
-          {tienePermiso('mantenimientos.ver') && (
-            <Link to="/calendario" className="boton">
-              Ver calendario <ArrowRight size={16} />
-            </Link>
-          )}
-        </div>
+        <AvisosDelDia
+          avisos={[
+            emergencias
+              ? {
+                  icono: Siren,
+                  tono: 'peligro',
+                  texto: `${emergencias} ${emergencias === 1 ? 'emergencia abierta' : 'emergencias abiertas'}`,
+                  detalle: 'Revise el tiempo de llegada',
+                  ruta: '/emergencias',
+                }
+              : null,
+            {
+              icono: ClipboardCheck,
+              tono: ordenesHoy ? 'info' : 'exito',
+              texto: ordenesHoy ? `${ordenesHoy} ${ordenesHoy === 1 ? 'orden de trabajo' : 'órdenes de trabajo'} hoy` : 'Sin órdenes de trabajo hoy',
+              detalle: ordenesHoy ? 'Programadas para hoy' : 'No hay trabajos programados',
+              ruta: '/ordenes',
+            },
+            atrasados.total
+              ? {
+                  icono: AlertTriangle,
+                  tono: 'alerta',
+                  texto: `${atrasados.total} ${atrasados.total === 1 ? 'visita del plan atrasada' : 'visitas del plan atrasadas'}`,
+                  detalle: 'Reprográmelas en el calendario',
+                  ruta: '/calendario',
+                }
+              : null,
+          ]}
+        />
       </div>
 
       <div className="franja-estado">

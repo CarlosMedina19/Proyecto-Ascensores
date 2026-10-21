@@ -49,6 +49,6 @@ class Certificacion extends Model
 
     public function registradoPor(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'registrado_por');
+        return $this->belongsTo(Usuario::class, 'registrado_por')->withTrashed();
     }
 }

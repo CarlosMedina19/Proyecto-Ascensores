@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Eye } from 'lucide-react';
 import { auditoria } from '../../api/servicios';
-import { useListado } from '../../hooks/useListado';
+import { filasSegunPantalla, useListado } from '../../hooks/useListado';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Modal, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
 import { ACCIONES_AUDITORIA, fechaHora, humanizar } from '../../utilidades/formato';
 
@@ -18,7 +18,7 @@ export default function ListaAuditoria() {
   const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina } = useListado(
     auditoria.listar,
     { modulo: '', accion: '', fecha_desde: '', fecha_hasta: '' },
-    20,
+    filasSegunPantalla(42),
   );
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function ListaAuditoria() {
     <>
       <EncabezadoPagina
         titulo="Auditoría"
-        descripcion="Registro de las acciones relevantes: usuario, acción, módulo, fecha, IP y cambios. Los registros no se pueden editar ni eliminar."
+        descripcion={['Usuario, acción y módulo', 'Fecha, IP y cambios', 'Los registros no se editan ni se eliminan']}
       />
 
       <Tarjeta sinRelleno>

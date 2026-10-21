@@ -4,7 +4,16 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * Carga un listado paginado de la API y maneja filtros, búsqueda y página.
  * `consultar` recibe los filtros y devuelve { datos, metadatos }.
  */
-export function useListado(consultar, filtrosIniciales = {}, porPagina = 15) {
+/**
+ * Filas por página según el alto de la ventana: la tabla cabe en la pantalla sin desplazarse.
+ * Se descuentan el encabezado, los filtros y la paginación (unos 390 px) y cada fila mide unos 58 px.
+ */
+export function filasSegunPantalla(altoFila = 58) {
+  if (typeof window === 'undefined' || !window.innerHeight) return 10;
+  return Math.max(4, Math.min(25, Math.floor((window.innerHeight - 390) / altoFila)));
+}
+
+export function useListado(consultar, filtrosIniciales = {}, porPagina = filasSegunPantalla()) {
   const [filtros, setFiltros] = useState({ busqueda: '', ...filtrosIniciales });
   const [pagina, setPagina] = useState(1);
   const [respuesta, setRespuesta] = useState({ datos: [], metadatos: null });

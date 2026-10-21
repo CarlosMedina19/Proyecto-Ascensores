@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { festivos as servicioFestivos, mantenimientos, ordenes } from '../../api/servicios';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
-import { Alerta, Cargando } from '../../componentes/Basicos';
+import { Alerta, Cargando, ListaDescripcion } from '../../componentes/Basicos';
 import { ESTADOS_ORDEN, diasHasta, estadoMantenimiento, fechaIso } from '../../utilidades/formato';
 import ModalMantenimiento from './ModalMantenimiento';
 
@@ -375,11 +375,13 @@ export default function Calendario() {
             {formatoMes.format(ancla).toUpperCase()} · {total} {total === 1 ? 'EVENTO' : 'EVENTOS'}
           </p>
           <h1 className="pagina__titulo">Calendario</h1>
-          <p className="pagina__descripcion">
-            {esTecnico
-              ? 'Sus órdenes de trabajo asignadas. Toque una orden para ver el detalle y avanzar su estado.'
-              : 'Un técnico no puede tener dos órdenes que se crucen. Las fechas que caen en domingo o festivo pasan al siguiente día hábil.'}
-          </p>
+          <ListaDescripcion
+            elementos={
+              esTecnico
+                ? ['Sus órdenes asignadas', 'Toque una orden para avanzar su estado']
+                : ['Sin cruces de horario por técnico', 'Domingos y festivos pasan al siguiente día hábil']
+            }
+          />
         </div>
         <div className="pagina__acciones">
           <div className="segmento" role="group" aria-label="Vista del calendario">

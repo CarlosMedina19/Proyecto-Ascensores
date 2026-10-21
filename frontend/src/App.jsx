@@ -45,7 +45,6 @@ import Cotizaciones from './paginas/servicio/Cotizaciones';
 import DetalleCotizacion from './paginas/servicio/DetalleCotizacion';
 import Certificaciones from './paginas/servicio/Certificaciones';
 import Indicadores from './paginas/servicio/Indicadores';
-import Proximamente from './paginas/servicio/Proximamente';
 import ReportarFalla from './paginas/publico/ReportarFalla';
 
 const conPermiso = (permiso, elemento) => <ConPermiso permiso={permiso}>{elemento}</ConPermiso>;
@@ -133,7 +132,6 @@ export default function App() {
               <Route path="/cotizaciones/:id" element={conPermiso('cotizaciones.ver', <DetalleCotizacion />)} />
               <Route path="/certificaciones" element={conPermiso('certificaciones.ver', <Certificaciones />)} />
               <Route path="/indicadores" element={conPermiso('indicadores.ver', <Indicadores />)} />
-              <Route path="/proximamente" element={<Proximamente />} />
 
               <Route
                 path="*"

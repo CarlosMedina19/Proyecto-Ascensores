@@ -1,9 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
 import { equipos } from '../../api/servicios';
-import { useListado } from '../../hooks/useListado';
+import { filasSegunPantalla, useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import AccionesRegistro from '../../componentes/AccionesRegistro';
 import HerramientasExcel from '../../componentes/HerramientasExcel';
 import { ResumenAscensor } from '../../componentes/Despliegues';
 import { ESTADOS_EQUIPO, TIPOS_EDIFICIO, numero } from '../../utilidades/formato';
@@ -15,7 +16,7 @@ export default function ListaEquipos({ tipo }) {
   const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina, recargar } = useListado(equipos.listar, {
     estado: '',
     tipo_edificio: tipo || '',
-  });
+  }, filasSegunPantalla(84));
   const grupo = TIPOS_EDIFICIO[tipo];
 
   return (
@@ -24,11 +25,12 @@ export default function ListaEquipos({ tipo }) {
         titulo={grupo ? `Ascensores · ${grupo.plural}` : esCliente ? 'Mis ascensores' : 'Ascensores'}
         descripcion={
           grupo
-            ? `Ascensores de los edificios de tipo ${grupo.texto.toLowerCase()}, con su ficha técnica, estado e historial.`
-            : 'Ascensores registrados con su ficha técnica, estado e historial.'
+            ? [`Edificios de tipo ${grupo.texto.toLowerCase()}`, 'Ficha técnica', 'Estado e historial']
+            : ['Ficha técnica', 'Estado e historial', 'Certificación y código QR']
         }
         migas={grupo ? <Link to={grupo.ruta}>{grupo.plural}</Link> : undefined}
       >
+        <HerramientasExcel modulo="ascensores" alImportar={recargar} />
         {tienePermiso('equipos.crear') && (
           <Link to="/equipos/nuevo" className="boton">
             <Plus size={16} /> Registrar ascensor
@@ -36,9 +38,6 @@ export default function ListaEquipos({ tipo }) {
         )}
       </EncabezadoPagina>
 
-      <div className="barra-excel">
-        <HerramientasExcel modulo="ascensores" alImportar={recargar} />
-      </div>
 
       <Tarjeta sinRelleno>
         <div className="filtros">
@@ -108,7 +107,19 @@ export default function ListaEquipos({ tipo }) {
               {
                 clave: 'estado',
                 titulo: 'Estado',
-                render: (e) => <Insignia tipo={ESTADOS_EQUIPO[e.estado]?.tipo}>{ESTADOS_EQUIPO[e.estado]?.texto}</Insignia>,
+                render: (e) => (
+                  <AccionesRegistro
+                    nombre={`el ascensor ${e.codigo}`}
+                    activo={e.estado !== 'inactivo'}
+                    insignia={<Insignia tipo={ESTADOS_EQUIPO[e.estado]?.tipo}>{ESTADOS_EQUIPO[e.estado]?.texto}</Insignia>}
+                    rutaEditar={tienePermiso('equipos.editar') ? `/equipos/${e.id}/editar` : null}
+                    alAlternar={tienePermiso('equipos.editar') ? () => equipos.alternarEstado(e.id) : null}
+                    alEliminar={tienePermiso('equipos.eliminar') ? () => equipos.eliminar(e.id) : null}
+                    mensajeDesactivar="El ascensor queda inactivo: no se programan visitas nuevas. Su historial se conserva."
+                    mensajeEliminar="El ascensor se da de baja y deja de aparecer en las listas. Su historial se conserva."
+                    alCambiar={recargar}
+                  />
+                ),
               },
             ]}
           />

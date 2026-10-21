@@ -95,14 +95,14 @@ export default function FormularioEdificio() {
           </div>
 
           <div className="formulario__seccion">Ubicación</div>
-          <CampoTexto etiqueta="Dirección" obligatorio valor={datos.direccion} alCambiar={cambiar('direccion')} error={error('direccion')} />
+          <div className="formulario__fila formulario__fila--direccion">
+            <CampoTexto etiqueta="Dirección" obligatorio valor={datos.direccion} alCambiar={cambiar('direccion')} error={error('direccion')} />
+            <CampoTexto etiqueta="Número de pisos" tipo="number" min="1" valor={datos.pisos} alCambiar={cambiar('pisos')} error={error('pisos')} />
+          </div>
           <div className="formulario__fila formulario__fila--3">
             <CampoTexto etiqueta="Ciudad" obligatorio valor={datos.ciudad} alCambiar={cambiar('ciudad')} error={error('ciudad')} />
             <CampoTexto etiqueta="Departamento" valor={datos.departamento} alCambiar={cambiar('departamento')} error={error('departamento')} />
             <CampoTexto etiqueta="Código postal" valor={datos.codigo_postal} alCambiar={cambiar('codigo_postal')} error={error('codigo_postal')} />
-          </div>
-          <div className="formulario__fila formulario__fila--3">
-            <CampoTexto etiqueta="Número de pisos" tipo="number" min="1" valor={datos.pisos} alCambiar={cambiar('pisos')} error={error('pisos')} />
           </div>
 
           <div className="formulario__seccion">Contacto del edificio</div>

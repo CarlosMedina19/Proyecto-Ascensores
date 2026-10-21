@@ -37,6 +37,6 @@ class Planilla extends Model
 
     public function tecnico(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'tecnico_usuario_id');
+        return $this->belongsTo(Usuario::class, 'tecnico_usuario_id')->withTrashed();
     }
 }

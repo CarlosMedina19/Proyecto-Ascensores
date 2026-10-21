@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ArrowUpDown, Wrench } from 'lucide-react';
 import { equipos as servicioEquipos, mantenimientos as servicioMantenimientos } from '../api/servicios';
 import { useAutenticacion } from '../contexto/AutenticacionContexto';
-import { Alerta, Cargando, EstadoVacio, Insignia, Tabla, Tarjeta } from '../componentes/Basicos';
+import { Alerta, Cargando, EstadoVacio, Insignia, Tabla, Tarjeta, ListaDescripcion } from '../componentes/Basicos';
+import AvisosDelDia from '../componentes/AvisosDelDia';
 import { ESTADOS_EQUIPO, diasHasta, estadoMantenimiento, fecha, fechaIso, nombreSaludo } from '../utilidades/formato';
 import PanelOperacion from './inicio/PanelOperacion';
 
@@ -120,18 +121,29 @@ function PanelEquipos({ nombre }) {
 
   return (
     <>
-      <div className="pagina__encabezado">
+      <div className="pagina__encabezado panel__encabezado">
         <div>
           <p className="etiqueta-superior">{esCliente ? `Portal del cliente · ${usuario.cliente?.nombre ?? ''}` : fechaLarga()}</p>
           <h1 className="pagina__titulo">
-            {saludo()}{nombre ? `, ${nombre}` : ''}. {esCliente ? 'Tiene' : 'Hay'} <span className="resalte">{conteo.activo} ascensores</span> en servicio.
+            {saludo()}
+            {nombre ? `, ${nombre}` : ''}.
           </h1>
-          <p className="pagina__descripcion">
-            {esCliente
-              ? 'Consulte la ficha técnica y el historial de los ascensores de sus edificios.'
-              : 'Consulte la ficha técnica de cada equipo y registre los eventos de sus visitas en el historial.'}
-          </p>
+          <ListaDescripcion elementos={esCliente ? ['Ficha técnica', 'Historial de sus ascensores'] : ['Ficha técnica de cada ascensor', 'Eventos de sus visitas']} />
         </div>
+        <AvisosDelDia
+          avisos={[
+            {
+              icono: ArrowUpDown,
+              tono: 'exito',
+              texto: `${conteo.activo} ${conteo.activo === 1 ? 'ascensor en servicio' : 'ascensores en servicio'}`,
+              detalle: `de ${lista.length} ${esCliente ? 'en sus edificios' : 'registrados'}`,
+              ruta: '/equipos',
+            },
+            conteo.mantenimiento
+              ? { icono: Wrench, tono: 'alerta', texto: `${conteo.mantenimiento} en mantenimiento`, detalle: 'Fuera de servicio por ahora', ruta: '/equipos' }
+              : null,
+          ]}
+        />
       </div>
       <div className="rejilla">
         <div className="rejilla rejilla--3">

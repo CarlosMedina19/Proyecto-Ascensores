@@ -58,6 +58,6 @@ class Cotizacion extends Model
 
     public function respondidaPor(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'respondida_por');
+        return $this->belongsTo(Usuario::class, 'respondida_por')->withTrashed();
     }
 }

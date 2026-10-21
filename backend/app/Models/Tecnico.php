@@ -26,7 +26,7 @@ class Tecnico extends Model
 
     public function usuario(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class);
+        return $this->belongsTo(Usuario::class)->withTrashed();
     }
 
     public function especialidades(): BelongsToMany

@@ -27,7 +27,7 @@ export default function ListaContratos() {
     <>
       <EncabezadoPagina
         titulo={esCliente ? 'Mis contratos' : 'Contratos'}
-        descripcion="Contratos de mantenimiento con su vigencia, valor, ascensores incluidos y el seguimiento de la renovación."
+        descripcion={['Vigencia y valor', 'Ascensores incluidos', 'Seguimiento de la renovación']}
       >
         {tienePermiso('contratos.crear') && (
           <Link to="/contratos/nuevo" className="boton">

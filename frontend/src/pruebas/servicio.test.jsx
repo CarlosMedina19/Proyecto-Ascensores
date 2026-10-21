@@ -8,6 +8,7 @@ import { guardarToken } from '../api/cliente';
 import ReportarFalla from '../paginas/publico/ReportarFalla';
 import DetalleCotizacion from '../paginas/servicio/DetalleCotizacion';
 import Certificaciones from '../paginas/servicio/Certificaciones';
+import { ModalReportarEmergencia } from '../paginas/servicio/Emergencias';
 import { duracion, plazoCertificacion } from '../utilidades/servicio';
 
 function respuestaJson(cuerpo, estado = 200) {
@@ -155,6 +156,21 @@ describe('certificación anual', () => {
     await usuario.click(screen.getByRole('button', { name: /Sin certificar/ }));
     expect(screen.getAllByRole('row')).toHaveLength(2);
     expect(screen.getByText('ASC-003')).toBeInTheDocument();
+  });
+});
+
+describe('reportar emergencia desde el panel', () => {
+  it('se puede escribir de seguido sin que el campo pierda el foco', async () => {
+    guardarToken('token');
+    simularApi({ 'GET /perfil': { datos: { id: 1, nombre: 'Coordinación', rol: { nombre: 'coordinador', permisos: ['emergencias.reportar'] } } } });
+    montar(<ModalReportarEmergencia equipo={{ id: 3, codigo: 'ASC-002', ubicacion: 'Torre A' }} alCerrar={() => {}} />, '/', '/');
+    const usuario = userEvent.setup();
+
+    const campo = await screen.findByLabelText('Quién reporta');
+    await usuario.click(campo);
+    await usuario.keyboard('Portería Torre A');
+    expect(campo).toHaveValue('Portería Torre A');
+    expect(campo).toHaveFocus();
   });
 });
 

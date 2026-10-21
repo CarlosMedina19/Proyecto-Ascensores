@@ -5,6 +5,7 @@ import { clientes, edificios } from '../../api/servicios';
 import { useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import AccionesRegistro from '../../componentes/AccionesRegistro';
 import { AscensoresDelEdificio } from '../../componentes/Despliegues';
 import { TIPOS_EDIFICIO } from '../../utilidades/formato';
 
@@ -16,7 +17,7 @@ export default function ListaEdificios({ tipo }) {
   const { tienePermiso, esCliente } = useAutenticacion();
   const navegar = useNavigate();
   const [opcionesClientes, setOpcionesClientes] = useState([]);
-  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina } = useListado(edificios.listar, {
+  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina, recargar } = useListado(edificios.listar, {
     cliente_id: '',
     activo: '',
     tipo: tipo || '',
@@ -37,8 +38,8 @@ export default function ListaEdificios({ tipo }) {
         titulo={grupo ? grupo.plural : esCliente ? 'Mis edificios' : 'Edificios'}
         descripcion={
           grupo
-            ? `Edificios de tipo ${grupo.texto.toLowerCase()} de cada cliente. Despliegue una fila para ver sus ascensores.`
-            : 'Edificios de cada cliente con su dirección, ciudad y contacto. Despliegue una fila para ver sus ascensores.'
+            ? [`Edificios de tipo ${grupo.texto.toLowerCase()}`, 'Dirección, ciudad y contacto', 'Despliegue una fila para ver sus ascensores']
+            : ['Dirección, ciudad y contacto', 'Despliegue una fila para ver sus ascensores']
         }
         migas={grupo ? <Link to="/clientes">Clientes</Link> : undefined}
       >
@@ -142,7 +143,17 @@ export default function ListaEdificios({ tipo }) {
               {
                 clave: 'activo',
                 titulo: 'Estado',
-                render: (e) => <Insignia tipo={e.activo ? 'exito' : 'neutro'}>{e.activo ? 'Activo' : 'Inactivo'}</Insignia>,
+                render: (e) => (
+                  <AccionesRegistro
+                    nombre={e.nombre}
+                    activo={e.activo}
+                    rutaEditar={tienePermiso('edificios.editar') ? `/edificios/${e.id}/editar` : null}
+                    alAlternar={tienePermiso('edificios.editar') ? () => edificios.alternarEstado(e.id) : null}
+                    alEliminar={tienePermiso('edificios.eliminar') ? () => edificios.eliminar(e.id) : null}
+                    mensajeEliminar="Solo se puede eliminar un edificio sin ascensores activos. Si los tiene, desactívelo."
+                    alCambiar={recargar}
+                  />
+                ),
               },
             ]}
           />

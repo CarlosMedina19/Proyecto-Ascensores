@@ -21,14 +21,15 @@ Estado al cierre de la fase 6 (21/10/2026).
 | P3 | Orden de trabajo desde una emergencia o una cotización aprobada | Hoy se crea la orden aparte; la relación `orden_id` ya existe en las tablas. |
 | P4 | Indicadores por cliente en el portal | El cliente ya ve sus indicadores en Indicadores; falta exportarlos a PDF para el comité del edificio. |
 | P5 | Facturación electrónica | La cartera es mínima (facturas y pagos manuales). La factura electrónica DIAN queda fuera de este alcance. |
-| P6 | IoT y mantenimiento predictivo | Solo la sección "Próximamente"; requiere elegir el sensor o la pasarela del controlador. |
+| P6 | IoT y mantenimiento predictivo | La sección "Próximamente" se retiró a pedido; queda como idea para una versión futura. |
 | P7 | Captura del velo del recorrido guiado | En el Edge sin interfaz que se usa para las capturas, el velo oscuro translúcido no aparece en la imagen; en el navegador sí se ve. Verificar en Chrome y Edge normales. |
 
 ## Cómo probar lo nuevo de la fase 6
 
 1. Restaurar datos de demostración: `docker exec ascensores_app php artisan db:seed --class=DatosDemoSeeder`.
-2. Panel → **Servicio**: Emergencias, Certificación anual, Cotizaciones, Indicadores y Próximamente.
+2. Panel → **Servicio**: Emergencias, Certificación anual, Cotizaciones e Indicadores.
 3. Ficha de un ascensor (por ejemplo ASC-002): certificación anual, emergencias, documentos y código QR.
 4. Abrir el enlace del QR en otra ventana privada (sin sesión) y reportar una falla.
 5. Con la cuenta del cliente, abrir la cotización CT-AAAA-00001 y aprobarla o rechazarla.
-6. Botón **?** del encabezado: recorrido guiado de 5 pasos (en modo demostración se abre solo la primera vez).
+6. En las tablas de clientes, edificios, ascensores, técnicos, planes y usuarios: columna Estado con editar, activar/desactivar y eliminar (con confirmación).
+7. Botón **?** del encabezado: recorrido guiado de 5 pasos (en modo demostración se abre solo la primera vez).

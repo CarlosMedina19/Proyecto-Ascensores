@@ -478,11 +478,13 @@ class PruebasFaseUnoTest extends TestCase
         $this->postJson('/api/v1/roles', ['nombre' => 'no-autorizado'])->assertForbidden();
     }
 
-    public function test_la_api_de_usuarios_no_permite_eliminar(): void
+    /** RF-003 (ajustado): los usuarios se pueden eliminar, pero nadie puede eliminar su propia cuenta. */
+    public function test_nadie_puede_eliminar_su_propia_cuenta(): void
     {
         $this->actingAs($this->administrador, 'sanctum')
             ->deleteJson('/api/v1/usuarios/'.$this->administrador->id)
-            ->assertMethodNotAllowed();
+            ->assertUnprocessable();
+        $this->assertNotSoftDeleted('usuarios', ['id' => $this->administrador->id]);
     }
 
     public function test_seeder_de_administrador_exige_contrasena_explicita(): void

@@ -31,6 +31,6 @@ class Pago extends Model
 
     public function registrador(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'registrado_por');
+        return $this->belongsTo(Usuario::class, 'registrado_por')->withTrashed();
     }
 }

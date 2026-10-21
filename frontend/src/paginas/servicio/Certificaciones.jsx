@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { servicio } from '../../api/servicios';
-import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Tabla, Tarjeta } from '../../componentes/Basicos';
+import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import { filasSegunPantalla } from '../../hooks/useListado';
 import HerramientasExcel from '../../componentes/HerramientasExcel';
 import { fecha } from '../../utilidades/formato';
 import { ESTADOS_CERTIFICACION, RESULTADOS_CERTIFICACION, plazoCertificacion } from '../../utilidades/servicio';
@@ -17,6 +18,8 @@ export default function Certificaciones() {
   const [respuesta, setRespuesta] = useState(null);
   const [error, setError] = useState('');
   const [filtro, setFiltro] = useState('');
+  const [pagina, setPagina] = useState(1);
+  const porPagina = filasSegunPantalla(70);
 
   const cargar = () =>
     servicio
@@ -34,16 +37,26 @@ export default function Certificaciones() {
       .sort((a, b) => ORDEN.indexOf(a.estado) - ORDEN.indexOf(b.estado) || (a.dias_para_vencer ?? 0) - (b.dias_para_vencer ?? 0));
   }, [respuesta, filtro]);
 
+  // Paginación en el navegador: la tabla cabe en la pantalla.
+  const ultimaPagina = Math.max(1, Math.ceil(filas.length / porPagina));
+  const paginaActual = Math.min(pagina, ultimaPagina);
+  const visibles = filas.slice((paginaActual - 1) * porPagina, paginaActual * porPagina);
+  const metadatos = {
+    pagina_actual: paginaActual,
+    ultima_pagina: ultimaPagina,
+    total: filas.length,
+    desde: filas.length ? (paginaActual - 1) * porPagina + 1 : 0,
+    hasta: Math.min(paginaActual * porPagina, filas.length),
+  };
+
   return (
     <>
       <EncabezadoPagina
         titulo="Certificación anual"
-        descripcion="Revisión general anual de cada ascensor por un organismo de inspección acreditado. SIGMA avisa 60, 30 y 15 días antes del vencimiento."
-      />
-
-      <div className="barra-excel">
+        descripcion={['Revisión general anual por organismo acreditado', 'Certificado de cada ascensor', 'Avisos 60, 30 y 15 días antes']}>
         <HerramientasExcel modulo="servicio" alImportar={cargar} />
-      </div>
+      </EncabezadoPagina>
+
 
       {error && <Alerta>{error}</Alerta>}
       {!respuesta ? (
@@ -51,11 +64,11 @@ export default function Certificaciones() {
       ) : (
         <>
           <div className="contadores" role="group" aria-label="Filtrar por estado">
-            <button type="button" className={`contador${filtro === '' ? ' activo' : ''}`} onClick={() => setFiltro('')}>
+            <button type="button" className={`contador${filtro === '' ? ' activo' : ''}`} onClick={() => { setFiltro(''); setPagina(1); }}>
               <b>{respuesta.datos.length}</b> Todos
             </button>
             {ORDEN.map((estado) => (
-              <button key={estado} type="button" className={`contador contador--${ESTADOS_CERTIFICACION[estado].tipo}${filtro === estado ? ' activo' : ''}`} onClick={() => setFiltro(estado)}>
+              <button key={estado} type="button" className={`contador contador--${ESTADOS_CERTIFICACION[estado].tipo}${filtro === estado ? ' activo' : ''}`} onClick={() => { setFiltro(estado); setPagina(1); }}>
                 <b>{respuesta.resumen[estado] || 0}</b> {ESTADOS_CERTIFICACION[estado].texto}
               </button>
             ))}
@@ -63,7 +76,7 @@ export default function Certificaciones() {
 
           <Tarjeta sinRelleno>
             <Tabla
-              filas={filas}
+              filas={visibles}
               claveFila={(f) => f.equipo.id}
               alSeleccionar={(f) => navegar(`/equipos/${f.equipo.id}`)}
               vacio={<EstadoVacio titulo="No hay ascensores en este estado" descripcion="Cambie el filtro o registre la certificación desde la ficha de cada ascensor." />}
@@ -88,16 +101,16 @@ export default function Certificaciones() {
                   render: (f) => (
                     <>
                       <Insignia tipo={ESTADOS_CERTIFICACION[f.estado].tipo}>{ESTADOS_CERTIFICACION[f.estado].texto}</Insignia>
-                      <div className="tabla__secundario">{plazoCertificacion(f.dias_para_vencer)}</div>
+                      {f.certificacion && <div className="tabla__secundario">{plazoCertificacion(f.dias_para_vencer)}</div>}
                     </>
                   ),
                 },
               ]}
             />
+            <Paginacion metadatos={metadatos} alCambiar={setPagina} />
           </Tarjeta>
-          <p className="texto-pequeno texto-suave" style={{ marginTop: 12 }}>
-            Norma de referencia: en Bogotá, Acuerdo 470 de 2011 (revisión general anual obligatoria) con la NTC 5926-1, por organismos acreditados por ONAC. En
-            otras ciudades confirme la norma local con la autoridad municipal y regístrela en cada certificación.
+          <p className="texto-pequeno texto-suave" style={{ marginTop: 8 }}>
+            Referencia en Bogotá: Acuerdo 470 de 2011 y NTC 5926-1, por organismos acreditados por ONAC. En otras ciudades, registre la norma local.
           </p>
         </>
       )}

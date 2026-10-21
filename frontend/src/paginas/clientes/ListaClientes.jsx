@@ -4,6 +4,7 @@ import { clientes } from '../../api/servicios';
 import { useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import AccionesRegistro from '../../componentes/AccionesRegistro';
 import HerramientasExcel from '../../componentes/HerramientasExcel';
 import { ArbolCliente } from '../../componentes/Despliegues';
 import { TIPOS_CLIENTE } from '../../utilidades/formato';
@@ -20,8 +21,9 @@ export default function ListaClientes() {
     <>
       <EncabezadoPagina
         titulo={esCliente ? 'Mi empresa' : 'Clientes'}
-        descripcion="Personas naturales y jurídicas. Despliegue un cliente para ver sus conjuntos, edificios institucionales y residenciales, con sus ascensores."
+        descripcion={['Personas naturales y jurídicas', 'Conjuntos, institucionales y residenciales', 'Despliegue un cliente para ver sus ascensores']}
       >
+        <HerramientasExcel modulo="clientes" alImportar={recargar} />
         {tienePermiso('clientes.crear') && (
           <Link to="/clientes/nuevo" className="boton">
             <Plus size={16} /> Registrar cliente
@@ -29,9 +31,6 @@ export default function ListaClientes() {
         )}
       </EncabezadoPagina>
 
-      <div className="barra-excel">
-        <HerramientasExcel modulo="clientes" alImportar={recargar} />
-      </div>
 
       <Tarjeta sinRelleno>
         {!esCliente && (
@@ -104,7 +103,17 @@ export default function ListaClientes() {
               {
                 clave: 'estado',
                 titulo: 'Estado',
-                render: (c) => <Insignia tipo={c.estado ? 'exito' : 'neutro'}>{c.estado ? 'Activo' : 'Inactivo'}</Insignia>,
+                render: (c) => (
+                  <AccionesRegistro
+                    nombre={c.nombre}
+                    activo={c.estado}
+                    rutaEditar={tienePermiso('clientes.editar') ? `/clientes/${c.id}/editar` : null}
+                    alAlternar={tienePermiso('clientes.editar') ? () => clientes.alternarEstado(c.id) : null}
+                    alEliminar={tienePermiso('clientes.eliminar') ? () => clientes.eliminar(c.id) : null}
+                    mensajeEliminar="Solo se puede eliminar un cliente sin edificios. Si tiene edificios, desactívelo."
+                    alCambiar={recargar}
+                  />
+                ),
               },
             ]}
           />

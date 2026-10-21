@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ConfiguracionController;
 use App\Http\Controllers\Api\ContratoController;
 use App\Http\Controllers\Api\EdificioController;
 use App\Http\Controllers\Api\EquipoController;
+use App\Http\Controllers\Api\EstadoRegistroController;
 use App\Http\Controllers\Api\ExcelController;
 use App\Http\Controllers\Api\FotoEquipoController;
 use App\Http\Controllers\Api\MantenimientoController;
@@ -55,7 +56,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/roles/{rol}/permisos', [RolController::class, 'sincronizarPermisos']);
     Route::get('/permisos', [PermisoController::class, 'index']);
 
-    // RF-003: usuarios (no se eliminan, se desactivan).
+    // RF-003: usuarios. Se desactivan o se eliminan (eliminación lógica, conserva su historial).
+    Route::delete('/usuarios/{usuario}', [EstadoRegistroController::class, 'eliminarUsuario']);
+    // Activar o desactivar desde las tablas.
+    Route::patch('/clientes/{cliente}/alternar-estado', [EstadoRegistroController::class, 'cliente']);
+    Route::patch('/edificios/{edificio}/alternar-estado', [EstadoRegistroController::class, 'edificio']);
+    Route::patch('/equipos/{equipo}/alternar-estado', [EstadoRegistroController::class, 'equipo']);
+    Route::patch('/planes/{plan}/alternar-estado', [EstadoRegistroController::class, 'plan']);
     Route::patch('/usuarios/{usuario}/alternar-estado', [UsuarioController::class, 'alternarEstado']);
     Route::apiResource('usuarios', UsuarioController::class)->except(['destroy']);
 

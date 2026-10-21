@@ -4,6 +4,7 @@ import { planes } from '../../api/servicios';
 import { useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import AccionesRegistro from '../../componentes/AccionesRegistro';
 import { dinero } from '../../utilidades/formato';
 
 /** Precios del plan como "1 m · $ 380.000". */
@@ -26,13 +27,13 @@ export function PreciosPlan({ precios = [] }) {
 export default function ListaPlanes() {
   const { tienePermiso } = useAutenticacion();
   const navegar = useNavigate();
-  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina } = useListado(planes.listar, { activo: '' });
+  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina, recargar } = useListado(planes.listar, { activo: '' });
 
   return (
     <>
       <EncabezadoPagina
         titulo="Planes de mantenimiento"
-        descripcion="Catálogo de planes con los servicios incluidos y el precio de cada visita según la periodicidad."
+        descripcion={['Servicios incluidos', 'Precio por visita', 'Periodicidad de 1 a 6 meses']}
       >
         {tienePermiso('planes.crear') && (
           <Link to="/planes/nuevo" className="boton">
@@ -89,7 +90,18 @@ export default function ListaPlanes() {
               {
                 clave: 'activo',
                 titulo: 'Estado',
-                render: (p) => <Insignia tipo={p.activo ? 'exito' : 'neutro'}>{p.activo ? 'Activo' : 'Inactivo'}</Insignia>,
+                render: (p) => (
+                  <AccionesRegistro
+                    nombre={`el plan ${p.nombre}`}
+                    activo={p.activo}
+                    rutaEditar={tienePermiso('planes.editar') ? `/planes/${p.id}/editar` : null}
+                    alAlternar={tienePermiso('planes.editar') ? () => planes.alternarEstado(p.id) : null}
+                    alEliminar={tienePermiso('planes.eliminar') ? () => planes.eliminar(p.id) : null}
+                    mensajeDesactivar="Un plan inactivo no se puede asignar a ascensores nuevos. Las asignaciones vigentes siguen igual."
+                    mensajeEliminar="Solo se puede eliminar un plan sin ascensores asignados."
+                    alCambiar={recargar}
+                  />
+                ),
               },
             ]}
           />

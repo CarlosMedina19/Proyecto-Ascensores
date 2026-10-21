@@ -31,6 +31,6 @@ class InformeOrden extends Model
 
     public function generador(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'generado_por');
+        return $this->belongsTo(Usuario::class, 'generado_por')->withTrashed();
     }
 }

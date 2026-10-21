@@ -32,6 +32,7 @@ export const usuarios = {
   crear: (datos) => api.crear('/usuarios', datos),
   actualizar: (id, datos) => api.actualizar(`/usuarios/${id}`, datos),
   alternarEstado: (id) => api.actualizar(`/usuarios/${id}/alternar-estado`),
+  eliminar: (id) => api.eliminar(`/usuarios/${id}`),
 };
 
 // RF-004 Auditoría
@@ -47,6 +48,7 @@ export const clientes = {
   crear: (datos) => api.crear('/clientes', datos),
   actualizar: (id, datos) => api.actualizar(`/clientes/${id}`, datos),
   eliminar: (id) => api.eliminar(`/clientes/${id}`),
+  alternarEstado: (id) => api.actualizar(`/clientes/${id}/alternar-estado`),
   agregarContacto: (id, datos) => api.crear(`/clientes/${id}/contactos`, datos),
   // Tipos de edificio que tiene el cliente, con sus edificios y ascensores.
   estructura: (id) => api.obtener(`/clientes/${id}/estructura`),
@@ -59,6 +61,7 @@ export const edificios = {
   crear: (datos) => api.crear('/edificios', datos),
   actualizar: (id, datos) => api.actualizar(`/edificios/${id}`, datos),
   eliminar: (id) => api.eliminar(`/edificios/${id}`),
+  alternarEstado: (id) => api.actualizar(`/edificios/${id}/alternar-estado`),
 };
 
 // RF-007, RF-008 y RF-009 Equipos, ascensores e historial
@@ -68,6 +71,7 @@ export const equipos = {
   crear: (datos) => api.crear('/equipos', datos),
   actualizar: (id, datos) => api.actualizar(`/equipos/${id}`, datos),
   eliminar: (id) => api.eliminar(`/equipos/${id}`),
+  alternarEstado: (id) => api.actualizar(`/equipos/${id}/alternar-estado`),
   historial: (id) => api.obtener(`/equipos/${id}/historial`),
   agregarHistorial: (id, datos) => api.crear(`/equipos/${id}/historial`, datos),
 };
@@ -93,6 +97,7 @@ export const planes = {
   crear: (datos) => api.crear('/planes', datos),
   actualizar: (id, datos) => api.actualizar(`/planes/${id}`, datos),
   eliminar: (id) => api.eliminar(`/planes/${id}`),
+  alternarEstado: (id) => api.actualizar(`/planes/${id}/alternar-estado`),
   actualizarPrecios: (id, datos) => api.reemplazar(`/planes/${id}/precios`, datos),
   historialPrecios: (id, filtros) => api.obtener(`/planes/${id}/historial-precios`, filtros),
 };

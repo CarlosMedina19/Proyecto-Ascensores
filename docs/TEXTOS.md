@@ -32,7 +32,7 @@ Criterios aplicados en el panel web y en la app:
 | Inicio de sesión (web y app) | Ingresa a SIGMA | Ingrese a SIGMA |
 | Inicio de sesión (web y app) | Usa el correo y la contraseña de tu cuenta. | Use el correo y la contraseña de su cuenta. |
 | Inicio de sesión (pie, web y app) | SENA · Proyecto formativo SIGMA | SIGMA · Gestión y mantenimiento de ascensores (el texto anterior queda en modo demostración) |
-| Menú lateral | Conectado · Fase 4 | Conectado (en modo demostración: Conectado · Fase 4 · Demostración) |
+| Menú lateral | Conectado · Fase 4 | Conectado (en modo demostración: Conectado · Demostración) |
 | Clientes | Nuevo cliente | Registrar cliente |
 | Contratos | Nuevo contrato | Crear contrato |
 | Edificios | Nuevo edificio | Registrar edificio |
@@ -49,7 +49,7 @@ Criterios aplicados en el panel web y en la app:
 | Inicio | Últimos eventos de los equipos | Últimos eventos de los ascensores |
 | Órdenes (web y app) | Preventivo / Correctivo | Mantenimiento preventivo / Mantenimiento correctivo |
 | Historial de la orden | Informe PDF emitido | Informe técnico emitido |
-| Inicio | Buenas tardes, Super. | Buenas tardes. (las cuentas genéricas se saludan sin nombre) |
+| Inicio | Buenas tardes, Super. Hoy no hay órdenes de trabajo y 1 visita del plan atrasada. | Buenas tardes. (los datos del día pasan a avisos al lado del saludo) |
 | Inicio | ▲ 2 esta semana · 1 críticos | ▲ 2 esta semana · 1 crítico |
 | Inicio | de 1 activos | de 1 activo |
 | Inicio | Cumplimiento semanal 0/0 | Cumplimiento semanal sin visitas programadas (o "3 de 5 visitas") |
@@ -75,3 +75,12 @@ Criterios aplicados en el panel web y en la app:
 - **App:** Mi perfil → *Modo demostración*.
 - Las cuentas y la contraseña de prueba **no están en el código**: se leen de `VITE_DEMO_CUENTAS` y
   `VITE_DEMO_CLAVE` en `frontend/.env`. No las defina en producción.
+
+## Descripciones de las secciones
+
+Las descripciones debajo de cada título pasaron de párrafo a lista corta (una idea por elemento). Ejemplo:
+
+| Antes | Después |
+| --- | --- |
+| Operación de mantenimiento: órdenes, técnicos, ascensores, planes y contratos. | • Órdenes y técnicos • Ascensores y planes • Contratos |
+| Cuentas de acceso al sistema. Los usuarios no se eliminan: se desactivan y conservan su historial. | • Cuentas de acceso al sistema • Activar, desactivar o eliminar • El historial se conserva |

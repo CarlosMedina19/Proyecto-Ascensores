@@ -23,7 +23,6 @@ import {
   ScrollText,
   Settings,
   Siren,
-  Sparkles,
   ShieldCheck,
   Sun,
   Users,
@@ -69,7 +68,6 @@ function opcionesMenu(esCliente, esTecnico) {
     { ruta: '/certificaciones', texto: 'Certificación anual', icono: BadgeCheck, permiso: 'certificaciones.ver', recorrido: 'certificaciones' },
     { ruta: '/cotizaciones', texto: esCliente ? 'Mis cotizaciones' : 'Cotizaciones', icono: ReceiptText, permiso: 'cotizaciones.ver' },
     { ruta: '/indicadores', texto: 'Indicadores', icono: Activity, permiso: 'indicadores.ver', recorrido: 'indicadores' },
-    { ruta: '/proximamente', texto: 'Próximamente', icono: Sparkles, permiso: 'resumen.ver' },
     { grupo: 'Administración' },
     { ruta: '/usuarios', texto: 'Usuarios', icono: Users, permiso: 'usuarios.ver' },
     { ruta: '/roles', texto: 'Roles y permisos', icono: ShieldCheck, permiso: 'roles.ver' },
@@ -211,7 +209,7 @@ export default function Estructura() {
           </button>
           <div className="lateral__version">
             <span className="en-vivo" aria-hidden="true" />
-            {demostracion ? 'Conectado · Fase 4 · Demostración' : 'Conectado'}
+            {demostracion ? 'Conectado · Demostración' : 'Conectado'}
           </div>
           <div className="lateral__usuario">
             <div className="avatar" aria-hidden="true">

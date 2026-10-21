@@ -99,7 +99,7 @@ export default function FormularioTecnico() {
       <EncabezadoPagina
         titulo={editando ? `Perfil de ${nombre}` : 'Nuevo técnico'}
         migas={<Link to="/tecnicos">Técnicos</Link>}
-        descripcion={editando ? null : 'Se crea la cuenta con la que el técnico ingresa a la app y al panel.'}
+        descripcion={editando ? null : ['Crea la cuenta del técnico', 'Ingresa a la app y al panel']}
       />
       <form className="formulario" onSubmit={guardar} noValidate>
         <Alerta>{mensajeError}</Alerta>

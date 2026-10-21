@@ -40,13 +40,24 @@ export function Insignia({ tipo = 'neutro', children }) {
   return <span className={`insignia insignia--${tipo}`}>{children}</span>;
 }
 
+/** Descripción de una sección en forma de lista corta (una idea por elemento). */
+export function ListaDescripcion({ elementos }) {
+  return (
+    <ul className="pagina__lista">
+      {elementos.filter(Boolean).map((texto) => (
+        <li key={texto}>{texto}</li>
+      ))}
+    </ul>
+  );
+}
+
 export function EncabezadoPagina({ titulo, descripcion, migas, children }) {
   return (
     <div className="pagina__encabezado">
       <div>
         {migas && <div className="migas">{migas}</div>}
         <h1 className="pagina__titulo">{titulo}</h1>
-        {descripcion && <p className="pagina__descripcion">{descripcion}</p>}
+        {Array.isArray(descripcion) ? <ListaDescripcion elementos={descripcion} /> : descripcion && <p className="pagina__descripcion">{descripcion}</p>}
       </div>
       {children && <div className="pagina__acciones">{children}</div>}
     </div>
@@ -187,14 +198,18 @@ export function Paginacion({ metadatos, alCambiar }) {
 
 export function Modal({ titulo, abierto, alCerrar, children, pie, ancho = false }) {
   const referencia = useRef(null);
+  // alCerrar suele llegar como función nueva en cada render; se guarda aparte para que el efecto
+  // no vuelva a correr (y no le quite el foco al campo) cada vez que el usuario escribe.
+  const cerrar = useRef(alCerrar);
+  cerrar.current = alCerrar;
 
   useEffect(() => {
     if (!abierto) return undefined;
     referencia.current?.focus();
-    const alPresionar = (evento) => evento.key === 'Escape' && alCerrar?.();
+    const alPresionar = (evento) => evento.key === 'Escape' && cerrar.current?.();
     window.addEventListener('keydown', alPresionar);
     return () => window.removeEventListener('keydown', alPresionar);
-  }, [abierto, alCerrar]);
+  }, [abierto]);
 
   if (!abierto) return null;
 

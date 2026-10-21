@@ -93,15 +93,14 @@ Detalle completo en [backend/docs/EXCEL.md](backend/docs/EXCEL.md).
   (`/reportar/{código}`), tiempo objetivo de llegada configurable y seguimiento por estados.
 - **Cotizaciones** de correctivos que el cliente aprueba o rechaza desde su portal.
 - **Indicadores**: disponibilidad, MTBF, tiempo medio de respuesta y cumplimiento del plan.
-- Historial del ascensor con línea de tiempo y documentos; sección **Próximamente** (IoT y predictivo);
-  **recorrido guiado** de 5 pasos.
+- Historial del ascensor con línea de tiempo y documentos; **recorrido guiado** de 5 pasos.
 
 Pendientes y decisiones abiertas en [docs/PENDIENTES.md](docs/PENDIENTES.md).
 
 ## Pruebas
 
 ```sh
-docker exec ascensores_app php artisan test     # backend: 111 pruebas (base ascensores_test)
-cd frontend && npm test                          # 38 pruebas
+docker exec ascensores_app php artisan test     # backend: 113 pruebas (base ascensores_test)
+cd frontend && npm test                          # 39 pruebas
 cd app/flutter_application_1 && flutter test     # 28 pruebas
 ```

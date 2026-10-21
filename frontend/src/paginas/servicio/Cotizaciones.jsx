@@ -24,8 +24,8 @@ export default function Cotizaciones() {
         titulo={esCliente ? 'Mis cotizaciones' : 'Cotizaciones'}
         descripcion={
           esCliente
-            ? 'Revise las cotizaciones de reparaciones de sus ascensores y apruébelas o recházelas antes de su vigencia.'
-            : 'Propuestas de mantenimiento correctivo enviadas a los clientes. El cliente responde desde su portal.'
+            ? ['Reparaciones de sus ascensores', 'Apruebe o rechace antes de la vigencia']
+            : ['Propuestas de mantenimiento correctivo', 'El cliente responde desde su portal']
         }
       >
         {tienePermiso('cotizaciones.crear') && (

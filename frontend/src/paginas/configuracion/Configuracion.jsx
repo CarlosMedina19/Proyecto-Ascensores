@@ -82,58 +82,50 @@ export default function Configuracion() {
 
   return (
     <>
-      <EncabezadoPagina titulo="Configuración" descripcion="Parámetros generales de avisos, contratos, emergencias, certificación anual e impuestos." />
+      <EncabezadoPagina titulo="Configuración" descripcion={['Avisos', 'Contratos', 'Emergencias', 'Certificación anual', 'Impuestos']} />
       <form className="formulario" onSubmit={guardar} noValidate>
         <Alerta>{mensajeError}</Alerta>
 
-        <Tarjeta titulo="Avisos de mantenimiento">
-          <div className="formulario">
-            <div className="campo">
-              <span className="campo__etiqueta">Canales de envío</span>
-              {CANALES.map((canal) => (
-                <Casilla key={canal.valor} etiqueta={canal.texto} valor={datos.canales.includes(canal.valor)} alCambiar={(m) => alternarCanal(canal.valor, m)} />
-              ))}
-              {error('notificaciones_canales') && <span className="campo__error">{error('notificaciones_canales')}</span>}
+        <div className="rejilla rejilla--3 configuracion">
+          <Tarjeta titulo="Avisos de mantenimiento">
+            <div className="formulario">
+              <div className="campo">
+                <span className="campo__etiqueta">Canales de envío</span>
+                {CANALES.map((canal) => (
+                  <Casilla key={canal.valor} etiqueta={canal.texto} valor={datos.canales.includes(canal.valor)} alCambiar={(m) => alternarCanal(canal.valor, m)} />
+                ))}
+                {error('notificaciones_canales') && <span className="campo__error">{error('notificaciones_canales')}</span>}
+              </div>
+              <CampoTexto etiqueta="Días de anticipación" ayuda="Separados por coma. 0 = el mismo día." valor={datos.dias} alCambiar={cambiar('dias')} error={errorDias} />
             </div>
-            <CampoTexto
-              etiqueta="Días de anticipación"
-              ayuda="Separados por coma. 0 = el mismo día. Por defecto: 15, 7, 1, 0."
-              valor={datos.dias}
-              alCambiar={cambiar('dias')}
-              error={errorDias}
-            />
-          </div>
-        </Tarjeta>
-
-        <div className="rejilla rejilla--2">
-          <Tarjeta titulo="Contratos">
-            <CampoTexto
-              etiqueta="Días de alerta antes del vencimiento"
-              tipo="number"
-              min="1"
-              max="365"
-              valor={datos.alerta}
-              alCambiar={cambiar('alerta')}
-              error={error('contratos_dias_alerta_vencimiento')}
-            />
           </Tarjeta>
-          <Tarjeta titulo="Impuestos">
-            <CampoTexto
-              etiqueta="IVA sugerido para nuevas asignaciones (%)"
-              tipo="number"
-              min="0"
-              max="100"
-              step="0.01"
-              valor={datos.iva}
-              alCambiar={cambiar('iva')}
-              error={error('iva_porcentaje')}
-            />
-          </Tarjeta>
-        </div>
 
-        <div className="rejilla rejilla--2">
+          <Tarjeta titulo="Contratos e impuestos">
+            <div className="formulario">
+              <CampoTexto
+                etiqueta="Alerta antes del vencimiento (días)"
+                tipo="number"
+                min="1"
+                max="365"
+                valor={datos.alerta}
+                alCambiar={cambiar('alerta')}
+                error={error('contratos_dias_alerta_vencimiento')}
+              />
+              <CampoTexto
+                etiqueta="IVA sugerido (%)"
+                tipo="number"
+                min="0"
+                max="100"
+                step="0.01"
+                valor={datos.iva}
+                alCambiar={cambiar('iva')}
+                error={error('iva_porcentaje')}
+              />
+            </div>
+          </Tarjeta>
+
           <Tarjeta titulo="Emergencias">
-            <div className="formulario__fila">
+            <div className="formulario">
               <CampoTexto
                 etiqueta="Tiempo objetivo de llegada (min)"
                 tipo="number"
@@ -154,29 +146,32 @@ export default function Configuracion() {
               />
             </div>
           </Tarjeta>
+
           <Tarjeta titulo="Certificación anual">
             <CampoTexto
-              etiqueta="Días de alerta antes del vencimiento"
+              etiqueta="Alerta antes del vencimiento (días)"
               ayuda="Separados por coma. Por defecto: 60, 30, 15."
               valor={datos.certificacion}
               alCambiar={cambiar('certificacion')}
               error={error('certificaciones_dias_alerta') || Object.entries(errores).find(([c]) => c.startsWith('certificaciones_dias_alerta.'))?.[1]?.[0]}
             />
           </Tarjeta>
-        </div>
 
-        <Tarjeta titulo="Periodicidades disponibles">
-          <p className="texto-pequeno texto-suave" style={{ marginTop: 0 }}>
-            Cada plan define un precio por periodicidad. Una periodicidad inactiva no se puede asignar.
-          </p>
-          <div className="precios">
-            {periodicidades.map((p) => (
-              <span key={p.id} className="precios__item">
-                {periodicidad(p.meses)} {!p.activo && <span className="texto-suave">(inactiva)</span>}
-              </span>
-            ))}
+          <div className="configuracion__ancha">
+            <Tarjeta titulo="Periodicidades disponibles">
+              <p className="texto-pequeno texto-suave" style={{ marginTop: 0 }}>
+                Cada plan define un precio por periodicidad. Una periodicidad inactiva no se puede asignar.
+              </p>
+              <div className="precios">
+                {periodicidades.map((p) => (
+                  <span key={p.id} className="precios__item">
+                    {periodicidad(p.meses)} {!p.activo && <span className="texto-suave">(inactiva)</span>}
+                  </span>
+                ))}
+              </div>
+            </Tarjeta>
           </div>
-        </Tarjeta>
+        </div>
 
         <div className="formulario__acciones">
           <button type="submit" className="boton" disabled={enviando}>

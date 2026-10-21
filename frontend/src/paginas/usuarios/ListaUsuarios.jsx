@@ -1,20 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Pencil, Plus, Power, Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { roles, usuarios } from '../../api/servicios';
 import { useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
-import { useNotificar } from '../../contexto/NotificacionesContexto';
-import { Alerta, Cargando, Confirmacion, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import AccionesRegistro from '../../componentes/AccionesRegistro';
 import HerramientasExcel from '../../componentes/HerramientasExcel';
 import { fechaHora, nombreRol } from '../../utilidades/formato';
 
 export default function ListaUsuarios() {
   const { tienePermiso, usuario: usuarioActual } = useAutenticacion();
-  const notificar = useNotificar();
   const [opcionesRoles, setOpcionesRoles] = useState([]);
-  const [seleccionado, setSeleccionado] = useState(null);
-  const [procesando, setProcesando] = useState(false);
   const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina, recargar } = useListado(usuarios.listar, {
     rol_id: '',
     activo: '',
@@ -27,25 +24,12 @@ export default function ListaUsuarios() {
       .catch(() => {});
   }, []);
 
-  async function alternarEstado() {
-    setProcesando(true);
-    try {
-      const respuesta = await usuarios.alternarEstado(seleccionado.id);
-      notificar(respuesta.datos.activo ? 'Usuario activado.' : 'Usuario desactivado. Sus sesiones abiertas se cerraron.');
-      recargar();
-    } catch (e) {
-      notificar(e.message, 'error');
-    } finally {
-      setProcesando(false);
-      setSeleccionado(null);
-    }
-  }
-
   const puedeEditar = tienePermiso('usuarios.editar');
 
   return (
     <>
-      <EncabezadoPagina titulo="Usuarios" descripcion="Cuentas de acceso al sistema. Los usuarios no se eliminan: se desactivan y conservan su historial.">
+      <EncabezadoPagina titulo="Usuarios" descripcion={['Cuentas de acceso al sistema', 'Activar, desactivar o eliminar', 'El historial se conserva']}>
+        <HerramientasExcel modulo="usuarios" alImportar={recargar} />
         {tienePermiso('usuarios.crear') && (
           <Link to="/usuarios/nuevo" className="boton">
             <Plus size={16} /> Crear usuario
@@ -53,9 +37,6 @@ export default function ListaUsuarios() {
         )}
       </EncabezadoPagina>
 
-      <div className="barra-excel">
-        <HerramientasExcel modulo="usuarios" alImportar={recargar} />
-      </div>
 
       <Tarjeta sinRelleno>
         <div className="filtros">
@@ -126,31 +107,18 @@ export default function ListaUsuarios() {
               {
                 clave: 'activo',
                 titulo: 'Estado',
-                render: (u) => <Insignia tipo={u.activo ? 'exito' : 'neutro'}>{u.activo ? 'Activo' : 'Inactivo'}</Insignia>,
-              },
-              {
-                clave: 'acciones',
-                titulo: <span className="oculto-visual">Acciones</span>,
-                clase: 'tabla__acciones',
-                render: (u) =>
-                  puedeEditar && (
-                    <>
-                      <Link to={`/usuarios/${u.id}/editar`} className="boton boton--fantasma" title="Editar" aria-label={`Editar ${u.nombre}`}>
-                        <Pencil size={16} />
-                      </Link>
-                      {u.id !== usuarioActual.id && (
-                        <button
-                          type="button"
-                          className="boton boton--fantasma"
-                          title={u.activo ? 'Desactivar' : 'Activar'}
-                          aria-label={`${u.activo ? 'Desactivar' : 'Activar'} ${u.nombre}`}
-                          onClick={() => setSeleccionado(u)}
-                        >
-                          <Power size={16} />
-                        </button>
-                      )}
-                    </>
-                  ),
+                render: (u) => (
+                  <AccionesRegistro
+                    nombre={u.nombre}
+                    activo={u.activo}
+                    rutaEditar={puedeEditar ? `/usuarios/${u.id}/editar` : null}
+                    alAlternar={puedeEditar && u.id !== usuarioActual.id ? () => usuarios.alternarEstado(u.id) : null}
+                    alEliminar={puedeEditar && u.id !== usuarioActual.id ? () => usuarios.eliminar(u.id) : null}
+                    mensajeDesactivar={`${u.nombre} no podrá ingresar al sistema y sus sesiones abiertas se cerrarán. Su historial se conserva.`}
+                    mensajeEliminar={`La cuenta de ${u.nombre} se elimina y no podrá ingresar. Las órdenes, el historial y la auditoría conservan su nombre.`}
+                    alCambiar={recargar}
+                  />
+                ),
               },
             ]}
           />
@@ -158,20 +126,6 @@ export default function ListaUsuarios() {
         <Paginacion metadatos={metadatos} alCambiar={setPagina} />
       </Tarjeta>
 
-      <Confirmacion
-        abierto={Boolean(seleccionado)}
-        titulo={seleccionado?.activo ? 'Desactivar usuario' : 'Activar usuario'}
-        mensaje={
-          seleccionado?.activo
-            ? `${seleccionado?.nombre} no podrá ingresar al sistema y sus sesiones abiertas se cerrarán. Su historial se conserva.`
-            : `${seleccionado?.nombre} podrá volver a ingresar al sistema.`
-        }
-        textoConfirmar={seleccionado?.activo ? 'Desactivar' : 'Activar'}
-        peligro={seleccionado?.activo}
-        procesando={procesando}
-        alConfirmar={alternarEstado}
-        alCerrar={() => setSeleccionado(null)}
-      />
     </>
   );
 }

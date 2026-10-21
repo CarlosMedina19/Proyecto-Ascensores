@@ -59,8 +59,9 @@ export default function Cartera() {
     <>
       <EncabezadoPagina
         titulo={esCliente ? 'Mi estado de cuenta' : 'Cartera'}
-        descripcion="Facturas pendientes, pagos registrados y saldo por antigüedad. Los pagos se aplican a la factura que se indique."
+        descripcion={['Facturas pendientes', 'Pagos registrados', 'Saldo por antigüedad']}
       >
+        <HerramientasExcel modulo="cartera" alImportar={actualizar} />
         {tienePermiso('facturas.crear') && (
           <button type="button" className="boton" onClick={() => setNuevaFactura(true)}>
             <Plus size={16} aria-hidden="true" /> Registrar factura
@@ -70,9 +71,6 @@ export default function Cartera() {
 
       {resumen ? <ResumenCartera resumen={resumen} /> : <Cargando texto="Cargando saldos…" />}
 
-      <div className="barra-excel" style={{ marginTop: 16 }}>
-        <HerramientasExcel modulo="cartera" alImportar={actualizar} />
-      </div>
 
       <Tarjeta sinRelleno>
         <div className="filtros">

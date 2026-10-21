@@ -21,6 +21,6 @@ class SeguimientoEmergencia extends Model
 
     public function usuario(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'usuario_id');
+        return $this->belongsTo(Usuario::class, 'usuario_id')->withTrashed();
     }
 }

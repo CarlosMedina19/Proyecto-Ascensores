@@ -32,16 +32,30 @@ export default function HerramientasExcel({ modulo, alImportar }) {
   return (
     <>
       <div className="herramientas-excel" role="group" aria-label="Excel">
-        <button type="button" className="boton boton--secundario" onClick={() => descargar(() => excel.exportar(modulo), 'exportar')} disabled={!!ocupado}>
-          <FileSpreadsheet size={16} aria-hidden="true" /> {ocupado === 'exportar' ? 'Exportando…' : 'Exportar a Excel'}
+        <button
+          type="button"
+          className="boton boton--secundario"
+          onClick={() => descargar(() => excel.exportar(modulo), 'exportar')}
+          disabled={!!ocupado}
+          aria-label="Exportar a Excel"
+          title="Exportar a Excel"
+        >
+          <FileSpreadsheet size={16} aria-hidden="true" /> {ocupado === 'exportar' ? 'Exportando…' : 'Exportar'}
         </button>
         {tienePermiso('datos.importar') && (
-          <button type="button" className="boton boton--secundario" onClick={() => setImportando(true)}>
-            <Upload size={16} aria-hidden="true" /> Importar desde Excel
+          <button type="button" className="boton boton--secundario" onClick={() => setImportando(true)} aria-label="Importar desde Excel" title="Importar desde Excel">
+            <Upload size={16} aria-hidden="true" /> Importar
           </button>
         )}
-        <button type="button" className="boton boton--fantasma" onClick={() => descargar(excel.plantilla, 'plantilla')} disabled={!!ocupado}>
-          <Download size={16} aria-hidden="true" /> {ocupado === 'plantilla' ? 'Descargando…' : 'Descargar plantilla vacía'}
+        <button
+          type="button"
+          className="boton boton--fantasma"
+          onClick={() => descargar(excel.plantilla, 'plantilla')}
+          disabled={!!ocupado}
+          aria-label="Descargar plantilla vacía"
+          title="Descargar plantilla vacía"
+        >
+          <Download size={16} aria-hidden="true" /> {ocupado === 'plantilla' ? 'Descargando…' : 'Plantilla'}
         </button>
       </div>
       {importando && (

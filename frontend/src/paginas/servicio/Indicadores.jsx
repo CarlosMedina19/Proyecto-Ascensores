@@ -51,7 +51,7 @@ export default function Indicadores() {
 
   return (
     <>
-      <EncabezadoPagina titulo="Indicadores del servicio" descripcion="Cómo está funcionando el mantenimiento: disponibilidad de los ascensores, fallas, respuesta a emergencias y cumplimiento del plan.">
+      <EncabezadoPagina titulo="Indicadores del servicio" descripcion={['Disponibilidad', 'Tiempo entre fallas', 'Respuesta a emergencias', 'Cumplimiento del plan']}>
         <select className="campo__control" value={dias} onChange={(e) => setDias(Number(e.target.value))} aria-label="Período">
           {PERIODOS.map((p) => (
             <option key={p.dias} value={p.dias}>

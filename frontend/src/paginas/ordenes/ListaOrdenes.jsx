@@ -30,10 +30,11 @@ export default function ListaOrdenes() {
         titulo={esTecnico ? 'Mis órdenes' : 'Órdenes de trabajo'}
         descripcion={
           esTecnico
-            ? 'Órdenes que tiene asignadas. Avance su estado desde el detalle de cada orden.'
-            : 'Preventivos, correctivos e inspecciones con su prioridad, técnicos, estado y tiempos.'
+            ? ['Órdenes asignadas a usted', 'Avance el estado desde el detalle']
+            : ['Preventivos, correctivos e inspecciones', 'Prioridad y técnicos', 'Estado y tiempos']
         }
       >
+        <HerramientasExcel modulo="ordenes" alImportar={recargar} />
         {tienePermiso('ordenes.crear') && (
           <Link to="/ordenes/nueva" className="boton">
             <Plus size={16} /> Crear orden de trabajo
@@ -41,9 +42,6 @@ export default function ListaOrdenes() {
         )}
       </EncabezadoPagina>
 
-      <div className="barra-excel">
-        <HerramientasExcel modulo="ordenes" alImportar={recargar} />
-      </div>
 
       <Tarjeta sinRelleno>
         <div className="filtros">

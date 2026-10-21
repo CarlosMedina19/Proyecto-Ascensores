@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
-import { tecnicos } from '../../api/servicios';
+import { tecnicos, usuarios } from '../../api/servicios';
 import { useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import AccionesRegistro from '../../componentes/AccionesRegistro';
 import { iniciales } from '../../utilidades/formato';
 
 /** Disponibilidad del técnico para recibir órdenes (RF-022). */
@@ -19,7 +20,7 @@ export default function ListaTecnicos() {
   const { tienePermiso } = useAutenticacion();
   const navegar = useNavigate();
   const [especialidades, setEspecialidades] = useState([]);
-  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina } = useListado(tecnicos.listar, {
+  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina, recargar } = useListado(tecnicos.listar, {
     disponibilidad: '',
     especialidad_id: '',
     activo: '',
@@ -34,7 +35,7 @@ export default function ListaTecnicos() {
 
   return (
     <>
-      <EncabezadoPagina titulo="Técnicos" descripcion="Personal técnico con sus especialidades, disponibilidad y estado. Solo los técnicos activos y disponibles reciben órdenes.">
+      <EncabezadoPagina titulo="Técnicos" descripcion={['Especialidades', 'Disponibilidad y estado', 'Solo los activos y disponibles reciben órdenes']}>
         {tienePermiso('tecnicos.crear') && (
           <Link to="/tecnicos/nuevo" className="boton">
             <Plus size={16} /> Registrar técnico
@@ -126,7 +127,23 @@ export default function ListaTecnicos() {
                   ),
               },
               { clave: 'telefono', titulo: 'Teléfono' },
-              { clave: 'estado', titulo: 'Estado', render: (t) => <EstadoTecnico tecnico={t} /> },
+              {
+                clave: 'estado',
+                titulo: 'Estado',
+                render: (t) => (
+                  <AccionesRegistro
+                    nombre={t.nombre}
+                    activo={t.activo}
+                    insignia={<EstadoTecnico tecnico={t} />}
+                    rutaEditar={tienePermiso('tecnicos.editar') ? `/tecnicos/${t.usuario_id}/editar` : null}
+                    alAlternar={tienePermiso('tecnicos.editar') ? () => tecnicos.cambiarEstado(t.usuario_id, !t.activo) : null}
+                    alEliminar={tienePermiso('usuarios.editar') ? () => usuarios.eliminar(t.usuario_id) : null}
+                    mensajeDesactivar="El técnico no podrá ingresar ni recibir órdenes nuevas. Sus órdenes e informes se conservan."
+                    mensajeEliminar="La cuenta del técnico se elimina y no podrá ingresar. Sus órdenes, firmas e informes conservan su nombre."
+                    alCambiar={recargar}
+                  />
+                ),
+              },
             ]}
           />
         )}
