@@ -236,8 +236,22 @@ export default function PanelOperacion({ nombre }) {
           <p className="etiqueta-superior">{fechaLarga()}</p>
           <h1 className="pagina__titulo">
             {saludo()}
-            {nombre ? `, ${nombre}` : ''}. Hoy hay <span className="resalte">{ordenesHoy} {ordenesHoy === 1 ? 'orden' : 'órdenes'}</span> de trabajo
-            {atrasados.total ? ` y ${atrasados.total} ${atrasados.total === 1 ? 'visita del plan atrasada' : 'visitas del plan atrasadas'}.` : '.'}
+            {nombre ? `, ${nombre}` : ''}.{' '}
+            {ordenesHoy ? (
+              <>
+                Hoy hay <span className="resalte">{ordenesHoy} {ordenesHoy === 1 ? 'orden' : 'órdenes'}</span> de trabajo
+              </>
+            ) : (
+              'Hoy no hay órdenes de trabajo'
+            )}
+            {atrasados.total ? (
+              <>
+                {' '}
+                y <span className="resalte">{atrasados.total} {atrasados.total === 1 ? 'visita del plan atrasada' : 'visitas del plan atrasadas'}</span>.
+              </>
+            ) : (
+              '.'
+            )}
           </h1>
           <p className="pagina__descripcion">Operación de mantenimiento: órdenes, técnicos, ascensores, planes y contratos.</p>
         </div>

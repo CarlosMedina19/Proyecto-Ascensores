@@ -5,8 +5,12 @@ import { ChevronLeft, ChevronRight, CircleAlert, Inbox } from 'lucide-react';
 export function Cargando({ texto = 'Cargando…' }) {
   return (
     <div className="cargando" role="status">
-      <span className="giro" aria-hidden="true" />
-      {texto}
+      <div className="esqueleto" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+      <span className="cargando__texto">{texto}</span>
     </div>
   );
 }

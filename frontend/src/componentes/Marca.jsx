@@ -7,6 +7,17 @@ export function Logo({ tamano = 40 }) {
   const neon = `url(#${id}n)`;
   const brillo = `url(#${id}g)`;
   const recorrido = 'M96 12L24 36V52L96 76V92L24 112';
+  // Versión reducida (32 px o menos): solo la Σ y la cabina, sin rieles, brillos ni letras, para que se lea a 24 px.
+  if (tamano <= 32) {
+    return (
+      <svg className="marca__logo" width={tamano} height={tamano} viewBox="0 0 120 120" aria-hidden="true" style={{ flex: 'none', display: 'block' }}>
+        <rect width="120" height="120" rx="28" fill="#150B2D" />
+        <path d={recorrido} fill="none" stroke="#AA94E0" strokeWidth="15" strokeLinejoin="bevel" />
+        <rect x="40" y="30" width="40" height="78" rx="6" fill="#E6DFF6" stroke="#150B2D" strokeWidth="6" />
+        <path d="M60 40V98" stroke="#5A30C5" strokeWidth="6" />
+      </svg>
+    );
+  }
   return (
     <svg className="marca__logo" width={tamano} height={tamano} viewBox="0 0 120 120" aria-hidden="true" style={{ flex: 'none', display: 'block' }}>
       <defs>
