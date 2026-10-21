@@ -27,9 +27,8 @@ export default function RecuperarContrasena() {
 
   return (
     <DisenoAcceso>
-      <p className="etiqueta-superior">Acceso</p>
       <h2>Recuperar contraseña</h2>
-      <p className="texto-suave" style={{ marginTop: -8 }}>Le enviaremos un enlace para crear una nueva contraseña. El enlace vence en 60 minutos.</p>
+      <p className="acceso__apoyo">Le enviaremos un enlace para crear una nueva contraseña. El enlace vence en 60 minutos.</p>
 
       {mensaje ? (
         <div className="formulario">

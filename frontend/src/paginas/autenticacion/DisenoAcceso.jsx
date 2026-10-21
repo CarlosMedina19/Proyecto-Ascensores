@@ -100,24 +100,6 @@ export default function DisenoAcceso({ children }) {
             </span>
           </div>
           <Edificio piso={piso} />
-          <div className="acceso__aviso acceso__aviso--1">
-            <span className="caja" style={{ background: 'rgba(154,127,224,.16)', color: '#CDC0ED' }}>
-              OT
-            </span>
-            <div>
-              <b>Preventivo en proceso</b>
-              Checklist por secciones del ascensor
-            </div>
-          </div>
-          <div className="acceso__aviso acceso__aviso--2">
-            <span className="caja" style={{ background: 'rgba(242,174,61,.16)', color: '#F2AE3D' }}>
-              R
-            </span>
-            <div>
-              <b>Puerta de piso en Regular</b>
-              Observación y correctivo derivado
-            </div>
-          </div>
         </div>
         <div>
           <h1>

@@ -42,6 +42,19 @@ para que la app funcione sin conexión. La planilla usa los botones B / R / M cu
 punteado INS → EST → N.A.; la orden muestra su avance por etapas. Al ingresar, unas puertas de
 ascensor se cierran y se abren ya dentro de la app (se omite si el sistema desactiva las animaciones).
 
+### APK para Android (liviano)
+
+```sh
+flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/simbolos
+```
+
+Genera un APK por tipo de procesador en `build/app/outputs/flutter-apk/` (unos 8–9 MB cada uno):
+`app-arm64-v8a-release.apk` sirve para casi todos los teléfonos actuales y `app-armeabi-v7a-release.apk`
+para los más antiguos. El APK de depuración (`flutter build apk --debug`) pesa más de 150 MB y no es para
+instalar en usuarios. El tamaño se logra con R8 (código y recursos sin uso eliminados), librerías nativas
+comprimidas y los símbolos de depuración guardados aparte en `build/simbolos`, que sirven para leer los
+errores con `flutter symbolize`.
+
 ### Versión web
 
 ```sh

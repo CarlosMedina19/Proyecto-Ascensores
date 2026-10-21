@@ -37,8 +37,8 @@ export default function IniciarSesion() {
 
   return (
     <DisenoAcceso>
-      <p className="etiqueta-superior">Bienvenido de nuevo</p>
       <h2>Ingresa a SIGMA</h2>
+      <p className="acceso__apoyo">Usa el correo y la contraseña de tu cuenta.</p>
 
       <form className="formulario" onSubmit={alEnviar} noValidate>
         {parametros.get('verificado') && <Alerta tipo="exito">Su correo fue verificado. Ya puede iniciar sesión.</Alerta>}

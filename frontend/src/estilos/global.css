@@ -3618,11 +3618,8 @@ span.estado-brm {
 
 .lateral .marca__nombre,
 .acceso__presentacion .marca__nombre {
-  background: linear-gradient(180deg, #ffffff 10%, #cdc0ed 55%, #9a7fe0);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 8px rgba(154, 127, 224, 0.45));
+  color: #ece6fb;
+  text-shadow: 0 0 14px rgba(154, 127, 224, 0.45);
 }
 
 /* ---------- Tarjetas y encabezados con borde luminoso ---------- */
@@ -3792,17 +3789,6 @@ span.estado-brm {
   gap: 28px;
 }
 
-.acceso__presentacion::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-  background-size: 40px 40px;
-  -webkit-mask-image: radial-gradient(80% 70% at 60% 40%, #000, transparent);
-  mask-image: radial-gradient(80% 70% at 60% 40%, #000, transparent);
-  pointer-events: none;
-}
-
 .acceso__presentacion > * {
   position: relative;
 }
@@ -3947,13 +3933,6 @@ span.estado-brm {
   font: 650 clamp(30px, 3.3vw, 44px) / 1.05 var(--fuente-titulos);
   margin-top: 0;
   max-width: 16ch;
-}
-
-.acceso__presentacion h1 em {
-  background: linear-gradient(90deg, #cdc0ed, #b5d65a);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
 }
 
 .acceso__presentacion p {
@@ -4141,4 +4120,106 @@ span.estado-brm {
 input::-ms-reveal,
 input::-ms-clear {
   display: none;
+}
+
+/* =====================================================================
+   Pulido: superficies sobrias para el trabajo diario; el borde luminoso
+   queda solo en la tarjeta de ingreso (un único momento de marca).
+   ===================================================================== */
+
+:root {
+  --sombra-tarjeta: 0 1px 2px rgba(34, 18, 74, 0.04), 0 8px 24px -18px rgba(78, 41, 170, 0.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) {
+    --sombra-tarjeta: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 28px -20px rgba(0, 0, 0, 0.9);
+  }
+}
+
+:root[data-tema='oscuro'] {
+  --sombra-tarjeta: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 28px -20px rgba(0, 0, 0, 0.9);
+}
+
+.tarjeta {
+  border: 1px solid var(--color-borde);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-tarjeta);
+}
+
+.pagina__encabezado {
+  border: 1px solid var(--color-borde);
+  background:
+    radial-gradient(60% 160% at 100% 0%, var(--brillo-encabezado), transparent 65%),
+    var(--color-superficie);
+  box-shadow: var(--sombra-tarjeta);
+}
+
+.pagina__titulo {
+  letter-spacing: -0.025em;
+}
+
+/* Ingreso */
+.acceso__presentacion h1 em {
+  font-style: normal;
+  color: #b5d65a;
+}
+
+.acceso__caja h2 {
+  margin: 0 0 6px;
+}
+
+.acceso__apoyo {
+  margin: 0 0 22px;
+  color: var(--color-texto-suave);
+  max-width: 44ch;
+}
+
+.acceso__caja .campo__control {
+  height: 44px;
+  background: var(--color-superficie-suave);
+}
+
+.acceso__caja .boton--alto {
+  height: 46px;
+}
+
+/* Superficies del navegador con la paleta propia */
+html {
+  scrollbar-color: var(--color-borde-fuerte) transparent;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-borde-fuerte);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+input,
+textarea {
+  caret-color: var(--color-primario);
+}
+
+.tabla td {
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  text-underline-offset: 3px;
+}
+
+.acceso__nota {
+  font: 12px/1.5 var(--fuente);
+  color: var(--color-texto-suave);
 }

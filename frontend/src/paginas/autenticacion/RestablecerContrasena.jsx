@@ -35,9 +35,8 @@ export default function RestablecerContrasena() {
 
   return (
     <DisenoAcceso>
-      <p className="etiqueta-superior">Acceso</p>
       <h2>Nueva contraseña</h2>
-      <p className="texto-suave" style={{ marginTop: -8 }}>Use al menos 8 caracteres, con letras y números.</p>
+      <p className="acceso__apoyo">Use al menos 8 caracteres, con letras y números.</p>
       <form className="formulario" onSubmit={alEnviar}>
         <Alerta>{error('token') || (mensajeError && !error('password') ? mensajeError : '')}</Alerta>
         <CampoTexto etiqueta="Correo electrónico" tipo="email" valor={datos.correo} alCambiar={cambiar('correo')} error={error('correo')} obligatorio />

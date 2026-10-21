@@ -129,9 +129,21 @@ class FilaOrden extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 4,
-                height: 64,
-                decoration: BoxDecoration(color: colorServicio(orden.servicio), borderRadius: BorderRadius.circular(4)),
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: colorSegunModo(context, colorServicio(orden.servicio)).withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  switch (orden.servicio) {
+                    'correctivo' => Icons.build_outlined,
+                    'inspeccion' => Icons.manage_search_outlined,
+                    _ => Icons.event_repeat_outlined,
+                  },
+                  size: 19,
+                  color: colorSegunModo(context, colorServicio(orden.servicio)),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

@@ -72,16 +72,21 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion> {
                   children: [
                     const _Presentacion(),
                     const SizedBox(height: 18),
-                    Card(
+                    DecoratedBox(
+                      decoration: ShapeDecoration(
+                        color: esquema.surface,
+                        shape: BordeLuminoso(degradado: degradadoBorde(Theme.of(context).brightness), radio: 20),
+                        shadows: const [BoxShadow(color: Color(0x334E29AA), blurRadius: 28, offset: Offset(0, 14), spreadRadius: -16)],
+                      ),
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+                        padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Etiqueta('Bienvenido de nuevo'),
-                            const SizedBox(height: 4),
                             Text('Ingresa a SIGMA', style: Theme.of(context).textTheme.headlineMedium),
-                            const SizedBox(height: 18),
+                            const SizedBox(height: 4),
+                            Text('Usa el correo y la contraseña de tu cuenta.', style: TextStyle(color: esquema.onSurfaceVariant)),
+                            const SizedBox(height: 20),
                             if (motivo != null && _error == null) _Aviso(texto: motivo, color: esquema.primary),
                             if (_error != null) _Aviso(texto: _error!, color: esquema.error),
                             TextFormField(
@@ -175,7 +180,7 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion> {
   }
 }
 
-/// Presentación del prototipo: fondo tinta con cuadrícula, marca SIGMA y lema con degradado.
+/// Presentación del prototipo: fondo tinta con resplandor morado, marca SIGMA y lema.
 class _Presentacion extends StatelessWidget {
   const _Presentacion();
 
@@ -188,40 +193,32 @@ class _Presentacion extends StatelessWidget {
           gradient: RadialGradient(center: Alignment(1, -1), radius: 1.5, colors: [Color(0x805A30C5), Color(0x005A30C5)]),
           color: SigmaColores.tinta,
         ),
-        child: CustomPaint(
-          painter: _Cuadricula(),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const MarcaSigma(tamanoLogo: 40, sobreOscuro: true),
-                const SizedBox(height: 22),
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      const TextSpan(text: 'Cada ascensor, '),
-                      WidgetSpan(
-                        alignment: PlaceholderAlignment.baseline,
-                        baseline: TextBaseline.alphabetic,
-                        child: ShaderMask(
-                          blendMode: BlendMode.srcIn,
-                          shaderCallback: (r) => const LinearGradient(colors: [Color(0xFFCDC0ED), SigmaColores.lima]).createShader(r),
-                          child: const Text('cada piso', style: _estiloLema),
-                        ),
-                      ),
-                      const TextSpan(text: ', bajo control.'),
-                    ],
-                  ),
-                  style: _estiloLema,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const MarcaSigma(tamanoLogo: 40, sobreOscuro: true),
+              const SizedBox(height: 22),
+              Text.rich(
+                TextSpan(
+                  children: [
+                    const TextSpan(text: 'Cada ascensor, '),
+                    const TextSpan(
+                      text: 'cada piso',
+                      style: TextStyle(color: SigmaColores.lima),
+                    ),
+                    const TextSpan(text: ', bajo control.'),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Programación de mantenimientos, checklist digital en campo e informes firmados en PDF.',
-                  style: TextStyle(color: Color(0xFFCDC0ED), fontSize: 13.5),
-                ),
-              ],
-            ),
+                style: _estiloLema,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Programación de mantenimientos, checklist digital en campo e informes firmados en PDF.',
+                style: TextStyle(color: Color(0xFFCDC0ED), fontSize: 13.5),
+              ),
+            ],
           ),
         ),
       ),
@@ -237,25 +234,6 @@ const _estiloLema = TextStyle(
   fontWeight: FontWeight.w700,
   letterSpacing: -0.8,
 );
-
-/// Cuadrícula tenue del fondo de la presentación.
-class _Cuadricula extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final pincel = Paint()
-      ..color = Colors.white.withValues(alpha: 0.04)
-      ..strokeWidth = 1;
-    for (var x = 0.0; x < size.width; x += 32) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), pincel);
-    }
-    for (var y = 0.0; y < size.height; y += 32) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), pincel);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
 class _Aviso extends StatelessWidget {
   const _Aviso({required this.texto, required this.color});

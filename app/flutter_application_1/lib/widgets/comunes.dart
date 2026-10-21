@@ -436,7 +436,7 @@ class LineaTiempo extends StatelessWidget {
   }
 }
 
-/// Logo y nombre "SIGMA" en Michroma con el degradado del prototipo.
+/// Logo y nombre "SIGMA" en Michroma; sobre fondo oscuro lleva un brillo suave.
 class MarcaSigma extends StatelessWidget {
   const MarcaSigma({super.key, this.tamanoLogo = 36, this.subtitulo, this.sobreOscuro = false});
 
@@ -455,8 +455,9 @@ class MarcaSigma extends StatelessWidget {
         fontFamily: SigmaFuentes.marca,
         fontSize: tamanoLogo * 0.45,
         letterSpacing: tamanoLogo * 0.07,
-        color: oscuro ? Colors.white : Theme.of(context).colorScheme.onSurface,
+        color: oscuro ? const Color(0xFFECE6FB) : Theme.of(context).colorScheme.onSurface,
         height: 1,
+        shadows: oscuro ? const [Shadow(color: Color(0x739A7FE0), blurRadius: 14)] : null,
       ),
     );
     return Row(
@@ -469,19 +470,7 @@ class MarcaSigma extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (oscuro)
-                ShaderMask(
-                  blendMode: BlendMode.srcIn,
-                  shaderCallback: (r) => const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.white, Color(0xFFCDC0ED), Color(0xFF9A7FE0)],
-                    stops: [.1, .55, 1],
-                  ).createShader(r),
-                  child: nombre,
-                )
-              else
-                nombre,
+              nombre,
               if (subtitulo != null) ...[
                 const SizedBox(height: 4),
                 Text(
@@ -514,7 +503,10 @@ class EncabezadoSigma extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: ShapeDecoration(
-        shape: BordeLuminoso(degradado: degradadoBorde(tema.brightness), radio: 18),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: tema.colorScheme.outlineVariant),
+        ),
         gradient: RadialGradient(
           center: const Alignment(1, -1),
           radius: 1.3,
@@ -525,8 +517,14 @@ class EncabezadoSigma extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (etiqueta != null) ...[Etiqueta(etiqueta!), const SizedBox(height: 6)],
           DefaultTextStyle.merge(style: tema.textTheme.headlineSmall, child: titulo),
+          if (etiqueta != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              etiqueta!,
+              style: TextStyle(color: tema.colorScheme.primary, fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+          ],
           if (descripcion != null) ...[
             const SizedBox(height: 6),
             Text(descripcion!, style: TextStyle(color: tema.colorScheme.onSurfaceVariant)),

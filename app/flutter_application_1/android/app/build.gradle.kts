@@ -29,11 +29,23 @@ android {
         versionName = flutter.versionName
     }
 
+    // Las librerías nativas (motor de Flutter y código de la app) van comprimidas dentro del APK:
+    // la descarga pesa casi la mitad; Android las descomprime al instalar.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // APK más liviano: R8 elimina el código sin uso y luego los recursos que nadie referencia.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }

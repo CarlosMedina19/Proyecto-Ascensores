@@ -165,7 +165,10 @@ ThemeData temaSigma(Brightness brillo) {
       margin: EdgeInsets.zero,
       color: tarjeta,
       surfaceTintColor: Colors.transparent,
-      shape: BordeLuminoso(degradado: degradadoBorde(brillo)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: borde),
+      ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

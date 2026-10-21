@@ -113,10 +113,15 @@ class _PantallaInicioState extends State<PantallaInicio> {
                   final lista = instantanea.data!;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: Seccion(
-                      titulo: 'Mis próximas órdenes',
-                      hijos: [
-                        if (lista.isEmpty) const Text('No tiene órdenes activas.'),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text('Mis próximas órdenes', style: Theme.of(context).textTheme.titleLarge),
+                        const SizedBox(height: 8),
+                        if (lista.isEmpty)
+                          const Card(
+                            child: Padding(padding: EdgeInsets.all(16), child: Text('No tiene órdenes activas.')),
+                          ),
                         for (final orden in lista.take(4)) FilaOrden(orden: orden, alVolver: _cargar),
                       ],
                     ),
