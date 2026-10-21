@@ -4,7 +4,7 @@ import { ArrowRight, ArrowUpDown, Wrench } from 'lucide-react';
 import { equipos as servicioEquipos, mantenimientos as servicioMantenimientos } from '../api/servicios';
 import { useAutenticacion } from '../contexto/AutenticacionContexto';
 import { Alerta, Cargando, EstadoVacio, Insignia, Tabla, Tarjeta } from '../componentes/Basicos';
-import { ESTADOS_EQUIPO, diasHasta, estadoMantenimiento, fecha, fechaIso } from '../utilidades/formato';
+import { ESTADOS_EQUIPO, diasHasta, estadoMantenimiento, fecha, fechaIso, nombreSaludo } from '../utilidades/formato';
 import PanelOperacion from './inicio/PanelOperacion';
 
 function Estadistica({ icono: Icono, valor, etiqueta, detalle, tono = 'primario' }) {
@@ -124,7 +124,7 @@ function PanelEquipos({ nombre }) {
         <div>
           <p className="etiqueta-superior">{esCliente ? `Portal del cliente · ${usuario.cliente?.nombre ?? ''}` : fechaLarga()}</p>
           <h1 className="pagina__titulo">
-            {saludo()}, {nombre}. {esCliente ? 'Tiene' : 'Hay'} <span className="resalte">{conteo.activo} ascensores</span> en servicio.
+            {saludo()}{nombre ? `, ${nombre}` : ''}. {esCliente ? 'Tiene' : 'Hay'} <span className="resalte">{conteo.activo} ascensores</span> en servicio.
           </h1>
           <p className="pagina__descripcion">
             {esCliente
@@ -167,7 +167,7 @@ function PanelEquipos({ nombre }) {
 
 export default function Inicio() {
   const { usuario, tienePermiso } = useAutenticacion();
-  const nombre = usuario?.nombre?.split(' ')[0];
+  const nombre = nombreSaludo(usuario?.nombre);
 
   if (tienePermiso('resumen.ver')) return <PanelOperacion nombre={nombre} />;
   if (tienePermiso('equipos.ver')) return <PanelEquipos nombre={nombre} />;

@@ -36,7 +36,7 @@ export default function ListaOrdenes() {
       >
         {tienePermiso('ordenes.crear') && (
           <Link to="/ordenes/nueva" className="boton">
-            <Plus size={16} /> Nueva orden
+            <Plus size={16} /> Crear orden de trabajo
           </Link>
         )}
       </EncabezadoPagina>

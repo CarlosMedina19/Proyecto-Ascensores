@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ImagePlus, ShieldAlert, Trash2, Wrench } from 'lucide-react';
 import { planilla as servicioPlanilla } from '../../api/servicios';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
+import { useDemostracion } from '../../hooks/useDemostracion';
 import { Alerta, Cargando, Insignia, Tarjeta } from '../../componentes/Basicos';
 import { ImagenProtegida, validarFotos } from '../../componentes/FotosEquipo';
 
@@ -38,6 +39,7 @@ function peorEstado(estados) {
  */
 export default function PlanillaOrden({ orden, alCambiar, notificar }) {
   const { tienePermiso } = useAutenticacion();
+  const { activo: demostracion } = useDemostracion();
   const editable = Boolean(orden.permisos?.ejecutar) && orden.estado === 'en_proceso';
   const puedeCrearCorrectivo = (orden.permisos?.ejecutar || tienePermiso('ordenes.crear')) && orden.estado !== 'cancelada';
 
@@ -254,7 +256,7 @@ export default function PlanillaOrden({ orden, alCambiar, notificar }) {
                   <div className="planilla__controles">
                     <div className="segmento segmento--pequeno" role="radiogroup" aria-label={`Resultado de ${item.nombre}`}>
                       {RESULTADOS.map((r) => (
-                        <button key={r.valor} type="button" role="radio" aria-checked={v.resultado === r.valor} aria-pressed={v.resultado === r.valor} onClick={() => cambiar(item.id, 'resultado', r.valor)} title="Significado de INS y EST por definir (RF-037)">
+                        <button key={r.valor} type="button" role="radio" aria-checked={v.resultado === r.valor} aria-pressed={v.resultado === r.valor} onClick={() => cambiar(item.id, 'resultado', r.valor)} title={demostracion ? 'Tipo de revisión: INS, EST o N.A. (significado por confirmar, RF-037)' : 'Tipo de revisión: INS, EST o N.A.'}>
                           {r.texto}
                         </button>
                       ))}

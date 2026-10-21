@@ -4458,3 +4458,16 @@ a {
   justify-content: flex-end;
   margin-bottom: 12px;
 }
+
+/* Modo demostración: cuentas de prueba en el inicio de sesión */
+.acceso__demo {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--color-borde);
+}
+.acceso__demo-cuentas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}

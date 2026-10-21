@@ -44,7 +44,7 @@ export default function ListaEdificios({ tipo }) {
       >
         {tienePermiso('edificios.crear') && (
           <Link to={tipo ? `/edificios/nuevo?tipo=${tipo}` : '/edificios/nuevo'} className="boton">
-            <Plus size={16} /> Nuevo edificio
+            <Plus size={16} /> Registrar edificio
           </Link>
         )}
       </EncabezadoPagina>

@@ -48,7 +48,7 @@ export default function ListaUsuarios() {
       <EncabezadoPagina titulo="Usuarios" descripcion="Cuentas de acceso al sistema. Los usuarios no se eliminan: se desactivan y conservan su historial.">
         {tienePermiso('usuarios.crear') && (
           <Link to="/usuarios/nuevo" className="boton">
-            <Plus size={16} /> Nuevo usuario
+            <Plus size={16} /> Crear usuario
           </Link>
         )}
       </EncabezadoPagina>

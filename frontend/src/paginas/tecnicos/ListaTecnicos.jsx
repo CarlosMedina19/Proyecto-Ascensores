@@ -37,7 +37,7 @@ export default function ListaTecnicos() {
       <EncabezadoPagina titulo="Técnicos" descripcion="Personal técnico con sus especialidades, disponibilidad y estado. Solo los técnicos activos y disponibles reciben órdenes.">
         {tienePermiso('tecnicos.crear') && (
           <Link to="/tecnicos/nuevo" className="boton">
-            <Plus size={16} /> Nuevo técnico
+            <Plus size={16} /> Registrar técnico
           </Link>
         )}
       </EncabezadoPagina>

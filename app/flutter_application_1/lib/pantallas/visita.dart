@@ -354,7 +354,7 @@ class _PantallaVisitaState extends State<PantallaVisita> {
                       onPressed: () => _cambio(() => visita.repuestos.removeAt(indice)),
                     ),
                   ),
-              Text('El descuento de inventario se habilita en la fase 5.', style: TextStyle(fontSize: 12, color: suave)),
+              Text('Registre los repuestos usados; el inventario se actualiza desde el panel web.', style: TextStyle(fontSize: 12, color: suave)),
             ],
           ),
           const SizedBox(height: 12),

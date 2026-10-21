@@ -24,7 +24,7 @@ export default function ListaClientes() {
       >
         {tienePermiso('clientes.crear') && (
           <Link to="/clientes/nuevo" className="boton">
-            <Plus size={16} /> Nuevo cliente
+            <Plus size={16} /> Registrar cliente
           </Link>
         )}
       </EncabezadoPagina>
@@ -73,7 +73,7 @@ export default function ListaClientes() {
             alSeleccionar={(cliente) => navegar(`/clientes/${cliente.id}`)}
             expandir={(cliente) => <ArbolCliente clienteId={cliente.id} />}
             etiquetaExpandir="Ver edificios de"
-            vacio={<EstadoVacio titulo="No se encontraron clientes" descripcion="Ajuste los filtros o registre un nuevo cliente." />}
+            vacio={<EstadoVacio titulo="No se encontraron clientes" descripcion="Ajuste los filtros, registre un cliente o impórtelos desde Excel con la plantilla de SIGMA." />}
             columnas={[
               {
                 clave: 'nombre',

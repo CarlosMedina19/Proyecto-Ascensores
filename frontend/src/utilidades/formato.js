@@ -1,14 +1,16 @@
 // Formatos y etiquetas en español para mostrar los datos de la API.
 
+// Formato colombiano: 17/10/2026 y 17/10/2026, 6:00 p. m.
 const formatoFechaHora = new Intl.DateTimeFormat('es-CO', {
   day: '2-digit',
-  month: 'short',
+  month: '2-digit',
   year: 'numeric',
-  hour: '2-digit',
+  hour: 'numeric',
   minute: '2-digit',
 });
 
-const formatoFecha = new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+const formatoFecha = new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const formatoFechaLarga = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
 
 export function fechaHora(valor) {
   if (!valor) return '—';
@@ -21,6 +23,25 @@ export function fecha(valor) {
   const texto = String(valor);
   const fechaLocal = /^\d{4}-\d{2}-\d{2}$/.test(texto) ? new Date(`${texto}T00:00:00`) : new Date(texto);
   return formatoFecha.format(fechaLocal);
+}
+
+/** "17 de octubre de 2026" para textos. */
+export function fechaTexto(valor) {
+  if (!valor) return '—';
+  const texto = String(valor);
+  return formatoFechaLarga.format(/^\d{4}-\d{2}-\d{2}$/.test(texto) ? new Date(`${texto}T00:00:00`) : new Date(texto));
+}
+
+/** Velocidad guardada en m/min, mostrada en m/s con coma decimal: "1,0 m/s". */
+export function velocidad(metrosPorMinuto) {
+  if (metrosPorMinuto === null || metrosPorMinuto === undefined || metrosPorMinuto === '') return '—';
+  return `${(Number(metrosPorMinuto) / 60).toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 2 })} m/s`;
+}
+
+/** Primer nombre para saludar; las cuentas genéricas (administrador) se saludan sin nombre. */
+export function nombreSaludo(nombreCompleto = '') {
+  if (/administrador|admin\b|sistema/i.test(nombreCompleto)) return '';
+  return nombreCompleto.trim().split(/\s+/)[0] || '';
 }
 
 const formatoDia = new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short' });
@@ -224,8 +245,8 @@ export const ESTADOS_RENOVACION = {
 // ---------- Fase 3: técnicos y órdenes de trabajo ----------
 
 export const SERVICIOS_ORDEN = {
-  preventivo: { texto: 'Preventivo', tipo: 'info' },
-  correctivo: { texto: 'Correctivo', tipo: 'peligro' },
+  preventivo: { texto: 'Mantenimiento preventivo', tipo: 'info' },
+  correctivo: { texto: 'Mantenimiento correctivo', tipo: 'peligro' },
   inspeccion: { texto: 'Inspección', tipo: 'cian' },
 };
 
@@ -256,7 +277,7 @@ export const ACCIONES_ORDEN = {
   inicio_registrado: 'Inicio registrado',
   fin_registrado: 'Fin registrado',
   mantenimiento_ejecutado: 'Visita del plan ejecutada',
-  informe_generado: 'Informe PDF emitido',
+  informe_generado: 'Informe técnico emitido',
 };
 
 /** "1 h 45 min", "30 min". */

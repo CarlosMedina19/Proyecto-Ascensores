@@ -135,7 +135,7 @@ function ModalImportacion({ alCerrar }) {
         </button>
       )}
       <button type="button" className="boton" onClick={() => alCerrar(true)}>
-        Listo
+        Cerrar
       </button>
     </>
   ) : vista ? (

@@ -454,7 +454,7 @@ class MantenimientoProgramado {
 
 // ---------------------------------------------------------------- Fase 3
 
-const nombresServicio = {'preventivo': 'Preventivo', 'correctivo': 'Correctivo', 'inspeccion': 'Inspección'};
+const nombresServicio = {'preventivo': 'Mantenimiento preventivo', 'correctivo': 'Mantenimiento correctivo', 'inspeccion': 'Inspección'};
 const nombresPrioridad = {'baja': 'Baja', 'media': 'Media', 'alta': 'Alta', 'critica': 'Crítica'};
 const nombresEstadoOrden = {
   'programada': 'Programada',

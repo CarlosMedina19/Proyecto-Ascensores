@@ -77,7 +77,7 @@ describe('importar desde Excel', () => {
     expect((await screen.findAllByText('Se importaron 2 ascensores, 14 puertas de piso y 1 cliente. 2 filas no se cargaron.')).length).toBeGreaterThan(0);
     expect(llamadas).toContain(`POST /excel/importaciones/${VISTA.id}/confirmar`);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Listo' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
     expect(alImportar).toHaveBeenCalled();
   });
 

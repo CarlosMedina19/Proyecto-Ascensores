@@ -74,7 +74,7 @@ export default function ListaRoles() {
       <EncabezadoPagina titulo="Roles y permisos" descripcion="Cada usuario tiene un rol; los permisos del rol definen a qué funciones accede.">
         {tienePermiso('roles.crear') && (
           <button type="button" className="boton" onClick={() => setModal(true)}>
-            <Plus size={16} /> Nuevo rol
+            <Plus size={16} /> Crear rol
           </button>
         )}
       </EncabezadoPagina>

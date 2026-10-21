@@ -49,7 +49,7 @@ export default function OrdenesDelEquipo({ equipoId }) {
           ))}
         </ul>
       ) : (
-        <EstadoVacio titulo="El ascensor no tiene órdenes" />
+        <EstadoVacio titulo="El ascensor no tiene órdenes de trabajo" descripcion="Cree una orden para programar un mantenimiento o atender una falla." />
       )}
     </Tarjeta>
   );

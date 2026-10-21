@@ -25,13 +25,13 @@ export default function ListaEquipos({ tipo }) {
         descripcion={
           grupo
             ? `Ascensores de los edificios de tipo ${grupo.texto.toLowerCase()}, con su ficha técnica, estado e historial.`
-            : 'Equipos registrados con su ficha técnica, estado e historial.'
+            : 'Ascensores registrados con su ficha técnica, estado e historial.'
         }
         migas={grupo ? <Link to={grupo.ruta}>{grupo.plural}</Link> : undefined}
       >
         {tienePermiso('equipos.crear') && (
           <Link to="/equipos/nuevo" className="boton">
-            <Plus size={16} /> Nuevo ascensor
+            <Plus size={16} /> Registrar ascensor
           </Link>
         )}
       </EncabezadoPagina>
@@ -76,7 +76,7 @@ export default function ListaEquipos({ tipo }) {
             alSeleccionar={(equipo) => navegar(`/equipos/${equipo.id}`)}
             expandir={(equipo) => <ResumenAscensor equipo={equipo} />}
             etiquetaExpandir="Ver resumen de"
-            vacio={<EstadoVacio titulo="No se encontraron ascensores" />}
+            vacio={<EstadoVacio titulo="No se encontraron ascensores" descripcion="Ajuste los filtros, registre un ascensor o impórtelos desde Excel con la plantilla de SIGMA." />}
             columnas={[
               {
                 clave: 'codigo',

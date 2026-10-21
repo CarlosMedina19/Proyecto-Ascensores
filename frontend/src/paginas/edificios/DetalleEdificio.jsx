@@ -127,7 +127,7 @@ export default function DetalleEdificio() {
           <Tabla
             filas={lista}
             alSeleccionar={(equipo) => navegar(`/equipos/${equipo.id}`)}
-            vacio={<EstadoVacio titulo="El edificio no tiene ascensores registrados" />}
+            vacio={<EstadoVacio titulo="El edificio no tiene ascensores registrados" descripcion="Registre el primer ascensor desde el botón de este edificio." />}
             columnas={[
               { clave: 'codigo', titulo: 'Código', render: (e) => <strong>{e.codigo}</strong> },
               { clave: 'marca', titulo: 'Marca / modelo', render: (e) => [e.marca, e.modelo].filter(Boolean).join(' · ') || '—' },

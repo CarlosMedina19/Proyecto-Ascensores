@@ -74,7 +74,7 @@ export default function ListaAuditoria() {
         ) : (
           <Tabla
             filas={filas}
-            vacio={<EstadoVacio titulo="No hay registros para los filtros seleccionados" />}
+            vacio={<EstadoVacio titulo="No hay registros para los filtros seleccionados" descripcion="Amplíe el rango de fechas o quite filtros." />}
             columnas={[
               { clave: 'created_at', titulo: 'Fecha', render: (r) => fechaHora(r.created_at) },
               { clave: 'usuario', titulo: 'Usuario', render: (r) => r.usuario?.nombre || 'Sistema' },

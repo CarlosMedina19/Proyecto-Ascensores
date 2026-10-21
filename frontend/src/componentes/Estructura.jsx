@@ -33,6 +33,7 @@ import CampanaNotificaciones from './CampanaNotificaciones';
 import BuscadorGlobal from './BuscadorGlobal';
 import { Marca } from './Marca';
 import { RamaTipo } from './ArbolLateral';
+import { useDemostracion } from '../hooks/useDemostracion';
 
 /** Opciones del menú lateral y el permiso que requiere cada una (RF-002). */
 function opcionesMenu(esCliente, esTecnico) {
@@ -69,6 +70,7 @@ function opcionesMenu(esCliente, esTecnico) {
 export default function Estructura() {
   const { usuario, tienePermiso, esCliente, esTecnico, cerrarSesion, minutosInactividad } = useAutenticacion();
   const { tema, alternar } = useTema();
+  const { activo: demostracion } = useDemostracion();
   const [menuAbierto, setMenuAbierto] = useState(false);
   // Menú contraído a solo íconos (pantallas anchas); se recuerda entre visitas.
   const [contraido, setContraido] = useState(() => {
@@ -188,7 +190,7 @@ export default function Estructura() {
           </button>
           <div className="lateral__version">
             <span className="en-vivo" aria-hidden="true" />
-            Conectado · Fase 4
+            {demostracion ? 'Conectado · Fase 4 · Demostración' : 'Conectado'}
           </div>
           <div className="lateral__usuario">
             <div className="avatar" aria-hidden="true">
@@ -214,6 +216,11 @@ export default function Estructura() {
             SIGMA <span className="texto-suave">/</span> <b>{actual?.texto || 'Inicio'}</b>
           </div>
           <span style={{ flex: 1 }} />
+          {demostracion && (
+            <span className="insignia insignia--alerta" title="Modo demostración activo: se ven referencias del proyecto. Se desactiva en Mi perfil.">
+              Demostración
+            </span>
+          )}
           <BuscadorGlobal />
           <CampanaNotificaciones />
           <button

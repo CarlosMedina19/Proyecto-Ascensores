@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { Marca } from '../../componentes/Marca';
 import { useTema } from '../../hooks/useTema';
+import { aplicarDemostracionDesdeUrl, useDemostracion } from '../../hooks/useDemostracion';
 
 const PISOS = 12;
 const VENTANAS_ENCENDIDAS = new Set([3, 8, 14, 19, 27, 31, 38, 44, 50, 57, 61, 66]);
@@ -90,6 +91,8 @@ function Edificio({ piso }) {
 export default function DisenoAcceso({ children }) {
   const { piso, sube } = useRecorrido();
   const { tema, alternar } = useTema();
+  const { activo: demostracion } = useDemostracion();
+  useEffect(() => aplicarDemostracionDesdeUrl(), []);
 
   return (
     <div className="acceso">
@@ -138,7 +141,7 @@ export default function DisenoAcceso({ children }) {
           </button>
         </div>
         <div className="acceso__caja">{children}</div>
-        <footer className="acceso__pie">SENA · Proyecto formativo SIGMA</footer>
+        <footer className="acceso__pie">{demostracion ? 'SENA · Proyecto formativo SIGMA · Modo demostración' : 'SIGMA · Gestión y mantenimiento de ascensores'}</footer>
       </section>
     </div>
   );

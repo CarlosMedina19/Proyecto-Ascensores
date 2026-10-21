@@ -7,7 +7,7 @@ import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { useFormulario } from '../../hooks/useFormulario';
 import { Alerta, Cargando, Confirmacion, Datos, EncabezadoPagina, EstadoVacio, Insignia, Modal, Tarjeta } from '../../componentes/Basicos';
 import { CampoArea, CampoSelector } from '../../componentes/Campos';
-import { ESTADOS_EQUIPO, EVENTOS_HISTORIAL, fecha, fechaHora, numero } from '../../utilidades/formato';
+import { ESTADOS_EQUIPO, EVENTOS_HISTORIAL, fecha, fechaHora, numero, velocidad } from '../../utilidades/formato';
 import CorteAscensor from '../../componentes/CorteAscensor';
 import LineaTiempo from '../../componentes/LineaTiempo';
 import PlanDelEquipo from './PlanDelEquipo';
@@ -169,7 +169,7 @@ export default function DetalleEquipo() {
 
       <div className="rejilla rejilla--2" style={{ alignItems: 'start' }}>
         <div className="rejilla">
-          <Tarjeta titulo="Datos del equipo">
+          <Tarjeta titulo="Datos del ascensor">
             <Datos
               elementos={[
                 ['Nombre', equipo.nombre],
@@ -196,7 +196,7 @@ export default function DetalleEquipo() {
             <Datos
               elementos={[
                 ['Capacidad', [numero(ficha.capacidad_kg, ' kg'), ficha.capacidad_personas ? `${ficha.capacidad_personas} personas` : null].filter(Boolean).join(' · ')],
-                ['Velocidad', numero(ficha.velocidad_mpm, ' m/min')],
+                ['Velocidad', velocidad(ficha.velocidad_mpm)],
                 ['Paradas', ficha.paradas],
                 ['Accionamiento', ficha.tipo_traccion],
                 ['Motor', ficha.motor],
@@ -259,7 +259,7 @@ export default function DetalleEquipo() {
         </Tarjeta>
         {puedeVerHistorial && (
           <Tarjeta
-            titulo="Historial del equipo"
+            titulo="Historial del ascensor"
             acciones={
               tienePermiso('equipos.historial.crear') && (
                 <button type="button" className="boton boton--secundario boton--pequeno" onClick={() => setModalEvento(true)}>

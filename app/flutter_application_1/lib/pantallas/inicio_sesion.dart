@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../datos/cliente_api.dart';
+import '../estado/preferencias.dart';
 import '../estado/sesion.dart';
 import '../tema.dart';
 import '../widgets/comunes.dart';
@@ -83,9 +84,9 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text('Ingresa a SIGMA', style: Theme.of(context).textTheme.headlineMedium),
+                            Text('Ingrese a SIGMA', style: Theme.of(context).textTheme.headlineMedium),
                             const SizedBox(height: 4),
-                            Text('Usa el correo y la contraseña de tu cuenta.', style: TextStyle(color: esquema.onSurfaceVariant)),
+                            Text('Use el correo y la contraseña de su cuenta.', style: TextStyle(color: esquema.onSurfaceVariant)),
                             const SizedBox(height: 20),
                             if (motivo != null && _error == null) _Aviso(texto: motivo, color: esquema.primary),
                             if (_error != null) _Aviso(texto: _error!, color: esquema.error),
@@ -165,7 +166,9 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion> {
                     ),
                     const SizedBox(height: 18),
                     Text(
-                      'SENA · Proyecto formativo SIGMA',
+                      context.watch<Preferencias>().demostracion
+                          ? 'SENA · Proyecto formativo SIGMA · Modo demostración'
+                          : 'SIGMA · Gestión y mantenimiento de ascensores',
                       textAlign: TextAlign.center,
                       style: estiloEtiqueta(esquema.outline, tamano: 10.5),
                     ),

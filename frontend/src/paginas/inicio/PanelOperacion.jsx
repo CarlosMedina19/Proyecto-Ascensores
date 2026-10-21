@@ -235,7 +235,8 @@ export default function PanelOperacion({ nombre }) {
         <div>
           <p className="etiqueta-superior">{fechaLarga()}</p>
           <h1 className="pagina__titulo">
-            {saludo()}, {nombre}. Hoy hay <span className="resalte">{ordenesHoy} {ordenesHoy === 1 ? 'orden' : 'órdenes'}</span> de trabajo
+            {saludo()}
+            {nombre ? `, ${nombre}` : ''}. Hoy hay <span className="resalte">{ordenesHoy} {ordenesHoy === 1 ? 'orden' : 'órdenes'}</span> de trabajo
             {atrasados.total ? ` y ${atrasados.total} ${atrasados.total === 1 ? 'visita del plan atrasada' : 'visitas del plan atrasadas'}.` : '.'}
           </h1>
           <p className="pagina__descripcion">Operación de mantenimiento: órdenes, técnicos, ascensores, planes y contratos.</p>
@@ -248,7 +249,7 @@ export default function PanelOperacion({ nombre }) {
           )}
           {tienePermiso('ordenes.crear') && (
             <Link to="/ordenes/nueva" className="boton boton--secundario">
-              <Plus size={16} /> Nueva orden
+              <Plus size={16} /> Crear orden de trabajo
             </Link>
           )}
           {tienePermiso('mantenimientos.ver') && (
@@ -265,7 +266,9 @@ export default function PanelOperacion({ nombre }) {
           <b>
             {franja.tecnicos_en_campo} {franja.tecnicos_en_campo === 1 ? 'técnico en campo' : 'técnicos en campo'}
           </b>
-          <span className="texto-suave">de {franja.tecnicos_activos} activos</span>
+          <span className="texto-suave">
+            de {franja.tecnicos_activos} {franja.tecnicos_activos === 1 ? 'activo' : 'activos'}
+          </span>
         </span>
         <span className="franja-estado__separador" />
         <span>
@@ -276,9 +279,13 @@ export default function PanelOperacion({ nombre }) {
         <span className="franja-estado__separador" />
         <span>
           Cumplimiento semanal{' '}
-          <b className="tabular">
-            {franja.cumplimiento_semana.ejecutados}/{franja.cumplimiento_semana.programados}
-          </b>
+          {franja.cumplimiento_semana.programados ? (
+            <b className="tabular">
+              {franja.cumplimiento_semana.ejecutados} de {franja.cumplimiento_semana.programados} visitas
+            </b>
+          ) : (
+            <b>sin visitas programadas</b>
+          )}
         </span>
       </div>
 
@@ -310,7 +317,7 @@ export default function PanelOperacion({ nombre }) {
             tono="peligro"
             etiqueta="Correctivos abiertos"
             valor={correctivos.abiertos}
-            detalle={`▲ ${correctivos.esta_semana} esta semana${correctivos.criticos ? ` · ${correctivos.criticos} críticos` : ''}`}
+            detalle={`▲ ${correctivos.esta_semana} esta semana${correctivos.criticos ? ` · ${correctivos.criticos} ${correctivos.criticos === 1 ? 'crítico' : 'críticos'}` : ''}`}
             tipoDetalle={correctivos.esta_semana ? 'baja' : null}
             serie={correctivos.serie.map((s) => s.valor)}
           />
@@ -404,7 +411,7 @@ export default function PanelOperacion({ nombre }) {
                   })}
                 </ul>
               ) : (
-                <EstadoVacio titulo="No hay trabajos programados para hoy" />
+                <EstadoVacio titulo="No hay trabajos programados para hoy" descripcion="Las órdenes y visitas del día aparecen aquí." />
               )}
             </Tarjeta>
           </div>
@@ -464,7 +471,7 @@ export default function PanelOperacion({ nombre }) {
           </div>
         </div>
 
-        <Tarjeta titulo="Últimos eventos de los equipos">
+        <Tarjeta titulo="Últimos eventos de los ascensores">
           {resumen.ultimos_eventos.length ? <LineaTiempo eventos={resumen.ultimos_eventos} conEquipo /> : <EstadoVacio titulo="Aún no hay eventos" />}
         </Tarjeta>
       </div>

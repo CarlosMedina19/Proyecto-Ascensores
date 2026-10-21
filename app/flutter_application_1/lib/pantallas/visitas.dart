@@ -43,7 +43,7 @@ class _PantallaVisitasState extends State<PantallaVisitas> {
               child: ListTile(
                 leading: Icon(Icons.calendar_month_outlined, color: esquema.primary),
                 title: const Text('Agenda y órdenes de trabajo'),
-                subtitle: const Text('Se habilitan en la fase 3. Por ahora, registre la visita desde la ficha del ascensor.'),
+                subtitle: const Text('Registre la visita desde la ficha del ascensor.'),
               ),
             ),
             const SizedBox(height: 18),

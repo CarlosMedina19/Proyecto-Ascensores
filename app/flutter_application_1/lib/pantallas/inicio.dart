@@ -172,7 +172,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                 child: ListTile(
                   leading: Icon(Icons.report_problem_outlined, color: esquema.primary),
                   title: const Text('Solicitar reparación o revisión'),
-                  subtitle: const Text('Disponible en la fase 6 (portal del cliente). Mientras tanto, comuníquese con su coordinador.'),
+                  subtitle: const Text('Para solicitar un servicio, comuníquese con su coordinador.'),
                 ),
               ),
             ],

@@ -31,7 +31,7 @@ export default function ListaContratos() {
       >
         {tienePermiso('contratos.crear') && (
           <Link to="/contratos/nuevo" className="boton">
-            <Plus size={16} /> Nuevo contrato
+            <Plus size={16} /> Crear contrato
           </Link>
         )}
       </EncabezadoPagina>
@@ -76,7 +76,7 @@ export default function ListaContratos() {
           <Tabla
             filas={filas}
             alSeleccionar={(contrato) => navegar(`/contratos/${contrato.id}`)}
-            vacio={<EstadoVacio titulo="No se encontraron contratos" />}
+            vacio={<EstadoVacio titulo="No se encontraron contratos" descripcion="Ajuste los filtros o cree un contrato para un cliente con ascensores registrados." />}
             columnas={[
               {
                 clave: 'numero',

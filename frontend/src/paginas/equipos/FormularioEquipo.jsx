@@ -5,7 +5,7 @@ import { limpiarVacios, useFormulario } from '../../hooks/useFormulario';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { Alerta, Cargando, EncabezadoPagina, Tarjeta } from '../../componentes/Basicos';
 import { CampoArea, CampoSelector, CampoTexto } from '../../componentes/Campos';
-import { ESTADOS_EQUIPO } from '../../utilidades/formato';
+import { ESTADOS_EQUIPO, velocidad } from '../../utilidades/formato';
 import { GaleriaFotos, SelectorFotos } from '../../componentes/FotosEquipo';
 
 const EQUIPO_VACIO = {
@@ -121,7 +121,7 @@ export default function FormularioEquipo() {
         <form className="formulario" onSubmit={alEnviar} noValidate>
           <Alerta>{mensajeError}</Alerta>
 
-          <div className="formulario__seccion">Datos generales del equipo</div>
+          <div className="formulario__seccion">Datos generales del ascensor</div>
           <div className="formulario__fila">
             <CampoSelector
               etiqueta="Edificio"
@@ -173,7 +173,7 @@ export default function FormularioEquipo() {
           <div className="formulario__seccion">Ficha técnica del ascensor</div>
           <div className="formulario__fila formulario__fila--3">
             <CampoTexto etiqueta="Capacidad (kg)" obligatorio tipo="number" min="100" max="5000" valor={datos.ascensor.capacidad_kg} alCambiar={cambiarFicha('capacidad_kg')} error={errorFicha('capacidad_kg')} ayuda="Entre 100 y 5.000 kg." />
-            <CampoTexto etiqueta="Velocidad (m/min)" obligatorio tipo="number" min="6" max="600" step="0.1" valor={datos.ascensor.velocidad_mpm} alCambiar={cambiarFicha('velocidad_mpm')} error={errorFicha('velocidad_mpm')} ayuda="Entre 6 y 600 m/min (0,1 a 10 m/s)." />
+            <CampoTexto etiqueta="Velocidad (m/min)" obligatorio tipo="number" min="6" max="600" step="0.1" valor={datos.ascensor.velocidad_mpm} alCambiar={cambiarFicha('velocidad_mpm')} error={errorFicha('velocidad_mpm')} ayuda={datos.ascensor.velocidad_mpm ? `Equivale a ${velocidad(datos.ascensor.velocidad_mpm)}. Rango: 6 a 600 m/min.` : 'Entre 6 y 600 m/min (0,1 a 10 m/s).'} />
             <CampoTexto etiqueta="Número de paradas" obligatorio tipo="number" min="2" max="60" valor={datos.ascensor.paradas} alCambiar={cambiarFicha('paradas')} error={errorFicha('paradas')} ayuda="Entre 2 y 60. Se crea una puerta de piso por parada." />
           </div>
           <div className="formulario__fila formulario__fila--3">

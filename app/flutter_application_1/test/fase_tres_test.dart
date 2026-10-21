@@ -53,7 +53,7 @@ void main() {
       final orden = OrdenTrabajo.desdeJson(ordenJson());
 
       expect(orden.numero, 'OT-2026-00009');
-      expect(orden.nombreServicio, 'Correctivo');
+      expect(orden.nombreServicio, 'Mantenimiento correctivo');
       expect(orden.nombrePrioridad, 'Crítica');
       expect(orden.nombreEstado, 'En proceso');
       expect(orden.direccion, 'Cra 15 # 100-20, Bogotá');
@@ -96,7 +96,7 @@ void main() {
 
     expect(find.text('ASC-002 · Torre A'), findsOneWidget);
     expect(find.textContaining('07:30–09:30'), findsOneWidget);
-    expect(find.text('OT-2026-00009 · Correctivo'), findsOneWidget);
+    expect(find.text('OT-2026-00009 · Mantenimiento correctivo'), findsOneWidget);
     expect(find.text('En proceso'), findsOneWidget);
     expect(find.text('Crítica'), findsOneWidget);
   });

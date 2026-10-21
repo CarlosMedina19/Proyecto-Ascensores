@@ -36,7 +36,7 @@ export default function ListaPlanes() {
       >
         {tienePermiso('planes.crear') && (
           <Link to="/planes/nuevo" className="boton">
-            <Plus size={16} /> Nuevo plan
+            <Plus size={16} /> Crear plan
           </Link>
         )}
       </EncabezadoPagina>

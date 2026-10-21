@@ -4,7 +4,8 @@ import { useAutenticacion } from '../contexto/AutenticacionContexto';
 import { useNotificar } from '../contexto/NotificacionesContexto';
 import { useFormulario } from '../hooks/useFormulario';
 import { Alerta, Datos, EncabezadoPagina, Insignia, Tarjeta } from '../componentes/Basicos';
-import { CampoContrasena } from '../componentes/Campos';
+import { CampoContrasena, Casilla } from '../componentes/Campos';
+import { useDemostracion } from '../hooks/useDemostracion';
 import { fechaHora, nombreRol } from '../utilidades/formato';
 
 export default function Perfil() {
@@ -79,7 +80,22 @@ export default function Perfil() {
             <span className="campo__ayuda">Al cambiarla se cerrarán sus sesiones abiertas en otros dispositivos.</span>
           </form>
         </Tarjeta>
+        <TarjetaDemostracion />
       </div>
     </>
+  );
+}
+
+/** Presentaciones: muestra u oculta las referencias del proyecto formativo y las cuentas de prueba. */
+function TarjetaDemostracion() {
+  const { activo, alternar } = useDemostracion();
+  return (
+    <Tarjeta titulo="Presentaciones">
+      <Casilla etiqueta="Modo demostración" valor={activo} alCambiar={alternar} />
+      <span className="campo__ayuda">
+        Muestra las referencias del proyecto formativo y las cuentas de prueba en el inicio de sesión. Desactívelo
+        antes de presentar SIGMA a un cliente. Solo afecta a este navegador.
+      </span>
+    </Tarjeta>
   );
 }
