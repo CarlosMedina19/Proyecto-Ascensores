@@ -15,10 +15,15 @@ import 'widgets/puertas.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('es');
+  // Si algo falla al preparar fechas o preferencias, la app arranca igual con los valores por defecto.
+  try {
+    await initializeDateFormatting('es');
+  } catch (_) {}
 
   final preferencias = Preferencias();
-  await preferencias.cargar();
+  try {
+    await preferencias.cargar().timeout(const Duration(seconds: 5));
+  } catch (_) {}
   final sesion = Sesion(repositorio: Repositorio(ClienteApi()));
   sesion.iniciar();
 

@@ -8,12 +8,14 @@ use App\Models\Equipo;
 use App\Models\HistorialEquipo;
 use App\Models\Usuario;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class EquipoService
 {
-    public function listar(array $filtros = [], int $porPagina = 15): LengthAwarePaginator
+    /** Consulta con los filtros del listado (también la usa la exportación a Excel). */
+    public function consulta(array $filtros = []): Builder
     {
         $consulta = Equipo::with(['edificio.cliente', 'ascensor']);
         $usuarioActual = Auth::user();
@@ -50,7 +52,12 @@ class EquipoService
             });
         }
 
-        return $consulta->orderBy('codigo')->paginate($porPagina, ['*'], 'pagina');
+        return $consulta;
+    }
+
+    public function listar(array $filtros = [], int $porPagina = 15): LengthAwarePaginator
+    {
+        return $this->consulta($filtros)->orderBy('codigo')->paginate($porPagina, ['*'], 'pagina');
     }
 
     public function crear(array $datos): Equipo

@@ -45,7 +45,7 @@ export default function Emergencias() {
         titulo="Emergencias"
         descripcion={['Atrapamientos y fallas', 'Reporte desde el panel, la app o el QR', 'Tiempo de llegada frente al objetivo']}
       >
-        <HerramientasExcel modulo="servicio" alImportar={recargar} />
+        <HerramientasExcel modulo="emergencias" alImportar={recargar} filtros={filtros} />
         {tienePermiso('emergencias.reportar') && (
           <button type="button" className="boton boton--peligro" onClick={() => setReportar(true)} data-recorrido="emergencia">
             <Siren size={16} aria-hidden="true" /> Reportar emergencia

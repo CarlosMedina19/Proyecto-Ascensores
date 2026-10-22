@@ -27,7 +27,8 @@ class ClienteApi {
   static http.Client _clientePorDefecto() => http.Client();
 
   final http.Client _http;
-  final String urlBase;
+  /// Se puede cambiar en caliente desde Configurar servidor.
+  String urlBase;
   String? token;
 
   /// Se llama cuando la API responde 401 con un token: sesión vencida o usuario desactivado.

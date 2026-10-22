@@ -36,9 +36,11 @@ class ExcelController extends Controller
     public function exportar(Request $solicitud, string $modulo): BinaryFileResponse
     {
         abort_unless(array_key_exists($modulo, ExportacionService::MODULOS), 404, 'Ese módulo no se puede exportar.');
-        $ruta = $this->exportacion->exportar($modulo, $solicitud->user());
+        // Solo los filtros que usan las tablas; cualquier otro parámetro se ignora.
+        $filtros = $solicitud->only(['tipo_edificio', 'estado', 'busqueda', 'tipo', 'cliente_id', 'edificio_id', 'rol_id', 'activo', 'servicio', 'prioridad', 'tecnico_id', 'desde', 'hasta', 'activas']);
+        $ruta = $this->exportacion->exportar($modulo, $solicitud->user(), $filtros);
 
-        return response()->download($ruta, ExportacionService::nombreArchivo($modulo))->deleteFileAfterSend();
+        return response()->download($ruta, ExportacionService::nombreArchivo($modulo, $filtros))->deleteFileAfterSend();
     }
 
     /** Paso 1: sube el archivo y devuelve la vista previa sin guardar nada. */

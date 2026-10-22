@@ -7,12 +7,14 @@ use App\Models\Cliente;
 use App\Models\ContactoCliente;
 use App\Models\Usuario;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ClienteService
 {
-    public function listar(array $filtros = [], int $porPagina = 15): LengthAwarePaginator
+    /** Consulta con los filtros del listado (también la usa la exportación a Excel). */
+    public function consulta(array $filtros = []): Builder
     {
         $consulta = Cliente::with(['contactos'])->withCount('edificios');
         $usuarioActual = Auth::user();
@@ -41,7 +43,16 @@ class ClienteService
             $consulta->where('tipo', $filtros['tipo']);
         }
 
-        return $consulta->orderBy('nombre')->paginate($porPagina, ['*'], 'pagina');
+        if (! empty($filtros['tipo_edificio'])) {
+            $consulta->whereHas('edificios', fn ($e) => $e->where('tipo', $filtros['tipo_edificio']));
+        }
+
+        return $consulta;
+    }
+
+    public function listar(array $filtros = [], int $porPagina = 15): LengthAwarePaginator
+    {
+        return $this->consulta($filtros)->orderBy('nombre')->paginate($porPagina, ['*'], 'pagina');
     }
 
     public function crear(array $datos): Cliente

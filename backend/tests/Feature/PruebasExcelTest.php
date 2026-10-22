@@ -212,6 +212,28 @@ class PruebasExcelTest extends TestCase
         }
     }
 
+    public function test_exporta_solo_la_seccion_que_se_esta_viendo(): void
+    {
+        $this->actingAs($this->administrador, 'sanctum');
+        $cliente = Cliente::create(['tipo' => 'juridica', 'nombre' => 'Mixto', 'nit' => '900777888-1', 'estado' => true]);
+        foreach (['conjunto' => 'ASC-CON', 'institucional' => 'ASC-INS'] as $tipo => $codigo) {
+            $edificio = $cliente->edificios()->create([
+                'tipo' => $tipo, 'nombre' => "Edificio {$tipo}", 'direccion' => 'Calle 1', 'ciudad' => 'Bogotá',
+                'nombre_contacto' => 'Ana', 'telefono_contacto' => '3001112233',
+            ]);
+            $edificio->equipos()->create(['codigo' => $codigo, 'tipo' => 'ascensor', 'estado' => 'activo']);
+        }
+
+        $respuesta = $this->get('/api/v1/excel/exportar/ascensores?tipo_edificio=conjunto')->assertOk();
+        $this->assertStringContainsString('SIGMA_Ascensores_Conjuntos_', $respuesta->headers->get('content-disposition'));
+        $ruta = tempnam(sys_get_temp_dir(), 'seccion').'.xlsx';
+        file_put_contents($ruta, $respuesta->streamedContent());
+        $hoja = IOFactory::load($ruta)->getSheetByName('Ascensores');
+
+        $this->assertSame('ASC-CON', $hoja->getCell('A2')->getValue());
+        $this->assertNull($hoja->getCell('A3')->getValue(), 'El ascensor del edificio institucional no debe salir.');
+    }
+
     public function test_exportar_e_importar_de_nuevo_no_cambia_ni_pierde_datos(): void
     {
         $this->actingAs($this->administrador, 'sanctum');

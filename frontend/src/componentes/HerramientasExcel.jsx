@@ -12,7 +12,7 @@ const EXTENSIONES = ['xlsx', 'csv'];
  * Botones de Excel de un módulo: exportar los datos actuales, descargar la plantilla vacía e importar
  * (vista previa con errores y duplicados antes de guardar).
  */
-export default function HerramientasExcel({ modulo, alImportar }) {
+export default function HerramientasExcel({ modulo, alImportar, filtros }) {
   const { tienePermiso } = useAutenticacion();
   const notificar = useNotificar();
   const [ocupado, setOcupado] = useState('');
@@ -35,7 +35,7 @@ export default function HerramientasExcel({ modulo, alImportar }) {
         <button
           type="button"
           className="boton boton--secundario"
-          onClick={() => descargar(() => excel.exportar(modulo), 'exportar')}
+          onClick={() => descargar(() => excel.exportar(modulo, filtros), 'exportar')}
           disabled={!!ocupado}
           aria-label="Exportar a Excel"
           title="Exportar a Excel"

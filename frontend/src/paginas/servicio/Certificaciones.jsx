@@ -54,7 +54,7 @@ export default function Certificaciones() {
       <EncabezadoPagina
         titulo="Certificación anual"
         descripcion={['Revisión general anual por organismo acreditado', 'Certificado de cada ascensor', 'Avisos 60, 30 y 15 días antes']}>
-        <HerramientasExcel modulo="servicio" alImportar={cargar} />
+        <HerramientasExcel modulo="certificaciones" alImportar={cargar} />
       </EncabezadoPagina>
 
 

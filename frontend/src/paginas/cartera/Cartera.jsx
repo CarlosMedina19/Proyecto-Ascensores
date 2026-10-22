@@ -61,7 +61,7 @@ export default function Cartera() {
         titulo={esCliente ? 'Mi estado de cuenta' : 'Cartera'}
         descripcion={['Facturas pendientes', 'Pagos registrados', 'Saldo por antigüedad']}
       >
-        <HerramientasExcel modulo="cartera" alImportar={actualizar} />
+        <HerramientasExcel modulo="cartera" alImportar={actualizar} filtros={filtros} />
         {tienePermiso('facturas.crear') && (
           <button type="button" className="boton" onClick={() => setNuevaFactura(true)}>
             <Plus size={16} aria-hidden="true" /> Registrar factura

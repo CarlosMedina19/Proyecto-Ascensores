@@ -30,7 +30,7 @@ export default function ListaEquipos({ tipo }) {
         }
         migas={grupo ? <Link to={grupo.ruta}>{grupo.plural}</Link> : undefined}
       >
-        <HerramientasExcel modulo="ascensores" alImportar={recargar} />
+        <HerramientasExcel modulo="ascensores" alImportar={recargar} filtros={{ ...filtros, tipo_edificio: tipo || filtros.tipo_edificio }} />
         {tienePermiso('equipos.crear') && (
           <Link to="/equipos/nuevo" className="boton">
             <Plus size={16} /> Registrar ascensor

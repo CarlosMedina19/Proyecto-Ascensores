@@ -8,15 +8,17 @@ use App\Models\Cliente;
 use App\Models\Cotizacion;
 use App\Models\Edificio;
 use App\Models\Emergencia;
-use App\Models\Equipo;
-use App\Models\Factura;
 use App\Models\Pago;
 use App\Models\PlanillaResultado;
 use App\Models\PlanMantenimiento;
 use App\Models\PuertaPiso;
 use App\Models\Tecnico;
 use App\Models\Usuario;
+use App\Services\CarteraService;
+use App\Services\ClienteService;
+use App\Services\EquipoService;
 use App\Services\OrdenTrabajoService;
+use App\Services\UsuarioService;
 use App\Support\Excel\Opciones;
 use App\Support\Excel\Plantilla;
 use Illuminate\Database\Eloquent\Builder;
@@ -32,8 +34,11 @@ class ExportacionService
     /** Hojas que descarga cada módulo. */
     public const MODULOS = [
         'clientes' => ['clientes', 'edificios'],
-        'ascensores' => ['ascensores', 'puertas', 'certificaciones'],
+        'ascensores' => ['ascensores', 'puertas'],
         'ordenes' => ['ordenes', 'checklist'],
+        'certificaciones' => ['certificaciones'],
+        'emergencias' => ['emergencias'],
+        'cotizaciones' => ['cotizaciones'],
         'servicio' => ['certificaciones', 'emergencias', 'cotizaciones'],
         'cartera' => ['facturas', 'pagos'],
         'usuarios' => ['usuarios'],
@@ -46,11 +51,24 @@ class ExportacionService
         'certificaciones' => 'certificaciones.ver', 'emergencias' => 'emergencias.ver', 'cotizaciones' => 'cotizaciones.ver',
     ];
 
-    public function __construct(private readonly OrdenTrabajoService $ordenes) {}
+    public function __construct(
+        private readonly OrdenTrabajoService $ordenes,
+        private readonly EquipoService $equipos,
+        private readonly ClienteService $clientes,
+        private readonly UsuarioService $usuarios,
+        private readonly CarteraService $cartera,
+    ) {}
 
-    /** Genera el archivo y devuelve su ruta temporal. */
-    public function exportar(string $modulo, Usuario $usuario): string
+    /** Filtros de la pantalla desde la que se exporta: solo sale lo que se está viendo. */
+    private array $filtros = [];
+
+    /**
+     * Genera el archivo y devuelve su ruta temporal. Con filtros (tipo de edificio, estado, búsqueda…)
+     * exporta solo los registros de esa sección, igual que la tabla en pantalla.
+     */
+    public function exportar(string $modulo, Usuario $usuario, array $filtros = []): string
     {
+        $this->filtros = array_filter($filtros, fn ($v) => $v !== null && $v !== '');
         $hojas = array_values(array_filter(self::MODULOS[$modulo] ?? [], fn ($h) => $usuario->tienePermiso(self::PERMISOS[$h])));
         if ($hojas === []) {
             throw new ReglaNegocioException('Su rol no tiene permiso para exportar esta información.');
@@ -72,11 +90,14 @@ class ExportacionService
     }
 
     /** Nombre del archivo descargado: SIGMA_Ascensores_2026-10-20.xlsx */
-    public static function nombreArchivo(string $modulo): string
+    public static function nombreArchivo(string $modulo, array $filtros = []): string
     {
-        $nombres = ['clientes' => 'Clientes', 'ascensores' => 'Ascensores', 'ordenes' => 'Ordenes', 'cartera' => 'Cartera', 'usuarios' => 'Usuarios', 'servicio' => 'Servicio', 'todo' => 'Datos'];
+        $nombres = ['clientes' => 'Clientes', 'ascensores' => 'Ascensores', 'ordenes' => 'Ordenes', 'cartera' => 'Cartera', 'usuarios' => 'Usuarios', 'servicio' => 'Servicio', 'certificaciones' => 'Certificaciones', 'emergencias' => 'Emergencias', 'cotizaciones' => 'Cotizaciones', 'todo' => 'Datos'];
 
-        return 'SIGMA_'.($nombres[$modulo] ?? 'Datos').'_'.now()->toDateString().'.xlsx';
+        $tipos = ['conjunto' => 'Conjuntos', 'institucional' => 'Institucionales', 'residencial' => 'Residenciales'];
+        $seccion = $tipos[$filtros['tipo_edificio'] ?? ''] ?? null;
+
+        return 'SIGMA_'.($nombres[$modulo] ?? 'Datos').($seccion ? '_'.$seccion : '').'_'.now()->toDateString().'.xlsx';
     }
 
     private function llenarListas(Worksheet $listas): void
@@ -142,7 +163,7 @@ class ExportacionService
 
     private function filasClientes(Usuario $usuario): iterable
     {
-        $consulta = Cliente::with(['contactos', 'contratos' => fn ($c) => $c->where('estado', 'vigente')->latest('fecha_inicio')])->orderBy('codigo');
+        $consulta = $this->clientes->consulta($this->filtros)->with(['contactos', 'contratos' => fn ($c) => $c->where('estado', 'vigente')->latest('fecha_inicio')])->reorder()->orderBy('codigo');
         foreach ($this->deCliente($consulta, $usuario, 'id')->cursor() as $cliente) {
             $contrato = $cliente->contratos->first();
             yield [
@@ -166,7 +187,10 @@ class ExportacionService
 
     private function filasEdificios(Usuario $usuario): iterable
     {
-        $consulta = Edificio::with('cliente')->orderBy('cliente_id')->orderBy('nombre');
+        $consulta = Edificio::with('cliente')
+            ->whereIn('cliente_id', $this->clientes->consulta($this->filtros)->reorder()->select('clientes.id'))
+            ->when($this->filtros['tipo_edificio'] ?? null, fn ($q, $tipo) => $q->where('tipo', $tipo))
+            ->orderBy('cliente_id')->orderBy('nombre');
         foreach ($this->deCliente($consulta, $usuario)->cursor() as $edificio) {
             yield [
                 'cliente' => $edificio->cliente?->codigo,
@@ -186,10 +210,9 @@ class ExportacionService
 
     private function filasAscensores(Usuario $usuario): iterable
     {
-        $consulta = Equipo::with(['edificio.cliente', 'ascensor', 'tecnico.usuario', 'asignacionActiva.plan', 'asignacionActiva.periodicidad'])->orderBy('codigo');
-        if ($usuario->esCliente()) {
-            $consulta->whereHas('edificio', fn ($c) => $c->where('cliente_id', $usuario->cliente_id));
-        }
+        $consulta = $this->equipos->consulta($this->filtros)
+            ->with(['edificio.cliente', 'ascensor', 'tecnico.usuario', 'asignacionActiva.plan', 'asignacionActiva.periodicidad'])
+            ->reorder()->orderBy('codigo');
         foreach ($consulta->cursor() as $equipo) {
             $ficha = $equipo->ascensor;
             $asignacion = $equipo->asignacionActiva;
@@ -222,10 +245,9 @@ class ExportacionService
 
     private function filasPuertas(Usuario $usuario): iterable
     {
-        $consulta = PuertaPiso::with('equipo')->whereHas('equipo')->orderBy('equipo_id')->orderBy('piso');
-        if ($usuario->esCliente()) {
-            $consulta->whereHas('equipo.edificio', fn ($c) => $c->where('cliente_id', $usuario->cliente_id));
-        }
+        $consulta = PuertaPiso::with('equipo')
+            ->whereIn('equipo_id', $this->idsEquipos())
+            ->orderBy('equipo_id')->orderBy('piso');
         foreach ($consulta->cursor() as $puerta) {
             yield [
                 'ascensor' => $puerta->equipo->codigo,
@@ -239,7 +261,7 @@ class ExportacionService
 
     private function filasOrdenes(Usuario $usuario): iterable
     {
-        $consulta = $this->ordenes->consultaVisible($usuario)->with(['equipo', 'tecnicos.usuario'])->orderBy('fecha')->orderBy('hora');
+        $consulta = $this->ordenes->filtrar($this->ordenes->consultaVisible($usuario), $this->filtros)->with(['equipo', 'tecnicos.usuario'])->orderBy('fecha')->orderBy('hora');
         foreach ($consulta->cursor() as $orden) {
             $inicio = substr((string) $orden->hora, 0, 5);
             yield [
@@ -260,7 +282,7 @@ class ExportacionService
 
     private function filasChecklist(Usuario $usuario): iterable
     {
-        $ordenes = $this->ordenes->consultaVisible($usuario)->select('id');
+        $ordenes = $this->ordenes->filtrar($this->ordenes->consultaVisible($usuario), $this->filtros)->select('ordenes_trabajo.id');
         $consulta = PlanillaResultado::with(['item', 'planilla.orden'])
             ->whereHas('planilla', fn ($c) => $c->whereIn('orden_id', $ordenes))
             ->orderBy('planilla_id')->orderBy('item_id');
@@ -276,6 +298,12 @@ class ExportacionService
         }
     }
 
+    /** Ascensores de la tabla en pantalla (filtros y cliente), como subconsulta de ids. */
+    private function idsEquipos(): Builder
+    {
+        return $this->equipos->consulta($this->filtros)->reorder()->select('equipos.id');
+    }
+
     /** Ascensores visibles para el usuario (el cliente, solo los suyos). */
     private function deEquipo(Builder $consulta, Usuario $usuario): Builder
     {
@@ -285,7 +313,7 @@ class ExportacionService
     private function filasCertificaciones(Usuario $usuario): iterable
     {
         $estados = ['vigente' => 'Vigente', 'por_vencer' => 'Por vencer', 'vencida' => 'Vencida', 'no_conforme' => 'No conforme'];
-        $consulta = Certificacion::with('equipo')->orderBy('equipo_id')->orderBy('fecha_inspeccion');
+        $consulta = Certificacion::with('equipo')->whereIn('equipo_id', $this->idsEquipos())->orderBy('equipo_id')->orderBy('fecha_inspeccion');
         foreach ($this->deEquipo($consulta, $usuario)->cursor() as $c) {
             yield [
                 'ascensor' => $c->equipo?->codigo,
@@ -303,7 +331,11 @@ class ExportacionService
 
     private function filasEmergencias(Usuario $usuario): iterable
     {
-        $consulta = Emergencia::with(['equipo', 'tecnico.usuario'])->orderBy('reportada_en');
+        $consulta = Emergencia::with(['equipo', 'tecnico.usuario'])
+            ->when(($this->filtros['estado'] ?? null) === 'abiertas', fn ($q) => $q->whereIn('estado', ['reportada', 'asignada', 'en_sitio']))
+            ->when(isset($this->filtros['estado']) && $this->filtros['estado'] !== 'abiertas', fn ($q) => $q->where('estado', $this->filtros['estado']))
+            ->when($this->filtros['busqueda'] ?? null, fn ($q, $t) => $q->where(fn ($b) => $b->where('numero', 'ilike', "%{$t}%")->orWhereHas('equipo', fn ($e) => $e->where('codigo', 'ilike', "%{$t}%"))))
+            ->orderBy('reportada_en');
         foreach ($this->deEquipo($consulta, $usuario)->cursor() as $e) {
             yield [
                 'numero' => $e->numero,
@@ -344,8 +376,8 @@ class ExportacionService
 
     private function filasFacturas(Usuario $usuario): iterable
     {
-        $consulta = Factura::with('cliente')->orderBy('fecha_emision')->orderBy('numero');
-        foreach ($this->deCliente($consulta, $usuario)->cursor() as $factura) {
+        $consulta = $this->cartera->consultaFacturas($this->filtros)->reorder()->orderBy('fecha_emision')->orderBy('numero');
+        foreach ($consulta->cursor() as $factura) {
             yield [
                 'cliente' => $factura->cliente?->codigo,
                 'numero' => $factura->numero,
@@ -361,7 +393,9 @@ class ExportacionService
 
     private function filasPagos(Usuario $usuario): iterable
     {
-        $consulta = Pago::with(['cliente', 'factura'])->orderBy('fecha')->orderBy('id');
+        $consulta = Pago::with(['cliente', 'factura'])
+            ->whereIn('factura_id', $this->cartera->consultaFacturas($this->filtros)->reorder()->select('facturas.id'))
+            ->orderBy('fecha')->orderBy('id');
         foreach ($this->deCliente($consulta, $usuario)->cursor() as $pago) {
             yield [
                 'cliente' => $pago->cliente?->codigo,
@@ -376,7 +410,7 @@ class ExportacionService
 
     private function filasUsuarios(Usuario $usuario): iterable
     {
-        foreach (Usuario::with(['rol', 'cliente'])->orderBy('nombre')->cursor() as $fila) {
+        foreach ($this->usuarios->consulta($this->filtros)->reorder()->orderBy('nombre')->cursor() as $fila) {
             yield [
                 'nombre' => $fila->nombre,
                 'correo' => $fila->correo,

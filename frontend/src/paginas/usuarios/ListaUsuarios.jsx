@@ -29,7 +29,7 @@ export default function ListaUsuarios() {
   return (
     <>
       <EncabezadoPagina titulo="Usuarios" descripcion={['Cuentas de acceso al sistema', 'Activar, desactivar o eliminar', 'El historial se conserva']}>
-        <HerramientasExcel modulo="usuarios" alImportar={recargar} />
+        <HerramientasExcel modulo="usuarios" alImportar={recargar} filtros={filtros} />
         {tienePermiso('usuarios.crear') && (
           <Link to="/usuarios/nuevo" className="boton">
             <Plus size={16} /> Crear usuario

@@ -8,9 +8,13 @@ import HerramientasExcel from '../../componentes/HerramientasExcel';
 import { ESTADOS_ORDEN, PRIORIDADES_ORDEN, SERVICIOS_ORDEN, fecha } from '../../utilidades/formato';
 
 /** Convierte el filtro "activas" de la lista en el parámetro de la API. */
-function consultar(filtros) {
+function parametros(filtros) {
   const { estado, ...resto } = filtros;
-  return ordenes.listar(estado === 'activas' ? { ...resto, activas: 1 } : filtros);
+  return estado === 'activas' ? { ...resto, activas: 1 } : filtros;
+}
+
+function consultar(filtros) {
+  return ordenes.listar(parametros(filtros));
 }
 
 export default function ListaOrdenes() {
@@ -34,7 +38,7 @@ export default function ListaOrdenes() {
             : ['Preventivos, correctivos e inspecciones', 'Prioridad y técnicos', 'Estado y tiempos']
         }
       >
-        <HerramientasExcel modulo="ordenes" alImportar={recargar} />
+        <HerramientasExcel modulo="ordenes" alImportar={recargar} filtros={parametros(filtros)} />
         {tienePermiso('ordenes.crear') && (
           <Link to="/ordenes/nueva" className="boton">
             <Plus size={16} /> Crear orden de trabajo

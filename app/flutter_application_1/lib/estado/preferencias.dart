@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../configuracion.dart';
+
 /// Preferencias locales del dispositivo (tema claro/oscuro y modo demostración).
 class Preferencias extends ChangeNotifier {
   static const _claveTema = 'sigma.tema';
   static const _claveDemostracion = 'sigma.demostracion';
+  static const _claveServidor = 'sigma.servidor';
 
   ThemeMode modoTema = ThemeMode.system;
 
@@ -19,7 +22,20 @@ class Preferencias extends ChangeNotifier {
       _ => ThemeMode.system,
     };
     demostracion = preferencias.getBool(_claveDemostracion) ?? false;
+    Configuracion.urlPersonalizada = preferencias.getString(_claveServidor);
     notifyListeners();
+  }
+
+  /// Guarda la dirección del servidor elegida en el teléfono (vacía = la de compilación).
+  Future<void> cambiarServidor(String? url) async {
+    Configuracion.urlPersonalizada = (url == null || url.isEmpty) ? null : url;
+    notifyListeners();
+    final preferencias = await SharedPreferences.getInstance();
+    if (Configuracion.urlPersonalizada == null) {
+      await preferencias.remove(_claveServidor);
+    } else {
+      await preferencias.setString(_claveServidor, Configuracion.urlPersonalizada!);
+    }
   }
 
   Future<void> cambiarTema(ThemeMode modo) async {

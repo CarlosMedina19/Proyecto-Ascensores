@@ -23,7 +23,7 @@ export default function ListaClientes() {
         titulo={esCliente ? 'Mi empresa' : 'Clientes'}
         descripcion={['Personas naturales y jurídicas', 'Conjuntos, institucionales y residenciales', 'Despliegue un cliente para ver sus ascensores']}
       >
-        <HerramientasExcel modulo="clientes" alImportar={recargar} />
+        <HerramientasExcel modulo="clientes" alImportar={recargar} filtros={filtros} />
         {tienePermiso('clientes.crear') && (
           <Link to="/clientes/nuevo" className="boton">
             <Plus size={16} /> Registrar cliente

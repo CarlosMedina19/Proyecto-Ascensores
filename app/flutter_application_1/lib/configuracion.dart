@@ -6,7 +6,11 @@ class Configuracion {
 
   /// URL base de la API de Laravel. Se puede cambiar al compilar:
   /// `flutter run --dart-define=API_URL=http://192.168.1.10:8000/api/v1`
+  /// Dirección elegida en la app (Configurar servidor). Tiene prioridad sobre la de compilación.
+  static String? urlPersonalizada;
+
   static String get urlApi {
+    if (urlPersonalizada != null && urlPersonalizada!.isNotEmpty) return urlPersonalizada!;
     const definida = String.fromEnvironment('API_URL');
     if (definida.isNotEmpty) return definida;
 
@@ -21,4 +25,14 @@ class Configuracion {
   static const int minutosInactividadPorDefecto = 10;
 
   static const Duration tiempoEsperaSolicitud = Duration(seconds: 20);
+
+  /// Normaliza lo que escribe el usuario: "192.168.1.100:8000" → "http://192.168.1.100:8000/api/v1".
+  static String normalizarServidor(String texto) {
+    var url = texto.trim();
+    if (url.isEmpty) return url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'http://$url';
+    url = url.replaceAll(RegExp(r'/+$'), '');
+    if (!url.endsWith('/api/v1')) url = '$url/api/v1';
+    return url;
+  }
 }

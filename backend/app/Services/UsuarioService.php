@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Models\Rol;
 use App\Models\Usuario;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class UsuarioService
 {
-    public function listar(array $filtros = [], int $porPagina = 15): LengthAwarePaginator
+    /** Consulta con los filtros del listado (también la usa la exportación a Excel). */
+    public function consulta(array $filtros = []): Builder
     {
         $consulta = Usuario::with(['rol', 'cliente']);
 
@@ -30,7 +32,12 @@ class UsuarioService
             });
         }
 
-        return $consulta->orderBy('nombre')->paginate($porPagina, ['*'], 'pagina');
+        return $consulta;
+    }
+
+    public function listar(array $filtros = [], int $porPagina = 15): LengthAwarePaginator
+    {
+        return $this->consulta($filtros)->orderBy('nombre')->paginate($porPagina, ['*'], 'pagina');
     }
 
     public function crear(array $datos): Usuario

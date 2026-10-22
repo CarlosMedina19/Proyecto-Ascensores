@@ -87,7 +87,7 @@ class OrdenTrabajoService
             ->get();
     }
 
-    private function filtrar(Builder $consulta, array $filtros): Builder
+    public function filtrar(Builder $consulta, array $filtros): Builder
     {
         foreach (['servicio', 'prioridad', 'equipo_id', 'cliente_id', 'edificio_id'] as $campo) {
             if (! empty($filtros[$campo])) {

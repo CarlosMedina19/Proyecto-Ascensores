@@ -204,7 +204,11 @@ export const planilla = {
 // Plantilla, exportación e importación en Excel (vista previa y confirmación)
 export const excel = {
   plantilla: () => descargarArchivo('/excel/plantilla', 'SIGMA_Plantilla_Datos.xlsx'),
-  exportar: (modulo) => descargarArchivo(`/excel/exportar/${modulo}`, `SIGMA_${modulo}.xlsx`),
+  // Exporta solo lo que muestra la tabla: se envían sus filtros (tipo de edificio, estado, búsqueda…).
+  exportar: (modulo, filtros = {}) => {
+    const consulta = new URLSearchParams(Object.entries(filtros).filter(([, v]) => v !== '' && v !== null && v !== undefined)).toString();
+    return descargarArchivo(`/excel/exportar/${modulo}${consulta ? `?${consulta}` : ''}`, `SIGMA_${modulo}.xlsx`);
+  },
   previsualizar: (archivo) => {
     const formulario = new FormData();
     formulario.append('archivo', archivo);

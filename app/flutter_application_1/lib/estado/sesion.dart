@@ -19,14 +19,35 @@ class AlmacenTokenSeguro implements AlmacenToken {
   static const _clave = 'sigma.token';
   final _almacen = const FlutterSecureStorage();
 
+  // Si el almacenamiento cifrado del teléfono falla (llaves dañadas tras restaurar una copia,
+  // fabricantes con Keystore defectuoso), la app no se bloquea: se pide iniciar sesión de nuevo.
   @override
-  Future<String?> leer() => _almacen.read(key: _clave);
+  Future<String?> leer() async {
+    try {
+      return await _almacen.read(key: _clave).timeout(const Duration(seconds: 5));
+    } catch (_) {
+      try {
+        await _almacen.deleteAll();
+      } catch (_) {}
+      return null;
+    }
+  }
 
   @override
-  Future<void> guardar(String token) => _almacen.write(key: _clave, value: token);
+  Future<void> guardar(String token) async {
+    try {
+      await _almacen.write(key: _clave, value: token);
+    } catch (_) {
+      // Sin almacenamiento cifrado la sesión dura mientras la app esté abierta.
+    }
+  }
 
   @override
-  Future<void> borrar() => _almacen.delete(key: _clave);
+  Future<void> borrar() async {
+    try {
+      await _almacen.delete(key: _clave);
+    } catch (_) {}
+  }
 }
 
 class AlmacenTokenMemoria implements AlmacenToken {
@@ -70,19 +91,23 @@ class Sesion extends ChangeNotifier {
 
   /// Recupera la sesión guardada en el dispositivo, si el token sigue vigente.
   Future<void> iniciar() async {
-    final token = await _almacen.leer();
-    if (token != null) {
-      repositorio.api.token = token;
-      try {
-        usuario = await repositorio.perfil();
-        _iniciarReloj();
-      } catch (_) {
-        repositorio.api.token = null;
-        await _almacen.borrar();
+    // Pase lo que pase, la pantalla de carga termina: nunca queda la app en negro esperando.
+    try {
+      final token = await _almacen.leer();
+      if (token != null) {
+        repositorio.api.token = token;
+        try {
+          usuario = await repositorio.perfil();
+          _iniciarReloj();
+        } catch (_) {
+          repositorio.api.token = null;
+          await _almacen.borrar();
+        }
       }
+    } finally {
+      cargando = false;
+      notifyListeners();
     }
-    cargando = false;
-    notifyListeners();
   }
 
   /// `antesDeEntrar` corre con las credenciales ya validadas y antes de mostrar la app (transición).

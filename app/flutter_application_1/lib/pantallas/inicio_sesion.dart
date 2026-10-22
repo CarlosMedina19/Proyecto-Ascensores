@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+
+import '../configuracion.dart';
 
 import '../datos/cliente_api.dart';
 import '../estado/preferencias.dart';
@@ -172,6 +175,15 @@ class _PantallaInicioSesionState extends State<PantallaInicioSesion> {
                       textAlign: TextAlign.center,
                       style: estiloEtiqueta(esquema.outline, tamano: 10.5),
                     ),
+                    const SizedBox(height: 6),
+                    Center(
+                      child: TextButton.icon(
+                        key: const Key('boton-servidor'),
+                        onPressed: () => showDialog<void>(context: context, builder: (_) => const _DialogoServidor()),
+                        icon: const Icon(Icons.dns_outlined, size: 16),
+                        label: Text('Servidor: ${Uri.tryParse(context.read<Sesion>().repositorio.api.urlBase)?.authority ?? ''}'),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -317,6 +329,84 @@ class _PantallaRecuperarContrasenaState extends State<PantallaRecuperarContrasen
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Dirección del servidor de SIGMA. En un celular real se escribe la IP del computador en la red
+/// Wi-Fi (por ejemplo 192.168.1.100:8000); se prueba antes de guardarla.
+class _DialogoServidor extends StatefulWidget {
+  const _DialogoServidor();
+
+  @override
+  State<_DialogoServidor> createState() => _DialogoServidorState();
+}
+
+class _DialogoServidorState extends State<_DialogoServidor> {
+  late final _campo = TextEditingController(
+    text: Uri.tryParse(context.read<Sesion>().repositorio.api.urlBase)?.authority ?? '',
+  );
+  bool _probando = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _campo.dispose();
+    super.dispose();
+  }
+
+  Future<void> _guardar() async {
+    final url = Configuracion.normalizarServidor(_campo.text);
+    if (url.isEmpty) {
+      setState(() => _error = 'Escriba la dirección del servidor.');
+      return;
+    }
+    setState(() {
+      _probando = true;
+      _error = null;
+    });
+    try {
+      // Cualquier respuesta (aunque sea "sin sesión") confirma que el servidor está al otro lado.
+      await http.get(Uri.parse('$url/perfil'), headers: {'Accept': 'application/json'}).timeout(const Duration(seconds: 8));
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _probando = false;
+          _error = 'No hay respuesta en esa dirección. Revise que el celular esté en la misma red Wi-Fi que el computador y que SIGMA esté encendido.';
+        });
+      }
+      return;
+    }
+    if (!mounted) return;
+    context.read<Sesion>().repositorio.api.urlBase = url;
+    await context.read<Preferencias>().cambiarServidor(url);
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Servidor de SIGMA'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Escriba la dirección del computador donde corre SIGMA, con el puerto.'),
+          const SizedBox(height: 12),
+          TextField(
+            key: const Key('campo-servidor'),
+            controller: _campo,
+            keyboardType: TextInputType.url,
+            autocorrect: false,
+            decoration: InputDecoration(labelText: 'Dirección', hintText: '192.168.1.100:8000', errorText: _error, errorMaxLines: 4),
+            onSubmitted: (_) => _guardar(),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+        FilledButton(onPressed: _probando ? null : _guardar, child: Text(_probando ? 'Probando…' : 'Probar y guardar')),
+      ],
     );
   }
 }

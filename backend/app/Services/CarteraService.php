@@ -8,16 +8,18 @@ use App\Models\Factura;
 use App\Models\Pago;
 use App\Models\Usuario;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Cartera mínima: facturas por cliente y pagos aplicados a una factura. El saldo de la factura baja
- * con cada pago y nunca queda negativo. La facturación completa llega en la fase 5.
+ * con cada pago y nunca queda negativo.
  */
 class CarteraService
 {
-    public function facturas(array $filtros = [], int $porPagina = 15): LengthAwarePaginator
+    /** Consulta con los filtros del listado (también la usa la exportación a Excel). */
+    public function consultaFacturas(array $filtros = []): Builder
     {
         $consulta = Factura::with('cliente')->withCount('pagos');
         $usuario = Auth::user();
@@ -38,7 +40,12 @@ class CarteraService
             $consulta->where(fn ($c) => $c->where('numero', $como, $texto)->orWhereHas('cliente', fn ($q) => $q->where('nombre', $como, $texto)));
         }
 
-        return $consulta->orderByDesc('fecha_emision')->orderByDesc('id')->paginate($porPagina, ['*'], 'pagina');
+        return $consulta;
+    }
+
+    public function facturas(array $filtros = [], int $porPagina = 15): LengthAwarePaginator
+    {
+        return $this->consultaFacturas($filtros)->orderByDesc('fecha_emision')->orderByDesc('id')->paginate($porPagina, ['*'], 'pagina');
     }
 
     public function crearFactura(array $datos): Factura

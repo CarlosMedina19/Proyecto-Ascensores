@@ -42,7 +42,9 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
-            // APK más liviano: R8 elimina el código sin uso y luego los recursos que nadie referencia.
+            // R8 reduce el código, pero sin su modo "optimize" y conservando completos los plugins:
+            // con la optimización agresiva se alteraba el código Kotlin de shared_preferences y la app
+            // se quedaba congelada en la pantalla de arranque en los celulares (probado en emulador).
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
