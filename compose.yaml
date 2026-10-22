@@ -1,0 +1,106 @@
+# SIGMA en producción (VPS): https://sigma.proyectoscampus.top
+# Caddy (en /opt/proxy, red "proxy") recibe el tráfico: /api/* y /up van a sigma_backend y el resto
+# a sigma_frontend. La base de datos queda en la red privada del proyecto y no publica puertos.
+# Las variables están en .env (ver .env.produccion.example); nunca se suben a Git.
+#
+# Para desarrollo local se sigue usando backend/docker-compose.yml.
+name: sigma
+
+x-backend: &backend
+  build:
+    context: ./backend
+    dockerfile: Dockerfile.prod
+  image: sigma-backend:latest
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    DB_CONNECTION: pgsql
+    DB_HOST: sigma_db
+    DB_PORT: 5432
+  volumes:
+    - sigma_archivos:/var/www/html/storage/app
+  depends_on:
+    sigma_db:
+      condition: service_healthy
+
+services:
+  sigma_backend:
+    <<: *backend
+    container_name: sigma_backend
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: sigma_db
+      DB_PORT: 5432
+      SIGMA_ROL: web
+    networks:
+      - proxy
+      - sigma_interna
+
+  # Envía los correos y avisos encolados.
+  sigma_queue:
+    <<: *backend
+    container_name: sigma_queue
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: sigma_db
+      DB_PORT: 5432
+      SIGMA_ROL: cola
+    command: ["su", "-s", "/bin/sh", "www-data", "-c", "php artisan queue:work --tries=3 --sleep=3 --max-time=3600"]
+    networks:
+      - sigma_interna
+
+  # Tareas diarias: vigencias, avisos de mantenimiento, contratos y certificación anual.
+  sigma_scheduler:
+    <<: *backend
+    container_name: sigma_scheduler
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: sigma_db
+      DB_PORT: 5432
+      SIGMA_ROL: programador
+    command: ["su", "-s", "/bin/sh", "www-data", "-c", "php artisan schedule:work"]
+    networks:
+      - sigma_interna
+
+  sigma_frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api/v1
+    image: sigma-frontend:latest
+    container_name: sigma_frontend
+    restart: unless-stopped
+    networks:
+      - proxy
+
+  sigma_db:
+    image: postgres:16-alpine
+    container_name: sigma_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - sigma_pgdata:/var/lib/postgresql/data
+    networks:
+      - sigma_interna
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  sigma_pgdata:
+    name: sigma_pgdata
+  sigma_archivos:
+    name: sigma_archivos
+
+networks:
+  # Red compartida con Caddy (ya existe en la VPS).
+  proxy:
+    external: true
+  # Red privada de SIGMA: base de datos, cola y programador.
+  sigma_interna:
+    name: sigma_interna

@@ -1,0 +1,54 @@
+# Imagen de producción de la API de SIGMA: Apache + PHP 8.2 con el código y las dependencias adentro.
+# (El Dockerfile normal es para desarrollo: monta el código como volumen y usa "php artisan serve".)
+FROM php:8.2-apache
+
+# Extensiones: PostgreSQL, zip (Excel), gd (fotos y firmas en el informe PDF) y OPcache.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libpq-dev libzip-dev libpng-dev libjpeg62-turbo-dev libwebp-dev libfreetype6-dev unzip git \
+    && docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype \
+    && docker-php-ext-install pdo pdo_pgsql zip gd opcache \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# PHP de producción: OPcache sin revisar archivos (el código no cambia dentro del contenedor)
+# y subidas de fotos y certificados.
+RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
+    && printf '%s\n' \
+       'opcache.enable=1' \
+       'opcache.memory_consumption=192' \
+       'opcache.max_accelerated_files=20000' \
+       'opcache.validate_timestamps=0' \
+       'upload_max_filesize=12M' \
+       'post_max_size=24M' \
+       'max_file_uploads=10' \
+       'memory_limit=256M' \
+       'expose_php=Off' \
+       > "$PHP_INI_DIR/conf.d/zz-sigma.ini"
+
+# Apache sirve public/ y respeta el .htaccess de Laravel.
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri 's!AllowOverride None!AllowOverride All!g' /etc/apache2/apache2.conf \
+    && a2enmod rewrite headers remoteip \
+    && printf '%s\n' 'ServerTokens Prod' 'ServerSignature Off' 'ServerName sigma' \
+       'RemoteIPHeader X-Forwarded-For' 'RemoteIPInternalProxy 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16' \
+       > /etc/apache2/conf-enabled/zz-sigma.conf
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+# Primero las dependencias (se reutiliza la capa mientras composer.lock no cambie).
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --no-progress
+
+COPY . .
+RUN composer dump-autoload --optimize --no-dev \
+    && mkdir -p storage/app/private storage/framework/cache storage/framework/sessions storage/framework/views storage/logs storage/fonts bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache
+
+COPY docker/entrypoint.sh /usr/local/bin/sigma-entrypoint
+RUN chmod +x /usr/local/bin/sigma-entrypoint
+
+EXPOSE 80
+ENTRYPOINT ["sigma-entrypoint"]
+CMD ["apache2-foreground"]

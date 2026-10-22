@@ -24,7 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // En producción Caddy termina HTTPS y reenvía la solicitud: se confía en sus encabezados
+        // X-Forwarded-* para generar enlaces https (QR, correos, archivos).
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Toda la API responde en JSON y con mensajes en español.
