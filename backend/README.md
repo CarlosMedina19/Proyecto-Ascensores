@@ -1,15 +1,9 @@
 # SIGMA — backend (Laravel + PostgreSQL)
 
-API REST versionada (`/api/v1`). Guías de la API con endpoints, permisos y reglas:
-
-- [Fase 1](docs/FASE-1-API.md): autenticación con Sanctum, roles y permisos, usuarios,
-  auditoría, clientes y contactos, edificios, ascensores e historial.
-- [Fase 2](docs/FASE-2-API.md): planes, periodicidades, precios e historial de precios,
-  planes de los ascensores, calendario de mantenimientos, contratos, renovaciones y avisos.
-- [Fase 3](docs/FASE-3-API.md): técnicos y especialidades, agenda, órdenes de trabajo con
-  asignación, estados, prioridad, tiempos y trazabilidad.
-- [Fase 4](docs/FASE-4-API.md): planilla del preventivo por secciones (B/R/M), fotos, firmas,
-  orden correctiva derivada e informe PDF versionado.
+API REST versionada (`/api/v1`): autenticación con Sanctum, roles y permisos, clientes, edificios,
+ascensores, planes, contratos, órdenes de trabajo, planilla con firmas e informe PDF, cartera,
+servicio comercial (certificación anual, emergencias, cotizaciones, indicadores) y carga en Excel.
+Las rutas están en `routes/api.php`.
 
 ## Con Docker (recomendado)
 
@@ -69,4 +63,4 @@ si la conexión apunta a otra base, para no borrar los datos de desarrollo.
 `tests/Feature/PruebasSeguridadTest.php` cubre bloqueo de cuenta, inactividad,
 recuperación de contraseña, aislamiento entre clientes, permisos exclusivos y auditoría;
 `tests/Feature/PruebasFaseDosTest.php` y `tests/Unit/CalendarioProgramacionTest.php` cubren
-la fase 2 (ver la [guía](docs/FASE-2-API.md#pruebas)).
+los planes, la programación y los contratos.

@@ -1,6 +1,6 @@
 # SIGMA · Ajuste a la pantalla (Fase 5)
 
-Medido con Edge sin interfaz, escala 1, en modo claro y oscuro (`docs/capturas/`). "Desplazamiento" es lo
+Medido con Edge sin interfaz, escala 1, en modo claro y oscuro (las capturas se generan con el script de abajo; no se guardan en el repositorio). "Desplazamiento" es lo
 que sobra del documento por debajo de la ventana; "fin de KPI" es el borde inferior de la última tarjeta de
 indicadores del panel.
 

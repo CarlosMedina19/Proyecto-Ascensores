@@ -54,9 +54,9 @@ mantenimiento y alertas de vencimiento.
 | Fase | Alcance | Estado |
 | --- | --- | --- |
 | 1 | Fundación y datos maestros (RF-001 a RF-009) | API, panel web y app móvil implementados y probados |
-| 2 | Planes, periodicidad, precios y contratos (RF-010 a RF-021) | API, panel web y app móvil implementados y probados ([guía de la API](backend/docs/FASE-2-API.md)) |
-| 3 | Técnicos, agenda y órdenes de trabajo (RF-022 a RF-029) | API, panel web y app móvil implementados y probados ([guía de la API](backend/docs/FASE-3-API.md)) |
-| 4 | Checklist de ascensores, firmas e informe PDF (RF-030 a RF-039) | API, panel web y app móvil implementados y probados ([guía de la API](backend/docs/FASE-4-API.md)) |
+| 2 | Planes, periodicidad, precios y contratos (RF-010 a RF-021) | API, panel web y app móvil implementados y probados |
+| 3 | Técnicos, agenda y órdenes de trabajo (RF-022 a RF-029) | API, panel web y app móvil implementados y probados |
+| 4 | Checklist de ascensores, firmas e informe PDF (RF-030 a RF-039) | API, panel web y app móvil implementados y probados |
 | 5 | Inventario, cotizaciones, facturación y cartera | Pendiente |
 | 6 | App móvil completa y portal del cliente (solicitudes, sin conexión con sincronización) | Pendiente |
 | 7–9 | IoT, analítica y Machine Learning, inteligencia artificial | Pendiente |
@@ -103,7 +103,6 @@ Emergencias, Cotizaciones, Facturas, Pagos y Usuarios) con listas desplegables, 
 - Un código que ya existe actualiza el registro: exportar → editar → importar no pierde datos.
 - Regenerar la plantilla: `cd scripts && npm install && npm run plantilla`.
 
-Detalle completo en [backend/docs/EXCEL.md](backend/docs/EXCEL.md).
 
 ## Servicio comercial
 
