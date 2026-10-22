@@ -60,7 +60,10 @@ export default function FormularioEquipo() {
   useEffect(() => {
     const solicitudes = [
       edificios.listar({ por_pagina: 100 }).then((r) => setOpcionesEdificios(r.datos)),
-      tecnicos.listar({ por_pagina: 100 }).then((r) => setOpcionesTecnicos(r.datos.filter((t) => t.id))).catch(() => {}),
+      tecnicos
+        .listar({ por_pagina: 100 })
+        .then((r) => setOpcionesTecnicos(r.datos.filter((t) => t.id)))
+        .catch(() => {}),
     ];
     if (editando) {
       solicitudes.push(
@@ -76,7 +79,11 @@ export default function FormularioEquipo() {
     Promise.allSettled(solicitudes).finally(() => setCargando(false));
   }, [editando, id, setDatos]);
 
-  const cambiarFicha = (campo) => (valor) => setDatos((actual) => ({ ...actual, ascensor: { ...actual.ascensor, [campo]: valor } }));
+  const cambiarFicha = (campo) => (valor) =>
+    setDatos((actual) => ({
+      ...actual,
+      ascensor: { ...actual.ascensor, [campo]: valor },
+    }));
   const errorFicha = (campo) => errores[`ascensor.${campo}`]?.[0];
 
   async function alEnviar(evento) {
@@ -122,7 +129,7 @@ export default function FormularioEquipo() {
           <Alerta>{mensajeError}</Alerta>
 
           <div className="formulario__seccion">Datos generales del ascensor</div>
-          <div className="formulario__fila">
+          <div className="formulario__fila formulario__fila--4">
             <CampoSelector
               etiqueta="Edificio"
               obligatorio
@@ -131,36 +138,43 @@ export default function FormularioEquipo() {
               error={error('edificio_id')}
               opciones={opcionesEdificios
                 .filter((e) => e.activo || String(e.id) === String(datos.edificio_id))
-                .map((e) => ({ valor: String(e.id), texto: `${e.nombre} — ${e.cliente?.nombre ?? ''}` }))}
+                .map((e) => ({
+                  valor: String(e.id),
+                  texto: `${e.nombre} — ${e.cliente?.nombre ?? ''}`,
+                }))}
             />
-            <CampoTexto etiqueta="Código" obligatorio valor={datos.codigo} alCambiar={cambiar('codigo')} error={error('codigo')} ayuda="Código único del equipo. Ej. ASC-001" />
-          </div>
-          <div className="formulario__fila">
-            <CampoTexto etiqueta="Nombre del equipo" valor={datos.nombre} alCambiar={cambiar('nombre')} error={error('nombre')} placeholder="Ascensor 1" ayuda="Nombre corto dentro del edificio." />
+            <CampoTexto
+              etiqueta="Código"
+              obligatorio
+              valor={datos.codigo}
+              alCambiar={cambiar('codigo')}
+              error={error('codigo')}
+              ayuda="Código único del equipo. Ej. ASC-001"
+            />
+            <CampoTexto
+              etiqueta="Nombre del equipo"
+              valor={datos.nombre}
+              alCambiar={cambiar('nombre')}
+              error={error('nombre')}
+              placeholder="Ascensor 1"
+              ayuda="Nombre corto dentro del edificio."
+            />
             <CampoSelector
               etiqueta="Técnico asignado"
               valor={String(datos.tecnico_id ?? '')}
               alCambiar={cambiar('tecnico_id')}
               error={error('tecnico_id')}
               vacio="Sin técnico de referencia"
-              opciones={opcionesTecnicos.map((t) => ({ valor: String(t.id), texto: t.nombre }))}
+              opciones={opcionesTecnicos.map((t) => ({
+                valor: String(t.id),
+                texto: t.nombre,
+              }))}
             />
           </div>
-          <div className="formulario__fila formulario__fila--3">
+          <div className="formulario__fila formulario__fila--4">
             <CampoTexto etiqueta="Marca" valor={datos.marca} alCambiar={cambiar('marca')} error={error('marca')} />
             <CampoTexto etiqueta="Modelo" valor={datos.modelo} alCambiar={cambiar('modelo')} error={error('modelo')} />
             <CampoTexto etiqueta="Número de serie" valor={datos.numero_serie} alCambiar={cambiar('numero_serie')} error={error('numero_serie')} />
-          </div>
-          <div className="formulario__fila formulario__fila--3">
-            <CampoTexto etiqueta="Ubicación" valor={ubicacion} alCambiar={() => {}} readOnly placeholder="Se toma del edificio" ayuda="Se toma del edificio elegido." />
-            <CampoSelector
-              etiqueta="Estado"
-              vacio={null}
-              valor={datos.estado}
-              alCambiar={cambiar('estado')}
-              error={error('estado')}
-              opciones={Object.entries(ESTADOS_EQUIPO).map(([valor, { texto }]) => ({ valor, texto }))}
-            />
             <CampoTexto
               etiqueta="Fecha de instalación"
               tipo="date"
@@ -169,17 +183,69 @@ export default function FormularioEquipo() {
               error={error('fecha_instalacion')}
             />
           </div>
+          <div className="formulario__fila formulario__fila--4 formulario__fila--ubicacion">
+            <CampoTexto etiqueta="Ubicación" valor={ubicacion} alCambiar={() => {}} readOnly placeholder="Se toma del edificio" />
+            <CampoSelector
+              etiqueta="Estado"
+              vacio={null}
+              valor={datos.estado}
+              alCambiar={cambiar('estado')}
+              error={error('estado')}
+              opciones={Object.entries(ESTADOS_EQUIPO).map(([valor, { texto }]) => ({ valor, texto }))}
+            />
+          </div>
 
-          <div className="formulario__seccion">Ficha técnica del ascensor</div>
-          <div className="formulario__fila formulario__fila--3">
-            <CampoTexto etiqueta="Capacidad (kg)" obligatorio tipo="number" min="100" max="5000" valor={datos.ascensor.capacidad_kg} alCambiar={cambiarFicha('capacidad_kg')} error={errorFicha('capacidad_kg')} ayuda="Entre 100 y 5.000 kg." />
-            <CampoTexto etiqueta="Velocidad (m/min)" obligatorio tipo="number" min="6" max="600" step="0.1" valor={datos.ascensor.velocidad_mpm} alCambiar={cambiarFicha('velocidad_mpm')} error={errorFicha('velocidad_mpm')} ayuda={datos.ascensor.velocidad_mpm ? `Equivale a ${velocidad(datos.ascensor.velocidad_mpm)}. Rango: 6 a 600 m/min.` : 'Entre 6 y 600 m/min (0,1 a 10 m/s).'} />
-            <CampoTexto etiqueta="Número de paradas" obligatorio tipo="number" min="2" max="60" valor={datos.ascensor.paradas} alCambiar={cambiarFicha('paradas')} error={errorFicha('paradas')} ayuda="Entre 2 y 60. Se crea una puerta de piso por parada." />
+          <div className="formulario__seccion">Ficha técnica y puertas</div>
+          <div className="formulario__fila formulario__fila--4">
+            <CampoTexto
+              etiqueta="Capacidad (kg)"
+              obligatorio
+              tipo="number"
+              min="100"
+              max="5000"
+              valor={datos.ascensor.capacidad_kg}
+              alCambiar={cambiarFicha('capacidad_kg')}
+              error={errorFicha('capacidad_kg')}
+              ayuda="Entre 100 y 5.000 kg."
+            />
+            <CampoTexto
+              etiqueta="Velocidad (m/min)"
+              obligatorio
+              tipo="number"
+              min="6"
+              max="600"
+              step="0.1"
+              valor={datos.ascensor.velocidad_mpm}
+              alCambiar={cambiarFicha('velocidad_mpm')}
+              error={errorFicha('velocidad_mpm')}
+              ayuda={
+                datos.ascensor.velocidad_mpm
+                  ? `Equivale a ${velocidad(datos.ascensor.velocidad_mpm)}. Rango: 6 a 600 m/min.`
+                  : 'Entre 6 y 600 m/min (0,1 a 10 m/s).'
+              }
+            />
+            <CampoTexto
+              etiqueta="Número de paradas"
+              obligatorio
+              tipo="number"
+              min="2"
+              max="60"
+              valor={datos.ascensor.paradas}
+              alCambiar={cambiarFicha('paradas')}
+              error={errorFicha('paradas')}
+              ayuda="Entre 2 y 60. Se crea una puerta de piso por parada."
+            />
+            <CampoTexto
+              etiqueta="Capacidad (personas)"
+              tipo="number"
+              min="1"
+              max="100"
+              valor={datos.ascensor.capacidad_personas}
+              alCambiar={cambiarFicha('capacidad_personas')}
+              error={errorFicha('capacidad_personas')}
+            />
           </div>
-          <div className="formulario__fila formulario__fila--3">
-            <CampoTexto etiqueta="Capacidad (personas)" tipo="number" min="1" max="100" valor={datos.ascensor.capacidad_personas} alCambiar={cambiarFicha('capacidad_personas')} error={errorFicha('capacidad_personas')} />
-          </div>
-          <div className="formulario__fila formulario__fila--3">
+          <div className="formulario__fila formulario__fila--4">
             <CampoSelector
               etiqueta="Accionamiento"
               valor={datos.ascensor.tipo_traccion}
@@ -189,35 +255,62 @@ export default function FormularioEquipo() {
             />
             <CampoTexto etiqueta="Motor" valor={datos.ascensor.motor} alCambiar={cambiarFicha('motor')} error={errorFicha('motor')} />
             <CampoTexto etiqueta="Controlador" valor={datos.ascensor.controlador} alCambiar={cambiarFicha('controlador')} error={errorFicha('controlador')} />
-          </div>
-
-          <div className="formulario__seccion">Puertas de cabina y de piso</div>
-          <div className="formulario__fila formulario__fila--3">
-            <CampoTexto etiqueta="Tipo de puerta" valor={datos.ascensor.tipo_puerta} alCambiar={cambiarFicha('tipo_puerta')} error={errorFicha('tipo_puerta')} placeholder="Ej. Automática apertura central" />
-            <CampoTexto etiqueta="Puertas de cabina" tipo="number" min="0" valor={datos.ascensor.puertas_cabina} alCambiar={cambiarFicha('puertas_cabina')} error={errorFicha('puertas_cabina')} />
-            <CampoTexto etiqueta="Puertas de piso" tipo="number" min="0" valor={datos.ascensor.puertas_piso} alCambiar={cambiarFicha('puertas_piso')} error={errorFicha('puertas_piso')} />
-          </div>
-          <CampoTexto etiqueta="Operador de puertas" valor={datos.ascensor.operador_puertas} alCambiar={cambiarFicha('operador_puertas')} error={errorFicha('operador_puertas')} />
-          <CampoArea
-            etiqueta="Especificaciones técnicas adicionales"
-            valor={datos.ascensor.especificaciones_tecnicas}
-            alCambiar={cambiarFicha('especificaciones_tecnicas')}
-            error={errorFicha('especificaciones_tecnicas')}
-          />
-          <CampoArea etiqueta="Observaciones" valor={datos.observaciones} alCambiar={cambiar('observaciones')} error={error('observaciones')} />
-
-          <div className="formulario__seccion">Fotos del ascensor</div>
-          {editando ? (
-            <GaleriaFotos
-              equipoId={id}
-              fotos={fotosGuardadas}
-              editable
-              notificar={notificar}
-              alCambiar={() => equipos.obtener(id).then(({ datos: equipo }) => setFotosGuardadas(equipo.fotos || []))}
+            <CampoTexto
+              etiqueta="Operador de puertas"
+              valor={datos.ascensor.operador_puertas}
+              alCambiar={cambiarFicha('operador_puertas')}
+              error={errorFicha('operador_puertas')}
             />
-          ) : (
-            <SelectorFotos archivos={fotosNuevas} alCambiar={setFotosNuevas} />
-          )}
+          </div>
+          <div className="formulario__fila formulario__fila--4">
+            <CampoTexto
+              etiqueta="Tipo de puerta"
+              valor={datos.ascensor.tipo_puerta}
+              alCambiar={cambiarFicha('tipo_puerta')}
+              error={errorFicha('tipo_puerta')}
+              placeholder="Ej. Automática apertura central"
+            />
+            <CampoTexto
+              etiqueta="Puertas de cabina"
+              tipo="number"
+              min="0"
+              valor={datos.ascensor.puertas_cabina}
+              alCambiar={cambiarFicha('puertas_cabina')}
+              error={errorFicha('puertas_cabina')}
+            />
+            <CampoTexto
+              etiqueta="Puertas de piso"
+              tipo="number"
+              min="0"
+              valor={datos.ascensor.puertas_piso}
+              alCambiar={cambiarFicha('puertas_piso')}
+              error={errorFicha('puertas_piso')}
+            />
+          </div>
+          <div className="formulario__fila formulario__fila--3">
+            <CampoArea
+              etiqueta="Especificaciones técnicas adicionales"
+              rows={2}
+              valor={datos.ascensor.especificaciones_tecnicas}
+              alCambiar={cambiarFicha('especificaciones_tecnicas')}
+              error={errorFicha('especificaciones_tecnicas')}
+            />
+            <CampoArea etiqueta="Observaciones" rows={2} valor={datos.observaciones} alCambiar={cambiar('observaciones')} error={error('observaciones')} />
+            <div className="campo">
+              <span className="campo__etiqueta">Fotos del ascensor</span>
+              {editando ? (
+                <GaleriaFotos
+                  equipoId={id}
+                  fotos={fotosGuardadas}
+                  editable
+                  notificar={notificar}
+                  alCambiar={() => equipos.obtener(id).then(({ datos: equipo }) => setFotosGuardadas(equipo.fotos || []))}
+                />
+              ) : (
+                <SelectorFotos archivos={fotosNuevas} alCambiar={setFotosNuevas} />
+              )}
+            </div>
+          </div>
 
           <div className="formulario__acciones">
             <button type="button" className="boton boton--secundario" onClick={() => navegar(-1)}>

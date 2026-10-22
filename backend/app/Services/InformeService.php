@@ -100,9 +100,16 @@ class InformeService
             'generadoPor' => Auth::user()?->nombre ?? 'Sistema',
         ])->render();
 
-        // La plantilla usa fuentes estándar del PDF (Helvetica): no se incrustan ni se recortan,
-        // así el informe sale en menos de un segundo y pesa pocos KB (más las fotos).
-        return Pdf::loadHTML($html)->setPaper('letter')->setOption('dpi', 96)->output();
+        // Tipografía de la marca (Barlow, Geist, JetBrains Mono y Michroma) incrustada completa: el informe
+        // sale en menos de medio segundo (con subconjunto tarda unos 3 s) y pesa unos 200 KB más las fotos.
+        // Las métricas de las fuentes se guardan en storage/fonts la primera vez.
+        return Pdf::loadHTML($html)
+            ->setPaper('letter')
+            ->setOption('dpi', 96)
+            ->setOption('isFontSubsettingEnabled', false)
+            ->setOption('fontDir', storage_path('fonts'))
+            ->setOption('fontCache', storage_path('fonts'))
+            ->output();
     }
 
     /** Imagen como data URI; las fotos se reducen y se pasan a JPEG. */

@@ -234,8 +234,8 @@ const _estiloLema = TextStyle(
   color: SigmaColores.tintaTexto,
   fontSize: 27,
   height: 1.08,
-  fontWeight: FontWeight.w700,
-  letterSpacing: -0.8,
+  fontWeight: FontWeight.w600,
+  letterSpacing: -0.5,
 );
 
 class _Aviso extends StatelessWidget {

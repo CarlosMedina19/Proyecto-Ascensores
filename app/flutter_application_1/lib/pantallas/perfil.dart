@@ -28,7 +28,7 @@ class PantallaPerfil extends StatelessWidget {
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 child: Text(
                   usuario.nombre.split(' ').where((p) => p.isNotEmpty).take(2).map((p) => p[0].toUpperCase()).join(),
-                  style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w700, fontSize: 18),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w600, fontSize: 18),
                 ),
               ),
               const SizedBox(width: 14),
@@ -36,7 +36,7 @@ class PantallaPerfil extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(usuario.nombre, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                    Text(usuario.nombre, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                     Text(usuario.correo),
                   ],
                 ),

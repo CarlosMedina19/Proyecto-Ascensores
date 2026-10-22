@@ -1,5 +1,6 @@
 // Componentes básicos reutilizables de la interfaz.
 import { Fragment, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, CircleAlert, Inbox } from 'lucide-react';
 
 export function Cargando({ texto = 'Cargando…' }) {
@@ -213,7 +214,9 @@ export function Modal({ titulo, abierto, alCerrar, children, pie, ancho = false 
 
   if (!abierto) return null;
 
-  return (
+  // Se monta en body: el contenido de la página tiene una animación con transform que, si la ventana
+  // quedara adentro, la ubicaría respecto a ese contenedor y no a la pantalla (se cortaba arriba).
+  return createPortal(
     <div className="modal__fondo" onMouseDown={(e) => e.target === e.currentTarget && alCerrar?.()}>
       <div
         className={`modal${ancho ? ' modal--ancho' : ''}`}
@@ -227,7 +230,8 @@ export function Modal({ titulo, abierto, alCerrar, children, pie, ancho = false 
         <div className="modal__cuerpo">{children}</div>
         {pie && <div className="modal__pie">{pie}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

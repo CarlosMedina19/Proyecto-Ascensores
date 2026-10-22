@@ -71,7 +71,7 @@ function Edificio({ piso }) {
       <rect x="132" y="80" width="36" height="372" fill="url(#accesoHueco)" />
       <path d="M136 80V452M164 80V452" style={t('texto-suave')} strokeOpacity="0.3" />
       <rect x="116" y="50" width="68" height="22" rx="6" style={{ ...c('fondo'), ...t('panel') }} />
-      <text x="150" y="65.5" textAnchor="middle" style={{ ...c('luz'), font: "600 11px 'JetBrains Mono', monospace", letterSpacing: '.08em' }}>
+      <text x="150" y="65.5" textAnchor="middle" style={{ ...c('luz'), font: '500 11px var(--mono)', letterSpacing: '.08em' }}>
         SIGMA
       </text>
       <g clipPath="url(#accesoRecorte)">

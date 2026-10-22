@@ -5,26 +5,31 @@
 <title>Informe {{ $orden->numero }} v{{ $version }}</title>
 <style>
     @page { margin: 26mm 16mm 20mm 16mm; }
-    /* Helvetica y Courier son fuentes estándar del PDF: no se incrustan y el informe se genera en menos de un segundo. */
-    * { font-family: Helvetica, Arial, sans-serif; }
+    /* Tipografía de SIGMA: Barlow (títulos y cifras), Geist (texto), JetBrains Mono (códigos) y Michroma (marca). */
+    @font-face { font-family: 'Barlow'; font-weight: bold; src: url('{{ resource_path('fuentes/Barlow-600.ttf') }}') format('truetype'); }
+    @font-face { font-family: 'Geist'; font-weight: 400; src: url('{{ resource_path('fuentes/Geist-400.ttf') }}') format('truetype'); }
+    @font-face { font-family: 'Geist'; font-weight: bold; src: url('{{ resource_path('fuentes/Geist-600.ttf') }}') format('truetype'); }
+    @font-face { font-family: 'JetBrains Mono'; font-weight: 400; src: url('{{ resource_path('fuentes/JetBrainsMono-400.ttf') }}') format('truetype'); }
+    @font-face { font-family: 'Michroma'; font-weight: 400; src: url('{{ resource_path('fuentes/Michroma-400.ttf') }}') format('truetype'); }
+    * { font-family: 'Geist', Helvetica, sans-serif; }
     body { font-size: 9.5pt; color: #17121f; }
     header { position: fixed; top: -19mm; left: 0; right: 0; height: 14mm; border-bottom: 2px solid #6b3fd4; }
     footer { position: fixed; bottom: -14mm; left: 0; right: 0; height: 9mm; font-size: 7.5pt; color: #655e74; border-top: 1px solid #e6e0f0; padding-top: 2mm; }
-    .marca { font-size: 15pt; font-weight: bold; color: #6b3fd4; }
-    .sub { font-size: 7.5pt; color: #655e74; letter-spacing: 1px; }
-    h1 { font-size: 15pt; margin: 0 0 2mm; }
-    h2 { font-size: 11pt; color: #6b3fd4; margin: 6mm 0 2mm; border-bottom: 1px solid #e6e0f0; padding-bottom: 1mm; }
+    .marca { font-family: 'Michroma', sans-serif; font-size: 13pt; font-weight: 400; letter-spacing: 1.5px; color: #6b3fd4; }
+    .sub { font-family: 'JetBrains Mono', monospace; font-size: 7pt; color: #655e74; letter-spacing: 0.08em; text-transform: uppercase; }
+    h1 { font-family: 'Barlow', sans-serif; font-weight: 600; font-size: 16pt; letter-spacing: -0.01em; margin: 0 0 2mm; }
+    h2 { font-family: 'Barlow', sans-serif; font-weight: 600; font-size: 12pt; color: #6b3fd4; margin: 6mm 0 2mm; border-bottom: 1px solid #e6e0f0; padding-bottom: 1mm; }
     table { width: 100%; border-collapse: collapse; }
     .datos td { padding: 1.6mm 2mm; border: 1px solid #e6e0f0; vertical-align: top; }
     .datos .etiqueta { width: 22%; background: #f8f6fc; color: #655e74; font-size: 8pt; }
     .lista th { background: #f0ecf7; text-align: left; font-size: 8pt; padding: 1.6mm 2mm; border: 1px solid #e6e0f0; }
     .lista td { padding: 1.4mm 2mm; border: 1px solid #e6e0f0; vertical-align: top; }
-    .codigo { font-family: Courier, monospace; font-size: 8pt; color: #655e74; }
+    .codigo { font-family: 'JetBrains Mono', monospace; font-size: 8pt; color: #655e74; }
     .centro { text-align: center; }
-    .estado { font-weight: bold; text-align: center; width: 9mm; }
+    .estado { font-weight: 600; text-align: center; width: 9mm; }
     .B { color: #1f9d5c; } .R { color: #c27508; } .M { color: #d9344a; }
     .resumen td { padding: 2mm; text-align: center; border: 1px solid #e6e0f0; width: 25%; }
-    .resumen .numero { font-size: 14pt; font-weight: bold; }
+    .resumen .numero { font-family: 'Barlow', sans-serif; font-size: 15pt; font-weight: 600; }
     .texto { white-space: pre-line; line-height: 1.45; }
     .fotos td { width: 50%; padding: 2mm; vertical-align: top; text-align: center; }
     .fotos img { max-width: 100%; max-height: 70mm; }

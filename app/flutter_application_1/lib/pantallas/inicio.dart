@@ -255,7 +255,7 @@ class _TarjetaDestacada extends StatelessWidget {
               fontFamily: SigmaFuentes.titulos,
               color: Colors.white,
               fontSize: 40,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               letterSpacing: -1.2,
               height: 1,
             ),
@@ -303,7 +303,7 @@ class _Indicador extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               '$valor',
-              style: const TextStyle(fontFamily: SigmaFuentes.titulos, fontSize: 30, fontWeight: FontWeight.w700, letterSpacing: -0.8),
+              style: const TextStyle(fontFamily: SigmaFuentes.titulos, fontSize: 30, fontWeight: FontWeight.w600, letterSpacing: -0.8),
             ),
           ],
         ),

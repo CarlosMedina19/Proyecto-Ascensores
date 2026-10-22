@@ -113,7 +113,7 @@ export default function FormularioEdificio() {
           </div>
           <span className="campo__ayuda">Cada edificio debe tener al menos un contacto con teléfono o correo.</span>
 
-          <CampoArea etiqueta="Observaciones" valor={datos.observaciones} alCambiar={cambiar('observaciones')} error={error('observaciones')} />
+          <CampoArea etiqueta="Observaciones" rows={2} valor={datos.observaciones} alCambiar={cambiar('observaciones')} error={error('observaciones')} />
           {editando && <Casilla etiqueta="Edificio activo" valor={datos.activo} alCambiar={cambiar('activo')} />}
 
           <div className="formulario__acciones">

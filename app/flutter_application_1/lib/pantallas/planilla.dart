@@ -241,7 +241,7 @@ class _PantallaPlanillaState extends State<PantallaPlanilla> {
                 children: [
                   Text(
                     '${items.isEmpty ? 0 : (hechos * 100 / items.length).round()} %',
-                    style: const TextStyle(fontFamily: SigmaFuentes.titulos, fontSize: 24, fontWeight: FontWeight.w700),
+                    style: const TextStyle(fontFamily: SigmaFuentes.titulos, fontSize: 24, fontWeight: FontWeight.w600),
                   ),
                   Text('$hechos de ${items.length} ítems', style: TextStyle(color: suave, fontSize: 12.5)),
                   Text('B ${cuenta('B')} · R ${cuenta('R')} · M ${cuenta('M')}', style: estiloEtiqueta(suave, tamano: 11.5)),

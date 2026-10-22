@@ -193,7 +193,7 @@ class FilaEquipo extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(equipo.codigo, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                      Text(equipo.codigo, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                       Text(
                         [equipo.edificioNombre, equipo.ubicacion].whereType<String>().join(' · '),
                         maxLines: 1,
@@ -467,7 +467,7 @@ class _FormularioEventoState extends State<_FormularioEvento> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Registrar evento', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+          const Text('Registrar evento', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           const Text('El historial no se modifica ni se elimina; para corregir, registre un nuevo evento.'),
           const SizedBox(height: 14),
@@ -527,7 +527,7 @@ class SeccionPlan extends StatelessWidget {
                   children: [
                     const Etiqueta('Próximo mantenimiento'),
                     const SizedBox(height: 2),
-                    Text(fecha(proximo), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                    Text(fecha(proximo), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),

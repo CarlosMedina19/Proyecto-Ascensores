@@ -56,7 +56,7 @@ export function Logo({ tamano = 40 }) {
       <path d="M55 37.3L58 42.4H52Z" fill="#E6DFF6" />
       <path d="M62 37.6H68L65 42.7Z" fill="#9A7FE0" />
       <rect x="45.5" y="48" width="29" height="55" fill={`url(#${id}l)`} />
-      <text x="60" y="49" textAnchor="middle" fill="#2F1967" style={{ font: "400 8.4px 'Michroma','Bricolage Grotesque',sans-serif" }}>
+      <text x="60" y="49" textAnchor="middle" fill="#2F1967" style={{ font: '400 8.4px var(--brand)' }}>
         {['S', 'I', 'G', 'M', 'A'].map((letra, i) => (
           <tspan key={letra} x="60" dy={i === 0 ? 9.2 : 9.6}>
             {letra}

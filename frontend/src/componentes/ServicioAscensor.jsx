@@ -207,7 +207,7 @@ export function CodigoQrAscensor({ equipo }) {
     const ventana = window.open('', '_blank', 'width=420,height=600');
     if (!ventana) return;
     ventana.document.write(`<!doctype html><title>QR ${equipo.codigo}</title>
-      <style>body{font-family:system-ui,sans-serif;text-align:center;padding:24px}svg{width:260px;height:260px}h1{font-size:20px;margin:12px 0 4px}p{margin:4px 0;color:#333}</style>
+      <style>@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@600&family=Geist:wght@400&display=swap');body{font-family:'Geist',system-ui,sans-serif;text-align:center;padding:24px}svg{width:260px;height:260px}h1{font:600 22px/1.2 'Barlow',system-ui,sans-serif;letter-spacing:-0.01em;margin:12px 0 4px}p{margin:4px 0;color:#333}</style>
       ${svg}<h1>¿Falla en el ascensor ${equipo.codigo}?</h1><p>Escanee el código para reportarla las 24 horas.</p><p>${qr.url}</p>
       <script>window.onload=()=>window.print()</script>`);
     ventana.document.close();

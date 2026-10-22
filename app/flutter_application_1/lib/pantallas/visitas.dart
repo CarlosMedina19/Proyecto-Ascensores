@@ -47,7 +47,7 @@ class _PantallaVisitasState extends State<PantallaVisitas> {
               ),
             ),
             const SizedBox(height: 18),
-            const Text('Guardadas en el dispositivo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            const Text('Guardadas en el dispositivo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: 4),
             Text(
               'Funcionan sin conexión. Ábralas para completarlas y enviarlas al historial.',
@@ -74,7 +74,7 @@ class _PantallaVisitasState extends State<PantallaVisitas> {
                         child: Card(
                           child: ListTile(
                             leading: Icon(Icons.edit_note, color: esquema.primary),
-                            title: Text('Ascensor ${visita.equipoCodigo}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                            title: Text('Ascensor ${visita.equipoCodigo}', style: const TextStyle(fontWeight: FontWeight.w600)),
                             subtitle: Text(
                               'Iniciada ${fechaHora(visita.inicio)} · ${visita.zonasRevisadas}/${visita.zonas.length} zonas'
                               '${visita.listaParaEnviar ? ' · lista para enviar' : ''}',

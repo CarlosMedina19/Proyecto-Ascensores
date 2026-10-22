@@ -83,10 +83,17 @@
   --ancho-lateral: 252px;
   --curva-salida: cubic-bezier(0.23, 1, 0.32, 1);
   --curva-cajon: cubic-bezier(0.32, 0.72, 0, 1);
-  --fuente-marca: 'Michroma', 'Bricolage Grotesque', system-ui, sans-serif;
-  --fuente-titulos: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
-  --fuente: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --fuente-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  /* Tipografía: Barlow (títulos y cifras), Geist (texto), JetBrains Mono (datos) y Michroma (solo la marca). */
+  --display: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+  --display-narrow: 'Barlow Semi Condensed', 'Barlow', system-ui, sans-serif;
+  --sans: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  --brand: 'Michroma', 'Barlow', sans-serif;
+  --fuente-marca: var(--brand);
+  --fuente-titulos: var(--display);
+  --fuente-estrecha: var(--display-narrow);
+  --fuente: var(--sans);
+  --fuente-mono: var(--mono);
   color-scheme: light;
   font-family: var(--fuente);
   color: var(--color-texto);
@@ -235,7 +242,7 @@ h3 {
 }
 
 .marca__nombre {
-  font: 800 20px/1 var(--fuente-titulos);
+  font: 400 20px/1 var(--fuente-marca);
   letter-spacing: 0.02em;
 }
 
@@ -499,8 +506,8 @@ h3 {
 }
 
 .pagina__titulo {
-  font: 650 clamp(26px, 3vw, 36px) / 1.08 var(--fuente-titulos);
-  letter-spacing: -0.028em;
+  font: 600 clamp(26px, 3vw, 36px) / 1.08 var(--fuente-titulos);
+  letter-spacing: -0.02em;
   margin: 8px 0 6px;
   text-wrap: balance;
 }
@@ -589,8 +596,8 @@ h3 {
 }
 
 .estadistica__valor {
-  font: 650 30px/1.1 var(--fuente-titulos);
-  letter-spacing: -0.025em;
+  font: 600 30px/1.1 var(--fuente-titulos);
+  letter-spacing: -0.02em;
   margin-top: 6px;
   font-variant-numeric: tabular-nums;
 }
@@ -1346,8 +1353,8 @@ textarea.campo__control {
 }
 
 .acceso__presentacion h1 {
-  font: 650 clamp(30px, 3.6vw, 46px) / 1.05 var(--fuente-titulos);
-  letter-spacing: -0.03em;
+  font: 600 clamp(30px, 3.6vw, 46px) / 1.05 var(--fuente-titulos);
+  letter-spacing: -0.02em;
   margin-top: auto;
   max-width: 15ch;
 }
@@ -1397,8 +1404,8 @@ textarea.campo__control {
 }
 
 .acceso__caja h2 {
-  font: 650 34px/1.08 var(--fuente-titulos);
-  letter-spacing: -0.028em;
+  font: 600 34px/1.08 var(--fuente-titulos);
+  letter-spacing: -0.02em;
   margin: 6px 0 20px;
 }
 
@@ -2054,7 +2061,7 @@ textarea.campo__control {
 }
 
 .indicador__valor {
-  font: 700 34px/1.1 var(--fuente-titulos);
+  font: 600 34px/1.1 var(--fuente-titulos);
   letter-spacing: -0.02em;
   overflow-wrap: anywhere;
 }
@@ -2186,7 +2193,7 @@ textarea.campo__control {
 
 .grafico-semanas__grupo.actual .grafico-semanas__etiqueta {
   color: var(--color-texto);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .aviso {
@@ -2609,7 +2616,7 @@ textarea.campo__control {
 }
 
 .agenda__dia b {
-  font: 700 20px var(--fuente-titulos);
+  font: 600 20px var(--fuente-titulos);
 }
 
 .agenda__dia.hoy b {
@@ -3081,7 +3088,7 @@ button.calendario__numero {
   place-items: center;
   border-radius: 8px;
   border: 1.5px solid var(--color-borde-fuerte);
-  font: 700 12.5px var(--fuente-mono);
+  font: 600 12.5px var(--fuente-mono);
   color: var(--color-texto-suave);
 }
 
@@ -3959,7 +3966,7 @@ span.estado-brm {
 }
 
 .acceso__presentacion h1 {
-  font: 650 clamp(30px, 3.3vw, 44px) / 1.05 var(--fuente-titulos);
+  font: 600 clamp(30px, 3.3vw, 44px) / 1.05 var(--fuente-titulos);
   margin-top: 0;
   max-width: 16ch;
 }
@@ -3983,7 +3990,7 @@ span.estado-brm {
 
 .acceso__funciones b {
   display: block;
-  font: 650 17px/1.2 var(--fuente-titulos);
+  font: 600 17px/1.2 var(--fuente-titulos);
   color: var(--escena-texto);
 }
 
@@ -4174,7 +4181,7 @@ input::-ms-clear {
 }
 
 .pagina__titulo {
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
 }
 
 /* Ingreso */
@@ -4381,7 +4388,7 @@ a {
 .cartera__cifra b {
   display: block;
   margin-top: 4px;
-  font: 650 26px/1.15 var(--fuente-titulos);
+  font: 600 26px/1.15 var(--fuente-titulos);
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
@@ -4790,7 +4797,7 @@ a {
 .totales__total {
   border-top: 1px solid var(--color-borde);
   padding-top: 6px;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1.05rem;
 }
 
@@ -4859,7 +4866,7 @@ a {
 
 .indicador-servicio b {
   display: block;
-  font: 650 clamp(26px, 2.6vw, 34px) / 1.1 var(--fuente-titulos);
+  font: 600 clamp(26px, 2.6vw, 34px) / 1.1 var(--fuente-titulos);
   letter-spacing: -0.02em;
   margin-bottom: 4px;
 }
@@ -4970,7 +4977,7 @@ a {
 }
 
 .reporte-publico__titulo {
-  font: 650 26px/1.15 var(--fuente-titulos);
+  font: 600 26px/1.15 var(--fuente-titulos);
   margin: 0 0 4px;
 }
 
@@ -5035,7 +5042,7 @@ a {
 }
 
 .reporte-publico__recibido h1 {
-  font: 650 24px/1.2 var(--fuente-titulos);
+  font: 600 24px/1.2 var(--fuente-titulos);
   margin: 8px 0 0;
 }
 
@@ -5070,7 +5077,7 @@ a {
 }
 
 .recorrido__cuadro h2 {
-  font: 650 18px/1.25 var(--fuente-titulos);
+  font: 600 18px/1.25 var(--fuente-titulos);
   margin: 4px 0 6px;
 }
 
@@ -5331,4 +5338,266 @@ a.avisos-dia__item:hover {
 
 .pagina__acciones .herramientas-excel {
   flex-wrap: nowrap;
+}
+
+/* =====================================================================
+   Tipografía: Barlow (títulos y cifras), Geist (texto), JetBrains Mono
+   (códigos, horas y datos) y Michroma (solo la marca SIGMA).
+   ===================================================================== */
+body {
+  font-family: var(--sans);
+  font-weight: 400;
+}
+
+h1,
+h2,
+h3,
+.pagina__titulo,
+.tarjeta__titulo,
+.modal__encabezado {
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.pagina__titulo {
+  letter-spacing: -0.02em;
+}
+
+/* Etiquetas pequeñas en mayúsculas (eyebrows). */
+.etiqueta-superior,
+.migas,
+.tabla th,
+.lateral__grupo {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+/* Cifras alineadas en tablas, indicadores y montos. */
+.tabla td,
+.indicador__valor,
+.indicador-servicio b,
+.cartera__cifra b,
+.totales,
+.contador b,
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.indicador__valor,
+.indicador-servicio b,
+.cartera__cifra b {
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Títulos largos en espacios estrechos. */
+.avisos-dia__texto b,
+.tarjeta--estrecha .tarjeta__titulo {
+  font-family: var(--display-narrow);
+  font-weight: 600;
+}
+
+.marca__nombre {
+  font-family: var(--brand);
+  font-weight: 400;
+}
+
+/* =====================================================================
+   Ventanas emergentes: encabezado y botones siempre visibles; solo el
+   contenido se desplaza si la ventana es más baja que el formulario.
+   ===================================================================== */
+.modal__fondo {
+  padding: 16px;
+  align-items: center;
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+  overflow: hidden;
+}
+
+.modal__encabezado {
+  flex: none;
+  padding: 16px 20px 0;
+  font-size: 18px;
+}
+
+.modal__cuerpo {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 20px;
+}
+
+.modal__pie {
+  flex: none;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.modal .formulario {
+  gap: 10px;
+}
+
+.modal textarea.campo__control {
+  min-height: 64px;
+}
+
+/* =====================================================================
+   Campos más compactos: aprovechan el espacio sin desplazar la página.
+   En pantallas táctiles siguen midiendo 44 px.
+   ===================================================================== */
+.campo {
+  gap: 4px;
+}
+
+.campo__etiqueta {
+  font-size: 12.5px;
+}
+
+.campo__control {
+  height: 36px;
+  font-size: 13.5px;
+  padding: 0 10px;
+  border-radius: var(--radio-pequeno);
+}
+
+textarea.campo__control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+}
+
+.formulario__fila {
+  gap: 12px;
+}
+
+.formulario__seccion {
+  margin-top: 4px;
+}
+
+.campo__ayuda {
+  font-size: 12px;
+}
+
+/* =====================================================================
+   Modo oscuro: el menú lateral se separa del contenido con un fondo un
+   poco más claro que la página y un borde visible.
+   ===================================================================== */
+:root {
+  --lateral-fondo: var(--menu-fondo);
+  --lateral-superficie: var(--menu-superficie);
+  --lateral-borde: var(--color-borde);
+  --lateral-sombra: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) {
+    --lateral-fondo: #201d29;
+    --lateral-superficie: #2a2635;
+    --lateral-borde: #3d3849;
+    --lateral-sombra: 8px 0 24px -16px rgba(0, 0, 0, 0.8);
+  }
+}
+
+:root[data-tema='oscuro'] {
+  --lateral-fondo: #201d29;
+  --lateral-superficie: #2a2635;
+  --lateral-borde: #3d3849;
+  --lateral-sombra: 8px 0 24px -16px rgba(0, 0, 0, 0.8);
+}
+
+.lateral {
+  --menu-fondo: var(--lateral-fondo);
+  --menu-superficie: var(--lateral-superficie);
+  background: var(--lateral-fondo);
+  border-right: 1px solid var(--lateral-borde);
+  box-shadow: var(--lateral-sombra);
+}
+
+/* Formularios con varias tarjetas: dos columnas en pantallas anchas para no desplazar la página. */
+@media (min-width: 1200px) {
+  form.formulario:has(> section.tarjeta ~ section.tarjeta) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  form.formulario:has(> section.tarjeta ~ section.tarjeta) > :not(section.tarjeta) {
+    grid-column: 1 / -1;
+  }
+}
+
+.formulario__fila--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* La ubicación (de solo lectura) ocupa tres columnas y el estado una. */
+.formulario__fila--ubicacion > :first-child {
+  grid-column: span 3;
+}
+
+@media (max-width: 1100px) {
+  .formulario__fila--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .formulario__fila--ubicacion > :first-child {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .formulario__fila--4 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .formulario__fila--ubicacion > :first-child {
+    grid-column: auto;
+  }
+}
+
+/* La primera sección de un formulario no lleva línea divisoria arriba. */
+.formulario > .formulario__seccion:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* Listas de selección (especialidades) en dos columnas. */
+.lista-seleccion {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+@media (max-width: 640px) {
+  .lista-seleccion {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Campo que ocupa dos columnas dentro de una fila de cuatro. */
+.formulario__doble {
+  grid-column: span 2;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .formulario__doble {
+    grid-column: auto;
+  }
+}
+
+.formulario__seccion {
+  padding-top: 10px;
+}
+
+textarea.campo__control[rows='2'] {
+  min-height: 56px;
 }

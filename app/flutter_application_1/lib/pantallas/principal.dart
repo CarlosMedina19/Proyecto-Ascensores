@@ -96,7 +96,7 @@ class _AvisoInactividad extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('¿Sigue ahí?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                  const Text('¿Sigue ahí?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   Text(
                     'Por seguridad, su sesión se cerrará en $segundos segundos por inactividad. Las visitas guardadas en el dispositivo no se pierden.',

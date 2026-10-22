@@ -60,21 +60,24 @@ export default function FormularioCliente() {
 
   return (
     <>
-      <EncabezadoPagina
-        titulo={editando ? 'Editar cliente' : 'Nuevo cliente'}
-        migas={<Link to="/clientes">Clientes</Link>}
-      />
+      <EncabezadoPagina titulo={editando ? 'Editar cliente' : 'Nuevo cliente'} migas={<Link to="/clientes">Clientes</Link>} />
       <Tarjeta>
         <form className="formulario" onSubmit={alEnviar} noValidate>
           <Alerta>{mensajeError}</Alerta>
 
-          <div className="formulario__fila">
+          <div className="formulario__fila formulario__fila--4">
             <CampoSelector
               etiqueta="Tipo de persona"
               obligatorio
               vacio={null}
               valor={datos.tipo}
-              alCambiar={(valor) => setDatos((d) => ({ ...d, tipo: valor, tipo_documento: valor === 'juridica' ? 'NIT' : 'CC' }))}
+              alCambiar={(valor) =>
+                setDatos((d) => ({
+                  ...d,
+                  tipo: valor,
+                  tipo_documento: valor === 'juridica' ? 'NIT' : 'CC',
+                }))
+              }
               error={error('tipo')}
               opciones={[
                 { valor: 'juridica', texto: 'Persona jurídica' },
@@ -88,36 +91,37 @@ export default function FormularioCliente() {
               alCambiar={cambiar('nombre')}
               error={error('nombre')}
             />
+            {esJuridica ? (
+              <div className="formulario__doble">
+                <CampoTexto
+                  etiqueta="NIT"
+                  obligatorio
+                  valor={datos.nit}
+                  alCambiar={cambiar('nit')}
+                  error={error('nit')}
+                  ayuda="Solo números y, opcionalmente, el dígito de verificación. Ej. 900123456-1"
+                />
+              </div>
+            ) : (
+              <>
+                <CampoSelector
+                  etiqueta="Tipo de documento"
+                  obligatorio
+                  valor={datos.tipo_documento}
+                  alCambiar={cambiar('tipo_documento')}
+                  error={error('tipo_documento')}
+                  opciones={TIPOS_DOCUMENTO.filter((t) => t.valor !== 'NIT')}
+                />
+                <CampoTexto
+                  etiqueta="Número de documento"
+                  obligatorio
+                  valor={datos.numero_documento}
+                  alCambiar={cambiar('numero_documento')}
+                  error={error('numero_documento')}
+                />
+              </>
+            )}
           </div>
-
-          {esJuridica ? (
-            <CampoTexto
-              etiqueta="NIT"
-              obligatorio
-              valor={datos.nit}
-              alCambiar={cambiar('nit')}
-              error={error('nit')}
-              ayuda="Solo números y, opcionalmente, el dígito de verificación. Ej. 900123456-1"
-            />
-          ) : (
-            <div className="formulario__fila">
-              <CampoSelector
-                etiqueta="Tipo de documento"
-                obligatorio
-                valor={datos.tipo_documento}
-                alCambiar={cambiar('tipo_documento')}
-                error={error('tipo_documento')}
-                opciones={TIPOS_DOCUMENTO.filter((t) => t.valor !== 'NIT')}
-              />
-              <CampoTexto
-                etiqueta="Número de documento"
-                obligatorio
-                valor={datos.numero_documento}
-                alCambiar={cambiar('numero_documento')}
-                error={error('numero_documento')}
-              />
-            </div>
-          )}
 
           <div className="formulario__seccion">Contacto</div>
           <div className="formulario__fila--3 formulario__fila">
@@ -133,7 +137,10 @@ export default function FormularioCliente() {
               valor={datos.regimen_tributario}
               alCambiar={cambiar('regimen_tributario')}
               error={error('regimen_tributario')}
-              opciones={REGIMENES_TRIBUTARIOS.map((r) => ({ valor: r, texto: r }))}
+              opciones={REGIMENES_TRIBUTARIOS.map((r) => ({
+                valor: r,
+                texto: r,
+              }))}
             />
             <CampoTexto
               etiqueta="Actividad económica (CIIU)"
@@ -143,11 +150,9 @@ export default function FormularioCliente() {
             />
           </div>
 
-          <CampoArea etiqueta="Observaciones" valor={datos.observaciones} alCambiar={cambiar('observaciones')} error={error('observaciones')} />
+          <CampoArea etiqueta="Observaciones" rows={2} valor={datos.observaciones} alCambiar={cambiar('observaciones')} error={error('observaciones')} />
           <Casilla etiqueta="Cliente activo" valor={datos.estado} alCambiar={cambiar('estado')} />
-          {!datos.estado && (
-            <Alerta tipo="alerta">Un cliente inactivo no podrá tener contratos ni órdenes nuevas.</Alerta>
-          )}
+          {!datos.estado && <Alerta tipo="alerta">Un cliente inactivo no podrá tener contratos ni órdenes nuevas.</Alerta>}
 
           <div className="formulario__acciones">
             <button type="button" className="boton boton--secundario" onClick={() => navegar(-1)}>

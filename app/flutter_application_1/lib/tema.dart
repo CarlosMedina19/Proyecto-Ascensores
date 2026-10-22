@@ -53,7 +53,8 @@ class SigmaFuentes {
   SigmaFuentes._();
 
   static const texto = 'Geist';
-  static const titulos = 'BricolageGrotesque';
+  static const titulos = 'Barlow';
+  static const titulosEstrecha = 'BarlowSemiCondensed';
   static const mono = 'JetBrainsMono';
   static const marca = 'Michroma';
 }
@@ -109,7 +110,7 @@ class BordeLuminoso extends ShapeBorder {
 
 /// Estilo de etiqueta en mayúsculas y monoespaciada (eyebrow del prototipo).
 TextStyle estiloEtiqueta(Color color, {double tamano = 11}) =>
-    TextStyle(fontFamily: SigmaFuentes.mono, fontSize: tamano, letterSpacing: 1, color: color, fontWeight: FontWeight.w400);
+    TextStyle(fontFamily: SigmaFuentes.mono, fontSize: tamano, letterSpacing: tamano * .08, color: color, fontWeight: FontWeight.w500);
 
 ThemeData temaSigma(Brightness brillo) {
   final oscuro = brillo == Brightness.dark;
@@ -146,11 +147,12 @@ ThemeData temaSigma(Brightness brillo) {
   final textos = base.textTheme
       .apply(fontFamily: SigmaFuentes.texto, bodyColor: texto, displayColor: texto)
       .copyWith(
-        displaySmall: titulo(34, FontWeight.w700, espaciado: -1),
-        headlineMedium: titulo(28, FontWeight.w700, espaciado: -0.8),
-        headlineSmall: titulo(24, FontWeight.w700, espaciado: -0.6),
-        titleLarge: titulo(20, FontWeight.w600),
-        titleMedium: titulo(16.5, FontWeight.w600, espaciado: -0.1),
+        // Barlow con interletrado de -0,015 a -0,02 em.
+        displaySmall: titulo(34, FontWeight.w600, espaciado: -0.68),
+        headlineMedium: titulo(28, FontWeight.w600, espaciado: -0.5),
+        headlineSmall: titulo(24, FontWeight.w600, espaciado: -0.4),
+        titleLarge: titulo(20, FontWeight.w600, espaciado: -0.3),
+        titleMedium: titulo(16.5, FontWeight.w600, espaciado: -0.2),
       );
 
   return base.copyWith(

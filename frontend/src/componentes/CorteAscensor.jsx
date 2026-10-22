@@ -26,7 +26,7 @@ export default function CorteAscensor({
   const cabinaY = 360 - Math.min(4, totalPisos) * alto + 4;
   const color = (zona) => COLORES[zonas[zona] || 'P'];
   const relleno = (zona, opacidad) => ({ fill: color(zona), fillOpacity: opacidad, stroke: color(zona), strokeWidth: 1.4 });
-  const texto = { fill: 'var(--color-texto)', font: "500 10.5px 'JetBrains Mono', monospace" };
+  const texto = { fill: 'var(--color-texto)', font: '500 10.5px var(--mono)' };
 
   return (
     <svg viewBox="0 0 250 440" role="img" aria-label={etiqueta} style={{ width: '100%', height: 'auto', display: 'block' }}>
@@ -42,7 +42,7 @@ export default function CorteAscensor({
           <g key={piso}>
             <rect x="44" y={y} width="6" height={Math.max(alto - separacion, 2)} rx="1.5" style={{ fill: COLORES[puertasPiso[piso] || 'P'] }} />
             {!compacto && rotulado && (
-              <text x="18" y={y + alto / 2 - 2} style={{ fill: 'var(--color-texto-suave)', font: "10px 'JetBrains Mono', monospace" }}>
+              <text x="18" y={y + alto / 2 - 2} style={{ fill: 'var(--color-texto-suave)', font: '400 10px var(--mono)' }}>
                 P{piso + 1}
               </text>
             )}

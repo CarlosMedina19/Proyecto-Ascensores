@@ -72,23 +72,21 @@ flutter:
           weight: 500
         - asset: assets/fuentes/Geist-600.ttf
           weight: 600
-    - family: BricolageGrotesque
+    - family: Barlow
       fonts:
-        - asset: assets/fuentes/BricolageGrotesque-500.ttf
+        - asset: assets/fuentes/Barlow-500.ttf
           weight: 500
-        - asset: assets/fuentes/BricolageGrotesque-600.ttf
+        - asset: assets/fuentes/Barlow-600.ttf
           weight: 600
-        - asset: assets/fuentes/BricolageGrotesque-700.ttf
-          weight: 700
-        - asset: assets/fuentes/BricolageGrotesque-800.ttf
-          weight: 800
+    - family: BarlowSemiCondensed
+      fonts:
+        - asset: assets/fuentes/BarlowSemiCondensed-600.ttf
+          weight: 600
     - family: JetBrainsMono
       fonts:
         - asset: assets/fuentes/JetBrainsMono-400.ttf
         - asset: assets/fuentes/JetBrainsMono-500.ttf
           weight: 500
-        - asset: assets/fuentes/JetBrainsMono-600.ttf
-          weight: 600
     - family: Michroma
       fonts:
         - asset: assets/fuentes/Michroma-400.ttf

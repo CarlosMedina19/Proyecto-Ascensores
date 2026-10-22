@@ -85,7 +85,7 @@ class _PantallaEdificiosState extends State<PantallaEdificios> {
                             backgroundColor: esquema.secondaryContainer,
                             child: Icon(Icons.apartment, color: esquema.onSecondaryContainer),
                           ),
-                          title: Text(edificio.nombre, style: const TextStyle(fontWeight: FontWeight.w700)),
+                          title: Text(edificio.nombre, style: const TextStyle(fontWeight: FontWeight.w600)),
                           subtitle: Text(
                             [edificio.direccion, edificio.ciudad].whereType<String>().join(' · ') +
                                 (edificio.clienteNombre != null ? '\n${edificio.clienteNombre}' : ''),
@@ -183,7 +183,7 @@ class _PantallaDetalleEdificioState extends State<PantallaDetalleEdificio> {
                 ],
               ),
               const SizedBox(height: 16),
-              Text('Ascensores (${edificio.equipos.length})', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              Text('Ascensores (${edificio.equipos.length})', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
               if (edificio.equipos.isEmpty) const EstadoVacio(titulo: 'El edificio no tiene ascensores registrados'),
               for (final equipo in edificio.equipos) FilaEquipo(equipo: equipo, alVolver: _recargar),

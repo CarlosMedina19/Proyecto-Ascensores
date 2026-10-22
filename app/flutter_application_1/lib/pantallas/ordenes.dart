@@ -152,7 +152,7 @@ class FilaOrden extends StatelessWidget {
                   children: [
                     Text(
                       '${orden.equipoCodigo ?? ''} · ${orden.edificioNombre ?? ''}',
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                     ),
                     const SizedBox(height: 2),
                     Text(
