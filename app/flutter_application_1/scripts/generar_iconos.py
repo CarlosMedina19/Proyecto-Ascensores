@@ -2,7 +2,7 @@
 
 Uso (con el panel corriendo en http://localhost:5173 para que cargue la fuente Michroma):
     pip install websocket-client
-    python scripts/generar_iconos.py
+    python app/flutter_application_1/scripts/generar_iconos.py
 
 Abre Edge sin interfaz, dibuja el SVG en cada tamaño con fondo transparente y guarda los PNG.
 """
@@ -18,8 +18,8 @@ import websocket
 
 EDGE = os.environ.get("EDGE", r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe")
 PUERTO = 9335
-RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-APP = os.path.join(RAIZ, "app", "flutter_application_1")
+# Carpeta de la app (este script está en app/flutter_application_1/scripts).
+APP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WEB = os.environ.get("SIGMA_WEB", "http://localhost:5173")
 
 DESTINOS = {

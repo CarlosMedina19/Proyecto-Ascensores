@@ -6,8 +6,9 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ExcelJS from 'exceljs';
 
-const raiz = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const estructura = JSON.parse(readFileSync(join(raiz, 'backend/resources/plantillas/estructura.json'), 'utf8'));
+// Raíz del backend (este script está en backend/scripts/plantilla).
+const raiz = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const estructura = JSON.parse(readFileSync(join(raiz, 'resources/plantillas/estructura.json'), 'utf8'));
 
 // Colores de la marca (prototipo SIGMA).
 const MORADO = 'FF4E29AA';
@@ -145,7 +146,7 @@ nombresListas.forEach((nombre, i) => {
 });
 
 // La API la entrega con "Descargar plantilla vacía"; no hay otra copia en el repositorio.
-const destino = join(raiz, 'backend/resources/plantillas', estructura.nombre);
+const destino = join(raiz, 'resources/plantillas', estructura.nombre);
 mkdirSync(dirname(destino), { recursive: true });
 await libro.xlsx.writeFile(destino);
 console.log(`Plantilla generada: ${destino}`);

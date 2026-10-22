@@ -9,3 +9,6 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# Scripts de arranque de los contenedores: siempre con saltos de línea LF.
+*.sh text eol=lf

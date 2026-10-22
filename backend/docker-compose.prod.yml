@@ -1,14 +1,15 @@
 # SIGMA en producción (VPS): https://sigma.proyectoscampus.top
 # Caddy (en /opt/proxy, red "proxy") recibe el tráfico: /api/* y /up van a sigma_backend y el resto
 # a sigma_frontend. La base de datos queda en la red privada del proyecto y no publica puertos.
-# Las variables están en .env (ver .env.produccion.example); nunca se suben a Git.
+# Las variables están en backend/.env de la VPS (ver .env.produccion.example); nunca se suben a Git.
 #
-# Para desarrollo local se sigue usando backend/docker-compose.yml.
+# Uso en la VPS:  cd /opt/apps/sigma/backend && docker compose -f docker-compose.prod.yml up -d --build
+# Para desarrollo local se sigue usando docker-compose.yml.
 name: sigma
 
 x-backend: &backend
   build:
-    context: ./backend
+    context: .
     dockerfile: Dockerfile.prod
   image: sigma-backend:latest
   restart: unless-stopped
@@ -64,7 +65,7 @@ services:
 
   sigma_frontend:
     build:
-      context: ./frontend
+      context: ../frontend
       args:
         VITE_API_URL: /api/v1
     image: sigma-frontend:latest

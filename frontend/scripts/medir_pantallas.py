@@ -3,7 +3,7 @@
 Uso:
     pip install websocket-client
     set SIGMA_CORREO=... y SIGMA_CLAVE=...   (cuenta con permiso resumen.ver)
-    python scripts/medir_pantallas.py <carpeta_salida> [claro|oscuro]
+    python frontend/scripts/medir_pantallas.py <carpeta_salida> [claro|oscuro]
 
 Abre Edge sin interfaz por el protocolo DevTools, fotografía el inicio de sesión y el panel en cada tamaño e
 informa el desplazamiento vertical/horizontal y dónde termina la última tarjeta de indicadores.
