@@ -45,8 +45,11 @@ ascensor se cierran y se abren ya dentro de la app (se omite si el sistema desac
 ### APK para Android (liviano)
 
 ```sh
-flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/simbolos
+flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/simbolos \n  --dart-define=API_URL=https://sigma.proyectoscampus.top/api/v1
 ```
+
+Sin `API_URL` el APK busca la API en `10.0.2.2:8000` (el computador visto desde el emulador) y en un
+celular real no conecta. Desde el inicio de sesión, «Servidor» permite cambiar la dirección sin recompilar.
 
 Genera un APK por tipo de procesador en `build/app/outputs/flutter-apk/` (unos 8–9 MB cada uno):
 `app-arm64-v8a-release.apk` sirve para casi todos los teléfonos actuales y `app-armeabi-v7a-release.apk`

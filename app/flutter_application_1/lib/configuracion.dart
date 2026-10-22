@@ -26,11 +26,15 @@ class Configuracion {
 
   static const Duration tiempoEsperaSolicitud = Duration(seconds: 20);
 
-  /// Normaliza lo que escribe el usuario: "192.168.1.100:8000" → "http://192.168.1.100:8000/api/v1".
+  /// Normaliza lo que escribe el usuario: "192.168.1.100:8000" → "http://192.168.1.100:8000/api/v1"
+  /// y "sigma.proyectoscampus.top" → "https://sigma.proyectoscampus.top/api/v1" (los dominios van por HTTPS).
   static String normalizarServidor(String texto) {
     var url = texto.trim();
     if (url.isEmpty) return url;
-    if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'http://$url';
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      final local = RegExp(r'^(localhost|\d{1,3}(\.\d{1,3}){3}|10\.0\.2\.2)(:\d+)?(/|$)').hasMatch(url);
+      url = local ? 'http://$url' : 'https://$url';
+    }
     url = url.replaceAll(RegExp(r'/+$'), '');
     if (!url.endsWith('/api/v1')) url = '$url/api/v1';
     return url;

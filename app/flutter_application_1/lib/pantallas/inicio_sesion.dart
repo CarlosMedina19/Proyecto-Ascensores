@@ -333,8 +333,8 @@ class _PantallaRecuperarContrasenaState extends State<PantallaRecuperarContrasen
   }
 }
 
-/// Dirección del servidor de SIGMA. En un celular real se escribe la IP del computador en la red
-/// Wi-Fi (por ejemplo 192.168.1.100:8000); se prueba antes de guardarla.
+/// Dirección del servidor de SIGMA: el dominio de producción (sigma.proyectoscampus.top) o, en desarrollo,
+/// la IP del computador en la red Wi-Fi (por ejemplo 192.168.1.100:8000); se prueba antes de guardarla.
 class _DialogoServidor extends StatefulWidget {
   const _DialogoServidor();
 
@@ -398,7 +398,7 @@ class _DialogoServidorState extends State<_DialogoServidor> {
             controller: _campo,
             keyboardType: TextInputType.url,
             autocorrect: false,
-            decoration: InputDecoration(labelText: 'Dirección', hintText: '192.168.1.100:8000', errorText: _error, errorMaxLines: 4),
+            decoration: InputDecoration(labelText: 'Dirección', hintText: 'sigma.proyectoscampus.top', errorText: _error, errorMaxLines: 4),
             onSubmitted: (_) => _guardar(),
           ),
         ],
