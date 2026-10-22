@@ -90,7 +90,7 @@ Desde otro programa (DBeaver, DataGrip): host `localhost`, puerto `5433`, base `
 
 ## Carga y descarga en Excel
 
-La plantilla [`plantillas/SIGMA_Plantilla_Datos.xlsx`](plantillas/SIGMA_Plantilla_Datos.xlsx) tiene una hoja
+La plantilla [`backend/resources/plantillas/SIGMA_Plantilla_Datos.xlsx`](backend/resources/plantillas/SIGMA_Plantilla_Datos.xlsx) (también se descarga desde el panel con **Plantilla**) tiene una hoja
 por formulario (Clientes, Edificios, Ascensores, Puertas de piso, Certificaciones, Órdenes de trabajo, Checklist,
 Emergencias, Cotizaciones, Facturas, Pagos y Usuarios) con listas desplegables, rangos validados y una fila de ejemplo.
 

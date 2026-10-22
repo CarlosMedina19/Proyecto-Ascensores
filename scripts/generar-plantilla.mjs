@@ -1,7 +1,7 @@
-// Genera plantillas/SIGMA_Plantilla_Datos.xlsx a partir de backend/resources/plantillas/estructura.json.
+// Genera backend/resources/plantillas/SIGMA_Plantilla_Datos.xlsx a partir de estructura.json (misma carpeta).
 // Uso: cd scripts && npm install && npm run plantilla
 // La misma estructura la usa Laravel para exportar e importar, así que plantilla y sistema no se desalinean.
-import { readFileSync, mkdirSync, copyFileSync } from 'node:fs';
+import { readFileSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ExcelJS from 'exceljs';
@@ -144,8 +144,8 @@ nombresListas.forEach((nombre, i) => {
   listas.getColumn(i + 1).width = 28;
 });
 
-const destino = join(raiz, 'plantillas', estructura.nombre);
+// La API la entrega con "Descargar plantilla vacía"; no hay otra copia en el repositorio.
+const destino = join(raiz, 'backend/resources/plantillas', estructura.nombre);
 mkdirSync(dirname(destino), { recursive: true });
 await libro.xlsx.writeFile(destino);
-copyFileSync(destino, join(raiz, 'backend/resources/plantillas', estructura.nombre));
 console.log(`Plantilla generada: ${destino}`);

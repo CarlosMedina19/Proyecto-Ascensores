@@ -1,0 +1,18 @@
+# Raíz del monorepo SIGMA: app/ (Flutter), backend/ (Laravel) y frontend/ (React).
+# Cada proyecto tiene además su propio .gitignore.
+
+# Herramientas locales del editor y del asistente (no forman parte del producto).
+.claude/
+.vscode/
+.idea/
+
+# Dependencias y archivos temporales
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+
+# Variables de entorno con secretos (los ejemplos .env.example sí se versionan)
+.env
+.env.*
+!.env.example
