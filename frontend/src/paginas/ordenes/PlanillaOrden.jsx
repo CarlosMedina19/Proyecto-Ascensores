@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ImagePlus, ShieldAlert, Trash2, Wrench } from 'lucide-react';
+import { FileText, ImagePlus, ShieldAlert, Trash2, Wrench } from 'lucide-react';
 import { planilla as servicioPlanilla } from '../../api/servicios';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { useDemostracion } from '../../hooks/useDemostracion';
 import { Alerta, Cargando, Insignia, Tarjeta } from '../../componentes/Basicos';
 import { ImagenProtegida, validarFotos } from '../../componentes/FotosEquipo';
+import { ModalCotizacion } from '../servicio/Cotizaciones';
 
 const SECCIONES = {
   cuarto_maquinas: 'Cuarto de máquinas',
@@ -54,6 +55,8 @@ export default function PlanillaOrden({ orden, alCambiar, notificar }) {
   const [errores, setErrores] = useState({});
   const [guardando, setGuardando] = useState(false);
   const [creando, setCreando] = useState(null);
+  const [cotizando, setCotizando] = useState(null);
+  const puedeCotizar = tienePermiso('cotizaciones.crear') && orden.estado !== 'cancelada';
 
   const aplicar = useCallback((datos) => {
     const mapa = {};
@@ -303,6 +306,21 @@ export default function PlanillaOrden({ orden, alCambiar, notificar }) {
                         </button>
                       )
                     )}
+                    {puedeCotizar && (
+                      <button
+                        type="button"
+                        className="boton boton--secundario boton--pequeno"
+                        onClick={() =>
+                          setCotizando({
+                            resultado_id: guardado.id,
+                            titulo: item.nombre,
+                            descripcion: `Hallazgo de la orden ${orden.numero}: ${item.nombre} en estado ${guardado.estado === 'M' ? 'Malo' : 'Regular'}${guardado.observacion ? `. ${guardado.observacion}` : '.'}`,
+                          })
+                        }
+                      >
+                        <FileText size={14} /> Cotizar
+                      </button>
+                    )}
                   </div>
                 )}
               </li>
@@ -365,6 +383,16 @@ export default function PlanillaOrden({ orden, alCambiar, notificar }) {
       </Tarjeta>
       {!editable && orden.estado === 'en_proceso' && !orden.permisos?.ejecutar && (
         <Insignia tipo="info">Solo el técnico asignado diligencia la planilla.</Insignia>
+      )}
+      {cotizando && (
+        <ModalCotizacion
+          equipo={orden.equipo}
+          hallazgo={cotizando}
+          alCerrar={(nueva) => {
+            setCotizando(null);
+            if (nueva) alCambiar();
+          }}
+        />
       )}
     </div>
   );

@@ -6,6 +6,7 @@ use App\Exceptions\ReglaNegocioException;
 use App\Models\Configuracion;
 use App\Models\Emergencia;
 use App\Models\Equipo;
+use App\Models\OrdenTrabajo;
 use App\Models\Tecnico;
 use App\Models\Usuario;
 use App\Notifications\EmergenciaNotification;
@@ -230,6 +231,50 @@ class EmergenciaService
         ]);
 
         return $emergencia;
+    }
+
+    /**
+     * Orden correctiva de seguimiento de una emergencia (la reparación de fondo). Con personas atrapadas
+     * o una emergencia aún abierta queda para hoy con prioridad crítica; si ya se resolvió, para el
+     * siguiente día hábil. El técnico que la atendió se propone si está libre.
+     */
+    public function crearOrden(Emergencia $emergencia, array $datos, OrdenTrabajoService $ordenes, CalendarioHabilService $calendario): OrdenTrabajo
+    {
+        if ($emergencia->estado === 'cancelada') {
+            throw new ReglaNegocioException('Una emergencia cancelada no genera orden de trabajo.');
+        }
+        if ($emergencia->orden_id) {
+            throw new ReglaNegocioException("La emergencia ya tiene la orden {$emergencia->orden?->numero}.");
+        }
+
+        $urgente = $emergencia->abierta();
+        $fecha = $datos['fecha'] ?? ($urgente ? now()->toDateString() : $calendario->siguienteHabil(CarbonImmutable::tomorrow())->toDateString());
+        $hora = $datos['hora'] ?? ($urgente ? now()->addMinutes(15 - now()->minute % 15)->format('H:i') : '08:00');
+        $tipo = mb_strtolower(Emergencia::TIPOS[$emergencia->tipo] ?? $emergencia->tipo);
+        $descripcion = $datos['descripcion'] ?? trim("Emergencia {$emergencia->numero} ({$tipo}). "
+            .($emergencia->descripcion ? "Reporte: {$emergencia->descripcion} " : '')
+            .($emergencia->solucion ? "Atención: {$emergencia->solucion}" : ''));
+
+        return DB::transaction(function () use ($emergencia, $datos, $ordenes, $fecha, $hora, $urgente, $descripcion) {
+            $orden = $ordenes->crear([
+                'servicio' => 'correctivo',
+                'equipo_id' => $emergencia->equipo_id,
+                'fecha' => $fecha,
+                'hora' => $hora,
+                'duracion_estimada' => $datos['duracion_estimada'] ?? 120,
+                'prioridad' => $datos['prioridad'] ?? ($urgente || $emergencia->personas_atrapadas ? 'critica' : 'alta'),
+                'descripcion' => $descripcion,
+                'tecnicos' => $datos['tecnicos'] ?? [],
+            ]);
+            $emergencia->update(['orden_id' => $orden->id]);
+            $emergencia->seguimientos()->create([
+                'estado' => $emergencia->estado,
+                'nota' => "Se creó la orden de trabajo {$orden->numero}.",
+                'usuario_id' => Auth::id(),
+            ]);
+
+            return $orden;
+        });
     }
 
     /** Número consecutivo por año (EM-2026-00001). */

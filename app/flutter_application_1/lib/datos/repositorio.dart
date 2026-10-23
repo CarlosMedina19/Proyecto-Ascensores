@@ -149,6 +149,28 @@ class Repositorio {
       ((await api.crear('/ordenes/$ordenId/planilla/resultados/$resultadoId/correctivo'))['datos'] as Map<String, dynamic>)['numero']
           as String;
 
+  // Emergencias 24/7: el técnico ve las asignadas a él y las que aún no tienen técnico.
+  Future<Pagina<Emergencia>> emergencias({bool abiertas = true, int pagina = 1}) async => Pagina.desdeJson(
+    await api.obtener('/emergencias', consulta: {'estado': abiertas ? 'abiertas' : 'resuelta', 'pagina': pagina, 'por_pagina': 30}),
+    Emergencia.desdeJson,
+  );
+
+  Future<Emergencia> emergencia(int id) async => Emergencia.desdeJson((await api.obtener('/emergencias/$id'))['datos'] as Map<String, dynamic>);
+
+  /// Llegada al sitio ('en_sitio') o solución ('resuelta', con lo que se hizo).
+  Future<Emergencia> cambiarEstadoEmergencia(int id, String estado, {String? solucion, String? nota}) async => Emergencia.desdeJson(
+    (await api.crear('/emergencias/$id/estado', {'estado': estado, 'solucion': ?solucion, 'nota': ?nota}))['datos'] as Map<String, dynamic>,
+  );
+
+  Future<({Emergencia emergencia, String mensaje})> reportarEmergencia({
+    required int equipoId,
+    required String tipo,
+    String? descripcion,
+  }) async {
+    final respuesta = await api.crear('/emergencias', {'equipo_id': equipoId, 'tipo': tipo, 'descripcion': ?descripcion});
+    return (emergencia: Emergencia.desdeJson(respuesta['datos'] as Map<String, dynamic>), mensaje: respuesta['mensaje'] as String? ?? '');
+  }
+
   // RF-005 Clientes
   Future<Cliente> cliente(int id) async => Cliente.desdeJson((await api.obtener('/clientes/$id'))['datos'] as Map<String, dynamic>);
 }

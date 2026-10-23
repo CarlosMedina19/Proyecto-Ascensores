@@ -249,11 +249,17 @@ export const servicio = {
   emergencia: (id) => api.obtener(`/emergencias/${id}`),
   reportarEmergencia: (datos) => api.crear('/emergencias', datos),
   cambiarEstadoEmergencia: (id, datos) => api.crear(`/emergencias/${id}/estado`, datos),
+  ordenDesdeEmergencia: (id, datos = {}) => api.crear(`/emergencias/${id}/orden`, datos),
   cotizaciones: (filtros) => api.obtener('/cotizaciones', filtros),
   cotizacion: (id) => api.obtener(`/cotizaciones/${id}`),
   crearCotizacion: (datos) => api.crear('/cotizaciones', datos),
   responderCotizacion: (id, datos) => api.crear(`/cotizaciones/${id}/respuesta`, datos),
+  ordenDesdeCotizacion: (id, datos = {}) => api.crear(`/cotizaciones/${id}/orden`, datos),
   indicadores: (filtros) => api.obtener('/indicadores/servicio', filtros),
+  indicadoresPdf: (filtros = {}) => {
+    const consulta = new URLSearchParams(Object.entries(filtros).filter(([, v]) => v !== '' && v != null)).toString();
+    return descargarArchivo(`/indicadores/servicio/pdf${consulta ? `?${consulta}` : ''}`, 'SIGMA_Indicadores.pdf');
+  },
 };
 
 // Reporte de fallas por el QR de la cabina (sin sesión).

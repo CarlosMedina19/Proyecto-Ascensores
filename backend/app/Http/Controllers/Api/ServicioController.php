@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Planilla\CorrectivoDerivadoRequest;
 use App\Http\Requests\Servicio\GuardarCertificacionRequest;
 use App\Http\Requests\Servicio\GuardarCotizacionRequest;
 use App\Http\Requests\Servicio\ReportarEmergenciaRequest;
@@ -11,13 +12,18 @@ use App\Models\Cotizacion;
 use App\Models\Emergencia;
 use App\Models\Equipo;
 use App\Models\InformeOrden;
+use App\Models\OrdenTrabajo;
 use App\Models\Usuario;
+use App\Http\Resources\OrdenTrabajoResource;
+use App\Services\CalendarioHabilService;
 use App\Services\CertificacionService;
 use App\Services\CotizacionService;
 use App\Services\EmergenciaService;
 use App\Services\IndicadoresServicioService;
+use App\Services\OrdenTrabajoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -33,7 +39,23 @@ class ServicioController extends Controller
         private readonly EmergenciaService $emergencias,
         private readonly CotizacionService $cotizaciones,
         private readonly IndicadoresServicioService $indicadores,
+        private readonly OrdenTrabajoService $ordenes,
+        private readonly CalendarioHabilService $calendario,
     ) {}
+
+    /** La orden derivada (de una emergencia o de una cotización) exige crear órdenes y, con técnicos, asignarlas. */
+    private function autorizarOrden(Request $solicitud): void
+    {
+        $this->authorize('create', OrdenTrabajo::class);
+        if ($solicitud->filled('tecnicos')) {
+            $this->authorize('asignar', new OrdenTrabajo);
+        }
+    }
+
+    private function ordenCorta(?OrdenTrabajo $orden): ?array
+    {
+        return $orden ? ['id' => $orden->id, 'numero' => $orden->numero, 'estado' => $orden->estado, 'fecha' => $orden->fecha?->toDateString()] : null;
+    }
 
     private function exigir(Request $solicitud, string $permiso, string $accion): Usuario
     {
@@ -175,6 +197,7 @@ class ServicioController extends Controller
             'llegada_en' => $e->llegada_en?->toIso8601String(),
             'resuelta_en' => $e->resuelta_en?->toIso8601String(),
             'solucion' => $e->solucion,
+            'orden' => $this->ordenCorta($e->orden),
             'siguientes' => Emergencia::TRANSICIONES[$e->estado] ?? [],
             'seguimiento' => $detalle ? $e->seguimientos->map(fn ($s) => [
                 'estado' => $s->estado,
@@ -245,6 +268,18 @@ class ServicioController extends Controller
         ]);
     }
 
+    /** Orden de trabajo de seguimiento a partir de la emergencia. */
+    public function ordenDesdeEmergencia(CorrectivoDerivadoRequest $solicitud, Emergencia $emergencia): JsonResponse
+    {
+        $this->autorizarOrden($solicitud);
+        $orden = $this->emergencias->crearOrden($emergencia, $solicitud->validated(), $this->ordenes, $this->calendario);
+
+        return (new OrdenTrabajoResource($orden))
+            ->additional(['mensaje' => "Orden {$orden->numero} creada para la emergencia {$emergencia->numero}."])
+            ->response()
+            ->setStatusCode(201);
+    }
+
     // ---------- Reporte por QR (sin sesión) ----------
 
     public function ascensorPublico(string $codigo): JsonResponse
@@ -294,6 +329,8 @@ class ServicioController extends Controller
             'equipo' => $this->equipoCorto($c->equipo),
             'cliente' => $c->cliente ? ['id' => $c->cliente->id, 'nombre' => $c->cliente->nombre] : null,
             'orden_id' => $c->orden_id,
+            'orden' => $this->ordenCorta($c->orden),
+            'resultado_origen_id' => $c->resultado_origen_id,
             'subtotal' => (float) $c->subtotal,
             'iva' => (float) $c->iva,
             'total' => (float) $c->total,
@@ -360,9 +397,39 @@ class ServicioController extends Controller
         ]);
     }
 
+    /** Orden de trabajo que ejecuta la cotización aprobada. */
+    public function ordenDesdeCotizacion(CorrectivoDerivadoRequest $solicitud, Cotizacion $cotizacion): JsonResponse
+    {
+        $this->autorizarOrden($solicitud);
+        $orden = $this->cotizaciones->crearOrden($cotizacion, $solicitud->validated(), $this->ordenes, $this->calendario);
+
+        return (new OrdenTrabajoResource($orden))
+            ->additional(['mensaje' => "Orden {$orden->numero} creada para la cotización {$cotizacion->numero}."])
+            ->response()
+            ->setStatusCode(201);
+    }
+
     // ---------- Indicadores y documentos ----------
 
     public function indicadores(Request $solicitud): JsonResponse
+    {
+        return response()->json(['datos' => $this->indicadores->calcular($this->filtrosIndicadores($solicitud))]);
+    }
+
+    /** Indicadores en PDF para el comité o la administración del edificio. */
+    public function indicadoresPdf(Request $solicitud): Response
+    {
+        $filtros = $this->filtrosIndicadores($solicitud);
+        $pdf = $this->indicadores->pdf($filtros);
+        $periodo = $this->indicadores->calcular($filtros)['periodo'];
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"SIGMA_Indicadores_{$periodo['desde']}_{$periodo['hasta']}.pdf\"",
+        ]);
+    }
+
+    private function filtrosIndicadores(Request $solicitud): array
     {
         $usuario = $this->exigir($solicitud, 'indicadores.ver', 'consultar los indicadores del servicio');
         $filtros = $solicitud->validate([
@@ -378,7 +445,7 @@ class ServicioController extends Controller
             $this->exigirEquipo($usuario, Equipo::with('edificio')->findOrFail($filtros['equipo_id']));
         }
 
-        return response()->json(['datos' => $this->indicadores->calcular($filtros)]);
+        return $filtros;
     }
 
     /** Documentos del ascensor: certificados anuales e informes técnicos firmados. */

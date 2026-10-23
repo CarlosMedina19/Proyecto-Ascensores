@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\Cliente;
 use App\Models\Emergencia;
 use App\Models\Equipo;
 use App\Models\MantenimientoProgramado;
 use App\Models\OrdenTrabajo;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Indicadores del servicio en un período (por defecto, los últimos 90 días):
@@ -54,6 +57,8 @@ class IndicadoresServicioService
             ->where('servicio', 'correctivo')
             ->where('estado', '!=', 'cancelada')
             ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
+            // La orden creada desde una emergencia es la misma falla: ya se cuenta por la emergencia.
+            ->whereNotIn('id', Emergencia::query()->whereNotNull('orden_id')->select('orden_id'))
             ->count();
         $numeroFallas = $fallas->filter(fn (Emergencia $e) => $e->reportada_en->gte($desde))->count() + $correctivas;
 
@@ -90,5 +95,38 @@ class IndicadoresServicioService
                 'programados' => $programados,
             ],
         ];
+    }
+
+    /** Informe en PDF: los cuatro indicadores y las emergencias del período, con el alcance (cliente o ascensor). */
+    public function pdf(array $filtros = []): string
+    {
+        $datos = $this->calcular($filtros);
+        $desde = CarbonImmutable::parse($datos['periodo']['desde'])->startOfDay();
+        $hasta = CarbonImmutable::parse($datos['periodo']['hasta'])->endOfDay();
+        $equipo = ! empty($filtros['equipo_id']) ? Equipo::with('edificio.cliente')->find($filtros['equipo_id']) : null;
+        $cliente = ! empty($filtros['cliente_id']) ? Cliente::find($filtros['cliente_id']) : $equipo?->edificio?->cliente;
+
+        $emergencias = Emergencia::query()
+            ->with(['equipo.edificio', 'tecnico.usuario'])
+            ->whereBetween('reportada_en', [$desde, $hasta])
+            ->when($cliente, fn ($q) => $q->whereHas('equipo.edificio', fn ($e) => $e->where('cliente_id', $cliente->id)))
+            ->when($equipo, fn ($q) => $q->where('equipo_id', $equipo->id))
+            ->orderBy('reportada_en')
+            ->get();
+
+        $html = view('pdf.indicadores', [
+            'datos' => $datos,
+            'alcance' => $equipo ? "Ascensor {$equipo->codigo} · {$equipo->edificio?->nombre}" : ($cliente?->nombre ?? 'Todos los clientes'),
+            'emergencias' => $emergencias,
+            'generadoPor' => Auth::user()?->nombre ?? 'Sistema',
+        ])->render();
+
+        return Pdf::loadHTML($html)
+            ->setPaper('letter')
+            ->setOption('dpi', 96)
+            ->setOption('isFontSubsettingEnabled', false)
+            ->setOption('fontDir', storage_path('fonts'))
+            ->setOption('fontCache', storage_path('fonts'))
+            ->output();
     }
 }

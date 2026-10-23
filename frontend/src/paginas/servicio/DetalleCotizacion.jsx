@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Check, X } from 'lucide-react';
+import { Check, ClipboardList, X } from 'lucide-react';
 import { servicio } from '../../api/servicios';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { useFormulario } from '../../hooks/useFormulario';
 import { Alerta, Cargando, Datos, EncabezadoPagina, Insignia, Modal, Tabla, Tarjeta } from '../../componentes/Basicos';
 import { CampoArea } from '../../componentes/Campos';
+import ModalOrdenDerivada from '../../componentes/ModalOrdenDerivada';
 import { dinero, fecha, fechaHora, numero } from '../../utilidades/formato';
 import { ESTADOS_COTIZACION } from '../../utilidades/servicio';
 
@@ -17,6 +18,7 @@ export default function DetalleCotizacion() {
   const [cotizacion, setCotizacion] = useState(null);
   const [error, setError] = useState('');
   const [decision, setDecision] = useState(null);
+  const [creandoOrden, setCreandoOrden] = useState(false);
 
   useEffect(() => {
     servicio
@@ -30,6 +32,7 @@ export default function DetalleCotizacion() {
 
   const estado = ESTADOS_COTIZACION[cotizacion.estado];
   const puedeResponder = tienePermiso('cotizaciones.responder') && cotizacion.estado === 'enviada';
+  const puedeCrearOrden = tienePermiso('ordenes.crear') && cotizacion.estado === 'aprobada' && !cotizacion.orden;
 
   return (
     <>
@@ -44,7 +47,21 @@ export default function DetalleCotizacion() {
             </button>
           </>
         )}
+        {puedeCrearOrden && (
+          <button type="button" className="boton" onClick={() => setCreandoOrden(true)}>
+            <ClipboardList size={16} aria-hidden="true" /> Crear orden de trabajo
+          </button>
+        )}
       </EncabezadoPagina>
+
+      {creandoOrden && (
+        <ModalOrdenDerivada
+          titulo={`Orden de trabajo para ${cotizacion.numero}`}
+          ayuda="Mantenimiento correctivo con los renglones aprobados. Si no elige fecha, queda para el siguiente día hábil a las 08:00."
+          crear={(datos) => servicio.ordenDesdeCotizacion(cotizacion.id, datos)}
+          alCerrar={() => setCreandoOrden(false)}
+        />
+      )}
 
       {cotizacion.estado === 'vencida' && <Alerta tipo="alerta">La cotización venció el {fecha(cotizacion.vigente_hasta)}. Pida una nueva a su coordinador si aún necesita el trabajo.</Alerta>}
 
@@ -58,6 +75,7 @@ export default function DetalleCotizacion() {
               ['Vigente hasta', fecha(cotizacion.vigente_hasta)],
               ['Respondida', cotizacion.respondida_en ? `${fechaHora(cotizacion.respondida_en)}${cotizacion.respondida_por ? ` · ${cotizacion.respondida_por}` : ''}` : '—'],
               ['Motivo del rechazo', cotizacion.motivo_rechazo || '—'],
+              ['Orden de trabajo', cotizacion.orden ? <Link key="o" to={`/ordenes/${cotizacion.orden.id}`}>{cotizacion.orden.numero}</Link> : '—'],
             ]}
           />
         </Tarjeta>

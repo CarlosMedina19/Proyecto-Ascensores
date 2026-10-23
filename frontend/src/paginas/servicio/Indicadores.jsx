@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Activity, CalendarCheck, Gauge, Timer } from 'lucide-react';
+import { Activity, CalendarCheck, Download, Gauge, Timer } from 'lucide-react';
 import { servicio } from '../../api/servicios';
+import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { Alerta, Cargando, EncabezadoPagina, Tarjeta } from '../../componentes/Basicos';
 import { fecha, numero } from '../../utilidades/formato';
 import { duracion } from '../../utilidades/servicio';
@@ -37,6 +38,20 @@ export default function Indicadores() {
   const [dias, setDias] = useState(90);
   const [datos, setDatos] = useState(null);
   const [error, setError] = useState('');
+  const [descargando, setDescargando] = useState(false);
+  const notificar = useNotificar();
+
+  // El PDF usa el mismo período que se ve en pantalla (para el comité o la administración del edificio).
+  async function descargarPdf() {
+    setDescargando(true);
+    try {
+      await servicio.indicadoresPdf({ desde: datos.periodo.desde, hasta: datos.periodo.hasta });
+    } catch (e) {
+      notificar(e.message, 'error');
+    } finally {
+      setDescargando(false);
+    }
+  }
 
   useEffect(() => {
     const hasta = new Date();
@@ -59,6 +74,9 @@ export default function Indicadores() {
             </option>
           ))}
         </select>
+        <button type="button" className="boton boton--secundario" onClick={descargarPdf} disabled={!datos || descargando}>
+          <Download size={16} aria-hidden="true" /> {descargando ? 'Generando…' : 'Descargar PDF'}
+        </button>
       </EncabezadoPagina>
 
       {error && <Alerta>{error}</Alerta>}

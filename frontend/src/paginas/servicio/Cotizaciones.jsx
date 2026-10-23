@@ -119,13 +119,14 @@ export default function Cotizaciones() {
 const RENGLON = { descripcion: '', cantidad: '1', valor_unitario: '' };
 const numero = (texto) => Number(String(texto).replace(/\./g, '').replace(',', '.')) || 0;
 
-export function ModalCotizacion({ equipo, alCerrar }) {
+/** Con `hallazgo` ({ resultado_id, titulo, descripcion }) la cotización nace de un ítem en R o M de la planilla. */
+export function ModalCotizacion({ equipo, hallazgo, alCerrar }) {
   const notificar = useNotificar();
   const [opciones, setOpciones] = useState([]);
   const { datos, setDatos, cambiar, error, errores, mensajeError, enviando, enviar } = useFormulario({
     equipo_id: equipo ? String(equipo.id) : '',
-    titulo: '',
-    descripcion: '',
+    titulo: hallazgo?.titulo || '',
+    descripcion: hallazgo?.descripcion || '',
     iva_porcentaje: '19',
     vigente_hasta: fechaIso(new Date(Date.now() + 30 * 86400000)),
     items: [{ ...RENGLON }],
@@ -149,6 +150,7 @@ export function ModalCotizacion({ equipo, alCerrar }) {
       servicio.crearCotizacion({
         ...datos,
         equipo_id: datos.equipo_id ? Number(datos.equipo_id) : null,
+        resultado_origen_id: hallazgo?.resultado_id || null,
         iva_porcentaje: numero(datos.iva_porcentaje),
         items: datos.items.map((r) => ({ descripcion: r.descripcion, cantidad: numero(r.cantidad), valor_unitario: numero(r.valor_unitario) })),
       }),

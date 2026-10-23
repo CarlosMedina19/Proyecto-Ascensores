@@ -17,7 +17,7 @@ class GuardarCotizacionRequest extends FormRequest
     {
         return [
             'equipo_id' => ['required', 'integer', Rule::exists('equipos', 'id')->whereNull('deleted_at')],
-            'orden_id' => ['nullable', 'integer', Rule::exists('ordenes_trabajo', 'id')],
+            'resultado_origen_id' => ['nullable', 'integer', Rule::exists('planilla_resultados', 'id')],
             'titulo' => ['required', 'string', 'max:150'],
             'descripcion' => ['nullable', 'string', 'max:2000'],
             'fecha_emision' => ['nullable', 'date'],

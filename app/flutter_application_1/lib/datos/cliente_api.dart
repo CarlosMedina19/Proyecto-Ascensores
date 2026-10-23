@@ -54,9 +54,11 @@ class ClienteApi {
     };
     final uri = Uri.parse('$urlBase$ruta').replace(queryParameters: parametros.isEmpty ? null : parametros);
 
+    // X-Origen: la API registra que la emergencia se reportó desde la app.
     final solicitud = http.Request(metodo, uri)
       ..headers['Accept'] = 'application/json'
-      ..headers['Content-Type'] = 'application/json';
+      ..headers['Content-Type'] = 'application/json'
+      ..headers['X-Origen'] = 'app';
     if (cuerpo != null) solicitud.body = jsonEncode(cuerpo);
 
     return _ejecutar(solicitud);

@@ -164,11 +164,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/emergencias', [ServicioController::class, 'reportarEmergencia']);
     Route::get('/emergencias/{emergencia}', [ServicioController::class, 'verEmergencia']);
     Route::post('/emergencias/{emergencia}/estado', [ServicioController::class, 'cambiarEstadoEmergencia']);
+    Route::post('/emergencias/{emergencia}/orden', [ServicioController::class, 'ordenDesdeEmergencia']);
     Route::get('/cotizaciones', [ServicioController::class, 'cotizaciones']);
     Route::post('/cotizaciones', [ServicioController::class, 'crearCotizacion']);
     Route::get('/cotizaciones/{cotizacion}', [ServicioController::class, 'verCotizacion']);
     Route::post('/cotizaciones/{cotizacion}/respuesta', [ServicioController::class, 'responderCotizacion']);
+    Route::post('/cotizaciones/{cotizacion}/orden', [ServicioController::class, 'ordenDesdeCotizacion']);
     Route::get('/indicadores/servicio', [ServicioController::class, 'indicadores']);
+    Route::get('/indicadores/servicio/pdf', [ServicioController::class, 'indicadoresPdf']);
 
     Route::get('/cartera/resumen', [CarteraController::class, 'resumen']);
     Route::get('/facturas', [CarteraController::class, 'facturas']);

@@ -9,6 +9,41 @@ import 'package:http/testing.dart';
 
 void main() {
   group('Modelos', () {
+    test('la emergencia lee el ascensor, el técnico, la orden y el seguimiento', () {
+      final emergencia = Emergencia.desdeJson({
+        'id': 4,
+        'numero': 'EM-2026-00004',
+        'tipo': 'atrapamiento',
+        'estado': 'asignada',
+        'personas_atrapadas': true,
+        'minutos_objetivo': 30,
+        'equipo': {
+          'id': 2,
+          'codigo': 'ASC-002',
+          'ubicacion': 'Torre B',
+          'edificio': {'id': 1, 'nombre': 'Conjunto Mirador'},
+          'cliente': {'id': 3, 'nombre': 'Administración Mirador'},
+        },
+        'tecnico': {'id': 9, 'nombre': 'Andrés Rojas'},
+        'orden': {'id': 15, 'numero': 'OT-2026-00015'},
+        'reportada_en': '2026-01-05T10:00:00-05:00',
+        'siguientes': ['en_sitio', 'resuelta', 'cancelada'],
+        'seguimiento': [
+          {'estado': 'reportada', 'nota': 'Reporte desde la app.', 'usuario': 'Ana', 'fecha': '2026-01-05T10:00:00-05:00'},
+        ],
+      });
+
+      expect(emergencia.abierta, isTrue);
+      expect(emergencia.nombreTipo, 'Personas atrapadas');
+      expect(emergencia.nombreEstado, 'Técnico en camino');
+      expect(emergencia.equipoCodigo, 'ASC-002');
+      expect(emergencia.edificioNombre, 'Conjunto Mirador');
+      expect(emergencia.tecnicoNombre, 'Andrés Rojas');
+      expect(emergencia.ordenNumero, 'OT-2026-00015');
+      expect(emergencia.siguientes, contains('en_sitio'));
+      expect(emergencia.seguimiento.single.nota, 'Reporte desde la app.');
+    });
+
     test('el usuario lee su rol, permisos y cliente', () {
       final usuario = Usuario.desdeJson({
         'id': 7,

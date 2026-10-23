@@ -710,3 +710,126 @@ class Planilla {
   final int fotos;
   final int faltantes;
 }
+
+/// Emergencias 24/7: atrapamientos y fallas con tiempo objetivo de llegada.
+const nombresTipoEmergencia = {
+  'atrapamiento': 'Personas atrapadas',
+  'falla': 'Ascensor detenido o con falla',
+  'ruido': 'Ruido o movimiento anormal',
+  'otro': 'Otro',
+};
+
+const nombresEstadoEmergencia = {
+  'reportada': 'Reportada',
+  'asignada': 'Técnico en camino',
+  'en_sitio': 'Técnico en sitio',
+  'resuelta': 'Resuelta',
+  'cancelada': 'Cancelada',
+};
+
+class SeguimientoEmergencia {
+  SeguimientoEmergencia({required this.estado, this.nota, this.usuario, this.fecha});
+
+  factory SeguimientoEmergencia.desdeJson(Map<String, dynamic> json) => SeguimientoEmergencia(
+    estado: json['estado'] as String? ?? '',
+    nota: json['nota'] as String?,
+    usuario: json['usuario'] as String?,
+    fecha: _fecha(json['fecha']),
+  );
+
+  final String estado;
+  final String? nota;
+  final String? usuario;
+  final DateTime? fecha;
+}
+
+class Emergencia {
+  Emergencia({
+    required this.id,
+    required this.numero,
+    required this.tipo,
+    required this.estado,
+    required this.personasAtrapadas,
+    required this.minutosObjetivo,
+    this.equipoId,
+    this.equipoCodigo,
+    this.ubicacion,
+    this.edificioNombre,
+    this.clienteNombre,
+    this.descripcion,
+    this.reportanteNombre,
+    this.reportanteTelefono,
+    this.tecnicoNombre,
+    this.minutosRespuesta,
+    this.dentroObjetivo,
+    this.reportadaEn,
+    this.llegadaEn,
+    this.resueltaEn,
+    this.solucion,
+    this.ordenNumero,
+    this.siguientes = const [],
+    this.seguimiento = const [],
+  });
+
+  factory Emergencia.desdeJson(Map<String, dynamic> json) {
+    final equipo = json['equipo'] as Map<String, dynamic>?;
+    final tecnico = json['tecnico'] as Map<String, dynamic>?;
+    return Emergencia(
+      id: _entero(json['id'])!,
+      numero: json['numero'] as String? ?? '',
+      tipo: json['tipo'] as String? ?? 'otro',
+      estado: json['estado'] as String? ?? 'reportada',
+      personasAtrapadas: json['personas_atrapadas'] == true,
+      minutosObjetivo: _entero(json['minutos_objetivo']) ?? 0,
+      equipoId: _entero(equipo?['id']),
+      equipoCodigo: equipo?['codigo'] as String?,
+      ubicacion: equipo?['ubicacion'] as String?,
+      edificioNombre: (equipo?['edificio'] as Map?)?['nombre'] as String?,
+      clienteNombre: (equipo?['cliente'] as Map?)?['nombre'] as String?,
+      descripcion: json['descripcion'] as String?,
+      reportanteNombre: json['reportante_nombre'] as String?,
+      reportanteTelefono: json['reportante_telefono'] as String?,
+      tecnicoNombre: tecnico?['nombre'] as String?,
+      minutosRespuesta: _entero(json['minutos_respuesta']),
+      dentroObjetivo: json['dentro_objetivo'] as bool?,
+      reportadaEn: _fecha(json['reportada_en']),
+      llegadaEn: _fecha(json['llegada_en']),
+      resueltaEn: _fecha(json['resuelta_en']),
+      solucion: json['solucion'] as String?,
+      ordenNumero: (json['orden'] as Map?)?['numero'] as String?,
+      siguientes: ((json['siguientes'] as List?) ?? const []).map((s) => '$s').toList(),
+      seguimiento: ((json['seguimiento'] as List?) ?? const [])
+          .map((s) => SeguimientoEmergencia.desdeJson(s as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  final int id;
+  final String numero;
+  final String tipo;
+  final String estado;
+  final bool personasAtrapadas;
+  final int minutosObjetivo;
+  final int? equipoId;
+  final String? equipoCodigo;
+  final String? ubicacion;
+  final String? edificioNombre;
+  final String? clienteNombre;
+  final String? descripcion;
+  final String? reportanteNombre;
+  final String? reportanteTelefono;
+  final String? tecnicoNombre;
+  final int? minutosRespuesta;
+  final bool? dentroObjetivo;
+  final DateTime? reportadaEn;
+  final DateTime? llegadaEn;
+  final DateTime? resueltaEn;
+  final String? solucion;
+  final String? ordenNumero;
+  final List<String> siguientes;
+  final List<SeguimientoEmergencia> seguimiento;
+
+  bool get abierta => estado == 'reportada' || estado == 'asignada' || estado == 'en_sitio';
+  String get nombreTipo => nombresTipoEmergencia[tipo] ?? tipo;
+  String get nombreEstado => nombresEstadoEmergencia[estado] ?? estado;
+}

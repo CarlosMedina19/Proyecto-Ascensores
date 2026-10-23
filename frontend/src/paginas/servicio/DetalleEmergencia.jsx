@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { CircleCheck, MapPin, Phone, UserRoundCheck, XCircle } from 'lucide-react';
+import { CircleCheck, ClipboardList, MapPin, Phone, UserRoundCheck, XCircle } from 'lucide-react';
 import { servicio, tecnicos } from '../../api/servicios';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { useFormulario } from '../../hooks/useFormulario';
 import { Alerta, Cargando, Datos, EncabezadoPagina, Insignia, Modal, Tarjeta } from '../../componentes/Basicos';
 import { CampoArea, CampoSelector } from '../../componentes/Campos';
+import ModalOrdenDerivada from '../../componentes/ModalOrdenDerivada';
 import { fechaHora } from '../../utilidades/formato';
 import { ESTADOS_EMERGENCIA, ORIGENES_EMERGENCIA, TIPOS_EMERGENCIA, duracion } from '../../utilidades/servicio';
 import { TiempoRespuesta } from './Emergencias';
@@ -25,6 +26,7 @@ export default function DetalleEmergencia() {
   const [emergencia, setEmergencia] = useState(null);
   const [error, setError] = useState('');
   const [accion, setAccion] = useState(null);
+  const [creandoOrden, setCreandoOrden] = useState(false);
 
   const cargar = useCallback(() => {
     servicio
@@ -48,6 +50,7 @@ export default function DetalleEmergencia() {
   const atiende = tienePermiso('emergencias.atender') && (!emergencia.tecnico || emergencia.tecnico.nombre === usuario?.nombre);
   const acciones = emergencia.siguientes.filter((s) => gestiona || (atiende && ['en_sitio', 'resuelta'].includes(s)));
   const estado = ESTADOS_EMERGENCIA[emergencia.estado];
+  const puedeCrearOrden = tienePermiso('ordenes.crear') && emergencia.estado !== 'cancelada' && !emergencia.orden;
 
   return (
     <>
@@ -67,6 +70,11 @@ export default function DetalleEmergencia() {
             </button>
           );
         })}
+        {puedeCrearOrden && (
+          <button type="button" className="boton boton--secundario" onClick={() => setCreandoOrden(true)}>
+            <ClipboardList size={16} aria-hidden="true" /> Crear orden de trabajo
+          </button>
+        )}
       </EncabezadoPagina>
 
       {emergencia.personas_atrapadas && emergencia.estado !== 'resuelta' && emergencia.estado !== 'cancelada' && (
@@ -87,6 +95,7 @@ export default function DetalleEmergencia() {
               ['Objetivo de llegada', duracion(emergencia.minutos_objetivo)],
               ['Resuelta', emergencia.resuelta_en ? fechaHora(emergencia.resuelta_en) : '—'],
               ['Técnico', emergencia.tecnico ? emergencia.tecnico.nombre : 'Sin asignar'],
+              ['Orden de trabajo', emergencia.orden ? <Link key="o" to={`/ordenes/${emergencia.orden.id}`}>{emergencia.orden.numero}</Link> : '—'],
             ]}
           />
           {emergencia.solucion && (
@@ -134,6 +143,19 @@ export default function DetalleEmergencia() {
           ))}
         </ol>
       </Tarjeta>
+
+      {creandoOrden && (
+        <ModalOrdenDerivada
+          titulo={`Orden de trabajo para ${emergencia.numero}`}
+          ayuda={
+            ['resuelta'].includes(emergencia.estado)
+              ? 'Mantenimiento correctivo para la reparación de fondo. Si no elige fecha, queda para el siguiente día hábil a las 08:00.'
+              : 'Mantenimiento correctivo para hoy con prioridad crítica, mientras la emergencia sigue abierta.'
+          }
+          crear={(datos) => servicio.ordenDesdeEmergencia(emergencia.id, datos)}
+          alCerrar={() => setCreandoOrden(false)}
+        />
+      )}
 
       {accion && (
         <ModalAccion

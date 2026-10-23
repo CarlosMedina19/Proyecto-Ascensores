@@ -6,8 +6,11 @@ use App\Exceptions\ReglaNegocioException;
 use App\Models\Configuracion;
 use App\Models\Cotizacion;
 use App\Models\Equipo;
+use App\Models\OrdenTrabajo;
+use App\Models\PlanillaResultado;
 use App\Models\Usuario;
 use App\Notifications\CotizacionNotification;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -51,6 +54,15 @@ class CotizacionService
         if (! $cliente) {
             throw new ReglaNegocioException('El ascensor no tiene cliente asociado. Revise su edificio.');
         }
+        if (! empty($datos['resultado_origen_id'])) {
+            $resultado = PlanillaResultado::with('planilla.orden')->findOrFail($datos['resultado_origen_id']);
+            if ($resultado->planilla?->orden?->equipo_id !== $equipo->id) {
+                throw new ReglaNegocioException('El hallazgo no corresponde a este ascensor.');
+            }
+            if (! in_array($resultado->estado, ['R', 'M'], true)) {
+                throw new ReglaNegocioException('Solo se cotizan los ítems en estado Regular o Malo.');
+            }
+        }
 
         $cotizacion = DB::transaction(function () use ($datos, $equipo, $cliente) {
             $items = collect($datos['items'])->map(fn (array $item) => [
@@ -67,7 +79,7 @@ class CotizacionService
                 'numero' => $this->siguienteNumero(),
                 'equipo_id' => $equipo->id,
                 'cliente_id' => $cliente->id,
-                'orden_id' => $datos['orden_id'] ?? null,
+                'resultado_origen_id' => $datos['resultado_origen_id'] ?? null,
                 'titulo' => $datos['titulo'],
                 'descripcion' => $datos['descripcion'] ?? null,
                 'subtotal' => $subtotal,
@@ -139,6 +151,46 @@ class CotizacionService
         );
 
         return $cotizacion;
+    }
+
+    /**
+     * Orden correctiva que ejecuta una cotización aprobada. Una cotización tiene una sola orden; por
+     * defecto queda para el siguiente día hábil a las 08:00 y el coordinador puede reprogramarla.
+     */
+    public function crearOrden(Cotizacion $cotizacion, array $datos, OrdenTrabajoService $ordenes, CalendarioHabilService $calendario): OrdenTrabajo
+    {
+        if ($cotizacion->estadoActual() !== 'aprobada') {
+            throw new ReglaNegocioException('Solo una cotización aprobada por el cliente genera la orden de trabajo.');
+        }
+        if ($cotizacion->orden_id) {
+            throw new ReglaNegocioException("La cotización ya tiene la orden {$cotizacion->orden?->numero}.");
+        }
+
+        $cotizacion->loadMissing('items');
+        $renglones = $cotizacion->items->map(fn ($i) => '· '.rtrim(rtrim(number_format((float) $i->cantidad, 2, ',', '.'), '0'), ',')." × {$i->descripcion}")->implode("
+");
+
+        return DB::transaction(function () use ($cotizacion, $datos, $ordenes, $calendario, $renglones) {
+            $orden = $ordenes->crear([
+                'servicio' => 'correctivo',
+                'equipo_id' => $cotizacion->equipo_id,
+                'fecha' => $datos['fecha'] ?? $calendario->siguienteHabil(CarbonImmutable::tomorrow())->toDateString(),
+                'hora' => $datos['hora'] ?? '08:00',
+                'duracion_estimada' => $datos['duracion_estimada'] ?? 120,
+                'prioridad' => $datos['prioridad'] ?? 'media',
+                'descripcion' => $datos['descripcion'] ?? trim("Cotización {$cotizacion->numero} aprobada: {$cotizacion->titulo}.
+{$renglones}"),
+                'tecnicos' => $datos['tecnicos'] ?? [],
+            ]);
+            $cotizacion->update(['orden_id' => $orden->id]);
+            $cotizacion->equipo->historial()->create([
+                'usuario_id' => Auth::id(),
+                'evento' => 'cotizacion_orden',
+                'descripcion' => "Cotización {$cotizacion->numero}: se programó la orden {$orden->numero}.",
+            ]);
+
+            return $orden;
+        });
     }
 
     /** Número consecutivo por año (CT-2026-00001). */

@@ -6,6 +6,7 @@ import '../datos/modelos.dart';
 import '../estado/sesion.dart';
 import '../tema.dart';
 import '../widgets/comunes.dart';
+import 'emergencias.dart';
 import 'equipos.dart';
 import 'ordenes.dart';
 
@@ -23,6 +24,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
   Future<Pagina<Equipo>>? _equipos;
   Future<List<MantenimientoProgramado>>? _proximos;
   Future<List<OrdenTrabajo>>? _misOrdenes;
+  Future<Pagina<Emergencia>>? _emergencias;
 
   @override
   void initState() {
@@ -35,6 +37,8 @@ class _PantallaInicioState extends State<PantallaInicio> {
     setState(() {
       _resumen = sesion.tienePermiso('resumen.ver') ? sesion.repositorio.resumen() : Future.value(null);
       _equipos = sesion.tienePermiso('equipos.ver') ? sesion.repositorio.equipos() : null;
+      // Emergencias abiertas: el técnico ve las suyas y las que aún no tienen técnico.
+      _emergencias = sesion.tienePermiso('emergencias.ver') ? sesion.repositorio.emergencias() : null;
       // Fase 2: visitas pendientes de los próximos 30 días (incluye las atrasadas del último mes).
       final hoy = DateTime.now();
       final esTecnico = sesion.usuario?.esTecnico ?? false;
@@ -105,6 +109,23 @@ class _PantallaInicioState extends State<PantallaInicio> {
                 return _PanelResumen(resumen: resumen);
               },
             ),
+            if (_emergencias != null)
+              FutureBuilder<Pagina<Emergencia>>(
+                future: _emergencias,
+                builder: (context, instantanea) {
+                  // Sin conexión o sin datos no se muestra: el acceso sigue en el botón de la tarjeta.
+                  final abiertas = instantanea.data?.elementos ?? const <Emergencia>[];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _TarjetaEmergencias(
+                      abiertas: abiertas,
+                      total: instantanea.data?.total ?? 0,
+                      cargando: !instantanea.hasData && !instantanea.hasError,
+                      alVolver: _cargar,
+                    ),
+                  );
+                },
+              ),
             if (_misOrdenes != null)
               FutureBuilder<List<OrdenTrabajo>>(
                 future: _misOrdenes,
@@ -338,6 +359,65 @@ class ProximosMantenimientos extends StatelessWidget {
                   : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PantallaDetalleEquipo(equipoId: visita.equipoId!))),
             ),
       ],
+    );
+  }
+}
+
+/// Acceso a las emergencias: muestra cuántas hay abiertas y si alguna tiene personas atrapadas.
+class _TarjetaEmergencias extends StatelessWidget {
+  const _TarjetaEmergencias({required this.abiertas, required this.total, required this.cargando, required this.alVolver});
+
+  final List<Emergencia> abiertas;
+  final int total;
+  final bool cargando;
+  final VoidCallback alVolver;
+
+  @override
+  Widget build(BuildContext context) {
+    final atrapadas = abiertas.where((e) => e.personasAtrapadas).length;
+    final urgente = total > 0;
+    final color = colorSegunModo(context, urgente ? SigmaColores.malo : SigmaColores.bueno);
+    final suave = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () async {
+          await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PantallaEmergencias()));
+          alVolver();
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(12)),
+                child: Icon(urgente ? Icons.notification_important : Icons.verified_outlined, color: color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Emergencias', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                    const SizedBox(height: 2),
+                    Text(
+                      cargando
+                          ? 'Consultando…'
+                          : !urgente
+                          ? 'No hay emergencias abiertas.'
+                          : '$total ${total == 1 ? 'abierta' : 'abiertas'}${atrapadas > 0 ? ' · $atrapadas con personas atrapadas' : ''}',
+                      style: TextStyle(color: urgente ? color : suave),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: suave),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

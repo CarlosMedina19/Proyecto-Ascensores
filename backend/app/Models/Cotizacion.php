@@ -14,7 +14,7 @@ class Cotizacion extends Model
     public const ESTADOS = ['enviada' => 'Esperando respuesta', 'aprobada' => 'Aprobada', 'rechazada' => 'Rechazada', 'vencida' => 'Vencida'];
 
     protected $fillable = [
-        'numero', 'equipo_id', 'cliente_id', 'orden_id', 'titulo', 'descripcion', 'subtotal', 'iva', 'total',
+        'numero', 'equipo_id', 'cliente_id', 'orden_id', 'resultado_origen_id', 'titulo', 'descripcion', 'subtotal', 'iva', 'total',
         'fecha_emision', 'vigente_hasta', 'estado', 'respondida_en', 'respondida_por', 'motivo_rechazo', 'creada_por',
     ];
 
@@ -49,6 +49,12 @@ class Cotizacion extends Model
     public function orden(): BelongsTo
     {
         return $this->belongsTo(OrdenTrabajo::class, 'orden_id');
+    }
+
+    /** Ítem de la planilla (en R o M) que originó la cotización. */
+    public function resultadoOrigen(): BelongsTo
+    {
+        return $this->belongsTo(PlanillaResultado::class, 'resultado_origen_id');
     }
 
     public function items(): HasMany
