@@ -27,6 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // En producción Caddy termina HTTPS y reenvía la solicitud: se confía en sus encabezados
         // X-Forwarded-* para generar enlaces https (QR, correos, archivos).
         $middleware->trustProxies(at: '*');
+        // No hay página de ingreso en Laravel (la tiene el panel): sin sesión la API responde 401 en JSON
+        // aunque la solicitud no pida JSON, en lugar de buscar la ruta «login».
+        $middleware->redirectGuestsTo(fn () => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Toda la API responde en JSON y con mensajes en español.

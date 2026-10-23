@@ -308,4 +308,11 @@ class PruebasSeguridadTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath('errores.nombre.0', 'El campo nombre es obligatorio.');
     }
+
+    public function test_sin_sesion_la_api_responde_401_aunque_no_pida_json(): void
+    {
+        $this->get('/api/v1/perfil')
+            ->assertUnauthorized()
+            ->assertJsonPath('mensaje', 'Sesión no válida o expirada. Inicie sesión nuevamente.');
+    }
 }
