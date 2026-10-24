@@ -31,7 +31,8 @@ export class ErrorApi extends Error {
 }
 
 function construirUrl(ruta, consulta) {
-  const url = new URL(URL_API + ruta);
+  // En producción URL_API es relativa ("/api/v1", mismo dominio): sin la base, new URL() falla.
+  const url = new URL(URL_API + ruta, window.location.origin);
   Object.entries(consulta || {}).forEach(([clave, valor]) => {
     if (valor !== undefined && valor !== null && valor !== '') {
       url.searchParams.set(clave, valor);
