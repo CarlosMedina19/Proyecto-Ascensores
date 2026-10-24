@@ -1954,6 +1954,11 @@ textarea.campo__control {
   pointer-events: none;
 }
 
+/* El botón de cerrar solo aparece en el celular, con el buscador expandido. */
+.buscador__cerrar {
+  display: none;
+}
+
 .buscador__panel {
   position: absolute;
   top: calc(100% + 8px);
@@ -3204,6 +3209,41 @@ span.estado-brm {
 
   .buscador__entrada {
     padding-right: 12px;
+  }
+
+  /* Al tocarlo se expande sobre el encabezado para que se lea lo que se escribe. */
+  .buscador--abierto {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+  }
+
+  .buscador--abierto .buscador__entrada {
+    height: 42px;
+    padding-right: 44px;
+    font-size: 16px; /* 16 px evita que el navegador del celular haga zoom al escribir */
+  }
+
+  .buscador--abierto .buscador__cerrar {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    color: var(--color-texto-suave);
+  }
+
+  .buscador--abierto .buscador__panel {
+    min-width: 0;
   }
 
   .calendario__celda {
@@ -5342,6 +5382,13 @@ a.avisos-dia__item:hover {
 
 .pagina__acciones .herramientas-excel {
   flex-wrap: nowrap;
+}
+
+/* En el celular los botones de Excel bajan de línea en lugar de empujar la página hacia los lados. */
+@media (max-width: 760px) {
+  .pagina__acciones .herramientas-excel {
+    flex-wrap: wrap;
+  }
 }
 
 /* =====================================================================

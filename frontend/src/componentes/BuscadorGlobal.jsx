@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowUpDown, Briefcase, Building2, ClipboardCheck, FileText, Search } from 'lucide-react';
+import { ArrowUpDown, Briefcase, Building2, ClipboardCheck, FileText, Search, X } from 'lucide-react';
 import { busqueda } from '../api/servicios';
 
 const GRUPOS = [
@@ -103,7 +103,8 @@ export default function BuscadorGlobal() {
   const mostrarPanel = abierto && texto.trim().length >= 2;
 
   return (
-    <div className="buscador" ref={contenedor}>
+    // En el celular el buscador ocupa todo el encabezado mientras está abierto (ver .buscador--abierto).
+    <div className={`buscador${abierto ? ' buscador--abierto' : ''}`} ref={contenedor}>
       <Search size={16} className="buscador__icono" aria-hidden="true" />
       <input
         ref={entrada}
@@ -123,6 +124,18 @@ export default function BuscadorGlobal() {
         aria-activedescendant={mostrarPanel && opciones[activo] ? `buscador-opcion-${activo}` : undefined}
         aria-label="Buscar en SIGMA"
       />
+      <button
+        type="button"
+        className="buscador__cerrar"
+        aria-label="Cerrar la búsqueda"
+        onClick={() => {
+          setTexto('');
+          setAbierto(false);
+          entrada.current?.blur();
+        }}
+      >
+        <X size={16} />
+      </button>
       <kbd className="buscador__atajo" aria-hidden="true">
         {esMac ? '⌘ K' : 'Ctrl K'}
       </kbd>
