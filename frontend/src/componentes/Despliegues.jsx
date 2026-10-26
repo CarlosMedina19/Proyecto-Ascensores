@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { ArrowUpDown, Building2, ChevronRight, Plus } from 'lucide-react';
 import { clientes, edificios } from '../api/servicios';
 import { useAutenticacion } from '../contexto/AutenticacionContexto';
-import { ESTADOS_EQUIPO, TIPOS_EDIFICIO, numero } from '../utilidades/formato';
+import { ESTADOS_EQUIPO, TIPOS_ASCENSOR, TIPOS_EDIFICIO, numero } from '../utilidades/formato';
 import { Alerta, Cargando, Insignia } from './Basicos';
 
 /** Ascensores de un edificio como enlaces directos. */
@@ -128,6 +128,7 @@ export function AscensoresDelEdificio({ edificioId }) {
 export function ResumenAscensor({ equipo }) {
   const ficha = equipo.ascensor || {};
   const datos = [
+    ['Tipo', TIPOS_ASCENSOR[ficha.tipo_ascensor] || '—'],
     ['Capacidad', numero(ficha.capacidad_kg, ' kg')],
     ['Velocidad', ficha.velocidad_mpm ? `${ficha.velocidad_mpm} m/min` : '—'],
     ['Paradas', ficha.paradas ?? '—'],

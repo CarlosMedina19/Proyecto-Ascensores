@@ -112,6 +112,13 @@ return [
 
     'custom' => [],
 
+    // Valores que aparecen en los mensajes (after_or_equal:today → «posterior o igual a hoy»).
+    'values' => [
+        'fecha' => ['today' => 'hoy'],
+        'vigente_hasta' => ['today' => 'hoy'],
+        'no_disponible_hasta' => ['today' => 'hoy'],
+    ],
+
     'attributes' => [
         'nombre' => 'nombre',
         'correo' => 'correo electrónico',

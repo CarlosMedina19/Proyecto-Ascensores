@@ -12,8 +12,20 @@ class Ascensor extends Model
 
     protected $table = 'ascensores';
 
+    /** Tipo según el uso del ascensor. */
+    public const TIPOS = [
+        'pasajeros' => 'Pasajeros',
+        'carga' => 'Carga (montacargas)',
+        'camillero' => 'Camillero (hospitalario)',
+        'panoramico' => 'Panorámico',
+        'vehicular' => 'Vehicular',
+        'plataforma' => 'Plataforma para movilidad reducida',
+        'montaplatos' => 'Montaplatos',
+    ];
+
     protected $fillable = [
         'equipo_id',
+        'tipo_ascensor',
         'marca',
         'modelo',
         'capacidad_kg',

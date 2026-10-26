@@ -357,6 +357,7 @@ class _PantallaDetalleEquipoState extends State<PantallaDetalleEquipo> {
                 titulo: 'Ficha técnica',
                 hijos: [
                   Datos([
+                    ('Tipo de ascensor', ficha.nombreTipo),
                     ('Capacidad', numero(ficha.capacidadKg, ' kg')),
                     ('Velocidad', numero(ficha.velocidadMpm, ' m/min')),
                     ('Paradas', ficha.paradas?.toString()),

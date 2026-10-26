@@ -7,7 +7,7 @@ import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, 
 import AccionesRegistro from '../../componentes/AccionesRegistro';
 import HerramientasExcel from '../../componentes/HerramientasExcel';
 import { ResumenAscensor } from '../../componentes/Despliegues';
-import { ESTADOS_EQUIPO, TIPOS_EDIFICIO, numero } from '../../utilidades/formato';
+import { ESTADOS_EQUIPO, TIPOS_ASCENSOR, TIPOS_EDIFICIO, numero } from '../../utilidades/formato';
 
 /** Todos los ascensores, o solo los de un tipo de edificio cuando se abre desde Clientes en el menú. */
 export default function ListaEquipos({ tipo }) {
@@ -15,6 +15,7 @@ export default function ListaEquipos({ tipo }) {
   const navegar = useNavigate();
   const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina, recargar } = useListado(equipos.listar, {
     estado: '',
+    tipo_ascensor: '',
     tipo_edificio: tipo || '',
   }, filasSegunPantalla(84));
   const grupo = TIPOS_EDIFICIO[tipo];
@@ -54,6 +55,14 @@ export default function ListaEquipos({ tipo }) {
           <select className="campo__control" value={filtros.estado} onChange={(e) => cambiarFiltro('estado', e.target.value)} aria-label="Estado">
             <option value="">Todos los estados</option>
             {Object.entries(ESTADOS_EQUIPO).map(([valor, { texto }]) => (
+              <option key={valor} value={valor}>
+                {texto}
+              </option>
+            ))}
+          </select>
+          <select className="campo__control" value={filtros.tipo_ascensor} onChange={(e) => cambiarFiltro('tipo_ascensor', e.target.value)} aria-label="Tipo de ascensor">
+            <option value="">Todos los tipos</option>
+            {Object.entries(TIPOS_ASCENSOR).map(([valor, texto]) => (
               <option key={valor} value={valor}>
                 {texto}
               </option>
@@ -100,9 +109,16 @@ export default function ListaEquipos({ tipo }) {
               { clave: 'ubicacion', titulo: 'Ubicación' },
               {
                 clave: 'ficha',
-                titulo: 'Capacidad · Paradas',
+                titulo: 'Tipo · Capacidad',
                 render: (e) =>
-                  e.ascensor ? `${numero(e.ascensor.capacidad_kg, ' kg')} · ${e.ascensor.paradas ?? '—'}` : '—',
+                  e.ascensor ? (
+                    <>
+                      {TIPOS_ASCENSOR[e.ascensor.tipo_ascensor] || 'Sin tipo'}
+                      <div className="tabla__secundario">{`${numero(e.ascensor.capacidad_kg, ' kg')} · ${e.ascensor.paradas ?? '—'} paradas`}</div>
+                    </>
+                  ) : (
+                    '—'
+                  ),
               },
               {
                 clave: 'estado',

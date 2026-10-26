@@ -7,7 +7,7 @@ import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { useFormulario } from '../../hooks/useFormulario';
 import { Alerta, Cargando, Confirmacion, Datos, EncabezadoPagina, EstadoVacio, Insignia, Modal, Tarjeta } from '../../componentes/Basicos';
 import { CampoArea, CampoSelector } from '../../componentes/Campos';
-import { ESTADOS_EQUIPO, EVENTOS_HISTORIAL, fecha, fechaHora, numero, velocidad } from '../../utilidades/formato';
+import { ESTADOS_EQUIPO, EVENTOS_HISTORIAL, TIPOS_ASCENSOR, fecha, fechaHora, numero, velocidad } from '../../utilidades/formato';
 import CorteAscensor from '../../componentes/CorteAscensor';
 import LineaTiempo from '../../componentes/LineaTiempo';
 import PlanDelEquipo from './PlanDelEquipo';
@@ -197,6 +197,7 @@ export default function DetalleEquipo() {
           <Tarjeta titulo="Ficha técnica">
             <Datos
               elementos={[
+                ['Tipo de ascensor', TIPOS_ASCENSOR[ficha.tipo_ascensor] || ficha.tipo_ascensor],
                 ['Capacidad', [numero(ficha.capacidad_kg, ' kg'), ficha.capacidad_personas ? `${ficha.capacidad_personas} personas` : null].filter(Boolean).join(' · ')],
                 ['Velocidad', velocidad(ficha.velocidad_mpm)],
                 ['Paradas', ficha.paradas],

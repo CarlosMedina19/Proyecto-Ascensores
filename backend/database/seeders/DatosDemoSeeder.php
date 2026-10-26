@@ -119,6 +119,8 @@ class DatosDemoSeeder extends Seeder
                             'capacidad_kg' => [450, 630, 800, 1000][$consecutivo % 4],
                             'velocidad_mpm' => [60, 90, 105, 150][$consecutivo % 4],
                             'paradas' => $edificio->pisos,
+                            // Casi todos de pasajeros; algunos de carga y camilleros para variar el ejemplo.
+                            'tipo_ascensor' => match ($consecutivo % 5) { 3 => 'carga', 4 => 'camillero', default => 'pasajeros' },
                             'tipo_traccion' => $consecutivo % 3 === 0 ? 'Hidráulico' : 'Eléctrico de tracción',
                             'motor' => 'Motor sin engranajes (gearless)',
                             'controlador' => 'Control de maniobra colectiva selectiva',

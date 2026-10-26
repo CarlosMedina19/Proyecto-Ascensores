@@ -94,7 +94,7 @@ class ImportacionService
         'ascensores' => [
             'edificio_id' => 'edificio', 'fecha_instalacion' => 'anio_instalacion', 'tecnico_id' => 'tecnico',
             'ascensor.capacidad_kg' => 'capacidad_kg', 'ascensor.capacidad_personas' => 'personas', 'ascensor.velocidad_mpm' => 'velocidad_ms',
-            'ascensor.paradas' => 'paradas', 'ascensor.tipo_traccion' => 'accionamiento', 'ascensor.controlador' => 'controlador',
+            'ascensor.paradas' => 'paradas', 'ascensor.tipo_traccion' => 'accionamiento', 'ascensor.tipo_ascensor' => 'tipo_ascensor', 'ascensor.controlador' => 'controlador',
             'ascensor.tipo_puerta' => 'tipo_puerta', 'plan_id' => 'plan', 'periodicidad_id' => 'periodicidad',
             'fecha_inicio' => 'fecha_primer_mantenimiento', 'precio' => 'valor_visita',
         ],
@@ -537,6 +537,7 @@ class ImportacionService
             'tecnico_id' => $tecnico?->id,
         ], fn ($x) => $x !== null);
         $datos['ascensor'] = array_filter([
+            'tipo_ascensor' => Plantilla::opcion($v['tipo_ascensor'] ?? null, Opciones::tiposAscensor()),
             'capacidad_kg' => Plantilla::numero($v['capacidad_kg']),
             'capacidad_personas' => Plantilla::numero($v['personas'] ?? null),
             'velocidad_mpm' => is_numeric($velocidad) ? round($velocidad * 60, 2) : $velocidad,

@@ -40,6 +40,10 @@ class EquipoService
             $consulta->where('estado', $filtros['estado']);
         }
 
+        if (! empty($filtros['tipo_ascensor'])) {
+            $consulta->whereHas('ascensor', fn ($consulta) => $consulta->where('tipo_ascensor', $filtros['tipo_ascensor']));
+        }
+
         if (! empty($filtros['busqueda'])) {
             $busqueda = $filtros['busqueda'];
             $coincidencia = DB::getDriverName() === 'pgsql' ? 'ilike' : 'like';

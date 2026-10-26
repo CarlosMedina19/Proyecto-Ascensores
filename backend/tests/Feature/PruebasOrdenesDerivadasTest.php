@@ -186,6 +186,14 @@ class PruebasOrdenesDerivadasTest extends TestCase
         ])->assertUnprocessable()->assertJsonPath('mensaje', 'El hallazgo no corresponde a este ascensor.');
     }
 
+    public function test_la_vigencia_vencida_se_explica_en_espanol(): void
+    {
+        $this->actingAs($this->coordinador, 'sanctum')->postJson('/api/v1/cotizaciones', [
+            'equipo_id' => $this->equipo->id, 'titulo' => 'x', 'vigente_hasta' => '2026-01-01',
+            'items' => [['descripcion' => 'x', 'cantidad' => 1, 'valor_unitario' => 1]],
+        ])->assertUnprocessable()->assertJsonPath('errores.vigente_hasta.0', 'El campo vigencia debe ser una fecha posterior o igual a hoy.');
+    }
+
     public function test_los_indicadores_se_descargan_en_pdf_y_el_cliente_solo_ve_los_suyos(): void
     {
         $this->emergencia();

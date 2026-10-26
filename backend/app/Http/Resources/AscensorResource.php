@@ -17,6 +17,7 @@ class AscensorResource extends RecursoApi
             'capacidad_personas' => $this->capacidad_personas,
             'paradas' => $this->paradas,
             'velocidad_mpm' => $this->velocidad_mpm,
+            'tipo_ascensor' => $this->tipo_ascensor,
             'tipo_traccion' => $this->tipo_traccion,
             'motor' => $this->motor,
             'controlador' => $this->controlador,

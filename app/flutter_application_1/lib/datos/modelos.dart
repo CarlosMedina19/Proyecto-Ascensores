@@ -57,8 +57,20 @@ class Usuario {
       rol;
 }
 
+/// Tipo de ascensor según su uso (mismos valores que la API).
+const nombresTipoAscensor = {
+  'pasajeros': 'Pasajeros',
+  'carga': 'Carga (montacargas)',
+  'camillero': 'Camillero (hospitalario)',
+  'panoramico': 'Panorámico',
+  'vehicular': 'Vehicular',
+  'plataforma': 'Plataforma para movilidad reducida',
+  'montaplatos': 'Montaplatos',
+};
+
 class Ascensor {
   Ascensor({
+    this.tipo,
     this.capacidadKg,
     this.velocidadMpm,
     this.paradas,
@@ -73,6 +85,7 @@ class Ascensor {
   });
 
   factory Ascensor.desdeJson(Map<String, dynamic> json) => Ascensor(
+    tipo: json['tipo_ascensor'] as String?,
     capacidadKg: _entero(json['capacidad_kg']),
     velocidadMpm: _decimal(json['velocidad_mpm']),
     paradas: _entero(json['paradas']),
@@ -86,6 +99,7 @@ class Ascensor {
     especificaciones: json['especificaciones_tecnicas'] as String?,
   );
 
+  final String? tipo;
   final int? capacidadKg;
   final double? velocidadMpm;
   final int? paradas;
@@ -97,6 +111,8 @@ class Ascensor {
   final int? puertasPiso;
   final String? operadorPuertas;
   final String? especificaciones;
+
+  String? get nombreTipo => tipo == null ? null : nombresTipoAscensor[tipo] ?? tipo;
 }
 
 class Edificio {

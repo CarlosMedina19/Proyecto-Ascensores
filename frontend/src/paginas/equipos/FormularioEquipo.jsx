@@ -5,7 +5,7 @@ import { limpiarVacios, useFormulario } from '../../hooks/useFormulario';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { Alerta, Cargando, EncabezadoPagina, Tarjeta } from '../../componentes/Basicos';
 import { CampoArea, CampoSelector, CampoTexto } from '../../componentes/Campos';
-import { ESTADOS_EQUIPO, velocidad } from '../../utilidades/formato';
+import { ESTADOS_EQUIPO, TIPOS_ASCENSOR, velocidad } from '../../utilidades/formato';
 import { GaleriaFotos, SelectorFotos } from '../../componentes/FotosEquipo';
 
 const EQUIPO_VACIO = {
@@ -22,6 +22,7 @@ const EQUIPO_VACIO = {
 };
 
 const FICHA_VACIA = {
+  tipo_ascensor: '',
   capacidad_kg: '',
   capacidad_personas: '',
   velocidad_mpm: '',
@@ -247,6 +248,13 @@ export default function FormularioEquipo() {
           </div>
           <div className="formulario__fila formulario__fila--4">
             <CampoSelector
+              etiqueta="Tipo de ascensor"
+              valor={datos.ascensor.tipo_ascensor}
+              alCambiar={cambiarFicha('tipo_ascensor')}
+              error={errorFicha('tipo_ascensor')}
+              opciones={Object.entries(TIPOS_ASCENSOR).map(([valor, texto]) => ({ valor, texto }))}
+            />
+            <CampoSelector
               etiqueta="Accionamiento"
               valor={datos.ascensor.tipo_traccion}
               alCambiar={cambiarFicha('tipo_traccion')}
@@ -255,12 +263,6 @@ export default function FormularioEquipo() {
             />
             <CampoTexto etiqueta="Motor" valor={datos.ascensor.motor} alCambiar={cambiarFicha('motor')} error={errorFicha('motor')} />
             <CampoTexto etiqueta="Controlador" valor={datos.ascensor.controlador} alCambiar={cambiarFicha('controlador')} error={errorFicha('controlador')} />
-            <CampoTexto
-              etiqueta="Operador de puertas"
-              valor={datos.ascensor.operador_puertas}
-              alCambiar={cambiarFicha('operador_puertas')}
-              error={errorFicha('operador_puertas')}
-            />
           </div>
           <div className="formulario__fila formulario__fila--4">
             <CampoTexto
@@ -285,6 +287,12 @@ export default function FormularioEquipo() {
               valor={datos.ascensor.puertas_piso}
               alCambiar={cambiarFicha('puertas_piso')}
               error={errorFicha('puertas_piso')}
+            />
+            <CampoTexto
+              etiqueta="Operador de puertas"
+              valor={datos.ascensor.operador_puertas}
+              alCambiar={cambiarFicha('operador_puertas')}
+              error={errorFicha('operador_puertas')}
             />
           </div>
           <div className="formulario__fila formulario__fila--3">

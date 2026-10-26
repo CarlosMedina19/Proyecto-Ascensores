@@ -105,6 +105,14 @@ export default function Estructura() {
 
   useEffect(() => setMenuAbierto(false), [ubicacion.pathname]);
 
+  // En el celular el menú se cierra con Esc (y tocando fuera, en el velo).
+  useEffect(() => {
+    if (!menuAbierto) return undefined;
+    const alTecla = (evento) => evento.key === 'Escape' && setMenuAbierto(false);
+    window.addEventListener('keydown', alTecla);
+    return () => window.removeEventListener('keydown', alTecla);
+  }, [menuAbierto]);
+
   // En modo demostración, el recorrido se abre solo la primera vez.
   useEffect(() => {
     if (!demostracion || recorridoVisto()) return undefined;
@@ -146,6 +154,7 @@ export default function Estructura() {
 
   return (
     <div className={`estructura${contraido ? ' estructura--contraida' : ''}`}>
+      {menuAbierto && <div className="lateral__velo" onClick={() => setMenuAbierto(false)} aria-hidden="true" />}
       <aside className={`lateral${menuAbierto ? ' abierto' : ''}`} aria-label="Menú principal">
         <Marca />
         <nav className="lateral__navegacion" data-recorrido="menu">

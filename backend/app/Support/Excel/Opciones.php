@@ -2,6 +2,7 @@
 
 namespace App\Support\Excel;
 
+use App\Models\Ascensor;
 use App\Models\ChecklistItem;
 use App\Models\Edificio;
 use App\Models\Pago;
@@ -42,6 +43,11 @@ class Opciones
     public static function tiposEdificio(): array
     {
         return Edificio::TIPOS;
+    }
+
+    public static function tiposAscensor(): array
+    {
+        return Ascensor::TIPOS;
     }
 
     public static function tiposPuertaPiso(): array

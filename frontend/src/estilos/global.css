@@ -1272,6 +1272,74 @@ textarea.campo__control {
   color: var(--escena-peligro);
 }
 
+.notificacion--alerta svg {
+  color: #f2b84b;
+}
+
+.notificacion--cargando svg,
+.girando {
+  animation: girar 0.9s linear infinite;
+}
+
+/* Revisión del archivo de Excel en curso. */
+.importacion__revisando {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 18px;
+  border: 1px solid var(--color-borde);
+  border-radius: 14px;
+  background: var(--color-superficie-suave);
+}
+
+.importacion__revisando svg {
+  color: var(--color-primario);
+  flex: none;
+}
+
+.importacion__revisando > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.importacion__revisando b {
+  color: var(--color-texto);
+  overflow-wrap: anywhere;
+}
+
+.importacion__revisando span {
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.importacion__barra {
+  margin-top: 8px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--color-borde);
+  overflow: hidden;
+}
+
+.importacion__barra i {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primario);
+  animation: barra-indeterminada 1.2s ease-in-out infinite;
+}
+
+@keyframes barra-indeterminada {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
 @keyframes aparecer {
   from {
     transform: translateY(16px);
@@ -1896,6 +1964,17 @@ textarea.campo__control {
   padding: 28px 16px;
   text-align: center;
   color: var(--color-texto-suave);
+}
+
+/* El velo del menú solo existe en pantallas angostas (ver @media max-width: 1000px). */
+.lateral__velo {
+  display: none;
+}
+
+@keyframes aparecer-velo {
+  from {
+    opacity: 0;
+  }
 }
 
 /* ---------- Buscador global (Ctrl+K) ---------- */
@@ -3287,6 +3366,16 @@ span.estado-brm {
   .lateral.abierto {
     transform: none;
     box-shadow: var(--sombra-elevada);
+  }
+
+  /* Velo detrás del menú abierto: tocar fuera del menú lo cierra. */
+  .lateral__velo {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    background: rgb(8 6 14 / 0.5);
+    animation: aparecer-velo 0.2s ease;
   }
 
   .encabezado {
@@ -5651,4 +5740,48 @@ textarea.campo__control {
 
 textarea.campo__control[rows='2'] {
   min-height: 56px;
+}
+
+/* Celular: los botones del pie de los modales van uno debajo del otro, a todo el ancho, con la
+   acción principal arriba (es el último botón del pie). */
+@media (max-width: 560px) {
+  .modal__pie {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .modal__pie .boton {
+    width: 100%;
+    justify-content: center;
+    white-space: normal;
+    text-align: center;
+  }
+
+  /* Errores de la importación: cada fila como una ficha (hoja · fila · columna y el motivo debajo). */
+  .importacion__problemas thead {
+    display: none;
+  }
+
+  .importacion__problemas .tabla tr {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    gap: 2px 10px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--color-borde);
+  }
+
+  .importacion__problemas .tabla td {
+    padding: 0;
+    border: 0;
+  }
+
+  .importacion__problemas .tabla td.numero::before {
+    content: 'Fila ';
+  }
+
+  .importacion__problemas .tabla .importacion__motivo {
+    grid-column: 1 / -1;
+    min-width: 0;
+    color: var(--color-texto);
+  }
 }

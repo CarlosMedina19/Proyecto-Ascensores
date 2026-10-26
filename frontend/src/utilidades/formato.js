@@ -121,6 +121,17 @@ export const TIPOS_EDIFICIO = {
   residencial: { texto: 'Residencial', plural: 'Residenciales', ruta: '/clientes/residenciales' },
 };
 
+/** Tipo de ascensor según su uso (mismos valores que la API). */
+export const TIPOS_ASCENSOR = {
+  pasajeros: 'Pasajeros',
+  carga: 'Carga (montacargas)',
+  camillero: 'Camillero (hospitalario)',
+  panoramico: 'Panorámico',
+  vehicular: 'Vehicular',
+  plataforma: 'Plataforma para movilidad reducida',
+  montaplatos: 'Montaplatos',
+};
+
 export const TIPOS_CLIENTE = {
   natural: 'Persona natural',
   juridica: 'Persona jurídica',

@@ -66,7 +66,9 @@ describe('importar desde Excel', () => {
     const archivo = new File(['contenido'], 'carga.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     await userEvent.upload(screen.getByLabelText(/arrastre el archivo/i), archivo);
 
-    expect(await screen.findByText(/Todavía no se ha guardado nada/)).toBeInTheDocument();
+    // La ventana muestra el resumen y una notificación avisa que la revisión terminó con problemas.
+    expect(await screen.findByText(/filas válidas, 1 con error/)).toBeInTheDocument();
+    expect(document.querySelector('.notificacion--alerta')).toHaveTextContent(/Revisión lista: .* con problemas\. Todavía no se ha guardado nada\./);
     expect(screen.getByRole('region', { name: 'Errores encontrados' })).toHaveTextContent('Falta Paradas. Es obligatorio.');
     expect(screen.getByRole('region', { name: 'Duplicados detectados' })).toHaveTextContent('ya aparece en la fila 2');
     expect(screen.getByText(/Se crearán 14 puertas de piso/)).toBeInTheDocument();

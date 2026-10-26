@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Equipo;
 
+use App\Models\Ascensor;
 use App\Models\Equipo;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -44,6 +45,7 @@ class GuardarEquipoRequest extends FormRequest
 
             // Ficha técnica: capacidad, velocidad y paradas son obligatorias y mayores que cero.
             'ascensor' => [$actualizando ? 'sometimes' : 'required', 'array'],
+            'ascensor.tipo_ascensor' => ['nullable', Rule::in(array_keys(Ascensor::TIPOS))],
             'ascensor.capacidad_kg' => [...$requerido, 'integer', 'min:100', 'max:5000'],
             'ascensor.capacidad_personas' => ['nullable', 'integer', 'min:1', 'max:100'],
             'ascensor.velocidad_mpm' => [...$requerido, 'numeric', 'min:6', 'max:600'],
@@ -70,6 +72,7 @@ class GuardarEquipoRequest extends FormRequest
             'ascensor.capacidad_kg' => 'capacidad (kg)',
             'ascensor.velocidad_mpm' => 'velocidad (m/min)',
             'ascensor.paradas' => 'número de paradas',
+            'ascensor.tipo_ascensor' => 'tipo de ascensor',
             'ascensor.tipo_traccion' => 'accionamiento',
             'ascensor.puertas_cabina' => 'puertas de cabina',
             'ascensor.puertas_piso' => 'puertas de piso',

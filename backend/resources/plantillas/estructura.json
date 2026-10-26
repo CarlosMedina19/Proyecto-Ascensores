@@ -384,6 +384,14 @@
           "ayuda": "Número de paradas entre 2 y 60. SIGMA crea una puerta de piso por parada."
         },
         {
+          "clave": "tipo_ascensor",
+          "titulo": "Tipo de ascensor",
+          "tipo": "lista",
+          "lista": "tiposAscensor",
+          "ancho": 24,
+          "ayuda": "Uso del ascensor: pasajeros, carga, camillero, panorámico, vehicular, plataforma o montaplatos."
+        },
+        {
           "clave": "accionamiento",
           "titulo": "Accionamiento",
           "tipo": "lista",
@@ -477,6 +485,7 @@
         "personas": 8,
         "velocidad_ms": 1,
         "paradas": 7,
+        "tipo_ascensor": "Pasajeros",
         "accionamiento": "Eléctrico de tracción",
         "controlador": "Microprocesado",
         "tipo_puerta": "Automática de apertura central",
@@ -1230,6 +1239,15 @@
       "Fujitec",
       "Sigma",
       "Otra"
+    ],
+    "tiposAscensor": [
+      "Pasajeros",
+      "Carga (montacargas)",
+      "Camillero (hospitalario)",
+      "Panorámico",
+      "Vehicular",
+      "Plataforma para movilidad reducida",
+      "Montaplatos"
     ],
     "accionamientos": [
       "Eléctrico de tracción",

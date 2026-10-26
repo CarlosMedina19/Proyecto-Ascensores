@@ -229,6 +229,7 @@ class ExportacionService
                 'personas' => $ficha?->capacidad_personas,
                 'velocidad_ms' => $ficha?->velocidad_mpm ? round((float) $ficha->velocidad_mpm / 60, 2) : null,
                 'paradas' => $ficha?->paradas,
+                'tipo_ascensor' => Opciones::tiposAscensor()[$ficha?->tipo_ascensor ?? ''] ?? $ficha?->tipo_ascensor,
                 'accionamiento' => $ficha?->tipo_traccion,
                 'controlador' => $ficha?->controlador,
                 'tipo_puerta' => $ficha?->tipo_puerta,
