@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Smartphone, Sun } from 'lucide-react';
 import { Marca } from '../../componentes/Marca';
 import { useTema } from '../../hooks/useTema';
 import { aplicarDemostracionDesdeUrl, useDemostracion } from '../../hooks/useDemostracion';
@@ -141,7 +141,13 @@ export default function DisenoAcceso({ children }) {
           </button>
         </div>
         <div className="acceso__caja">{children}</div>
-        <footer className="acceso__pie">{demostracion ? 'SENA · Proyecto formativo SIGMA · Modo demostración' : 'SIGMA · Gestión y mantenimiento de ascensores'}</footer>
+        <footer className="acceso__pie">
+          {demostracion ? 'SENA · Proyecto formativo SIGMA · Modo demostración' : 'SIGMA · Gestión y mantenimiento de ascensores'}
+          {/* El APK lo sirve el servidor en /descargas (ver frontend/docker/nginx.conf). */}
+          <a className="acceso__app" href="/descargas/sigma.apk" download>
+            <Smartphone size={13} aria-hidden="true" /> App para Android
+          </a>
+        </footer>
       </section>
     </div>
   );

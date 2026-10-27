@@ -32,7 +32,7 @@ class EmergenciaNotification extends NotificacionSigma
                 '%s (%s). %s Tiempo objetivo de llegada: %d minutos.',
                 Emergencia::TIPOS[$e->tipo] ?? $e->tipo,
                 $lugar,
-                $e->descripcion ? trim($e->descripcion).'.' : '',
+                $e->descripcion ? rtrim(trim($e->descripcion), '.').'.' : '', // sin doble punto si ya termina en punto
                 $e->minutos_objetivo,
             ),
             'resuelta' => "Se resolvió la emergencia del ascensor {$e->equipo?->codigo}. ".($e->solucion ?? ''),

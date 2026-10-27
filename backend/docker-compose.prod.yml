@@ -71,6 +71,9 @@ services:
     image: sigma-frontend:latest
     container_name: sigma_frontend
     restart: unless-stopped
+    volumes:
+      # APK de la app: se copia a backend/descargas en el servidor y queda en /descargas/sigma.apk.
+      - ./descargas:/usr/share/nginx/html/descargas:ro
     networks:
       - proxy
 
