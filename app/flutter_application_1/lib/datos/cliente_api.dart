@@ -42,6 +42,8 @@ class ClienteApi {
 
   Future<Map<String, dynamic>> reemplazar(String ruta, [Map<String, Object?>? cuerpo]) => _enviar('PUT', ruta, cuerpo: cuerpo);
 
+  Future<Map<String, dynamic>> eliminar(String ruta) => _enviar('DELETE', ruta);
+
   Future<Map<String, dynamic>> _enviar(
     String metodo,
     String ruta, {

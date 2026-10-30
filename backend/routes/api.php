@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AsignacionPlanController;
 use App\Http\Controllers\Api\AutenticacionController;
 use App\Http\Controllers\Api\BusquedaController;
 use App\Http\Controllers\Api\CarteraController;
+use App\Http\Controllers\Api\InventarioController;
 use App\Http\Controllers\Api\ClienteController;
 use App\Http\Controllers\Api\ConfiguracionController;
 use App\Http\Controllers\Api\ContratoController;
@@ -170,8 +171,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cotizaciones/{cotizacion}', [ServicioController::class, 'verCotizacion']);
     Route::post('/cotizaciones/{cotizacion}/respuesta', [ServicioController::class, 'responderCotizacion']);
     Route::post('/cotizaciones/{cotizacion}/orden', [ServicioController::class, 'ordenDesdeCotizacion']);
+    Route::post('/cotizaciones/{cotizacion}/factura', [ServicioController::class, 'facturarCotizacion']);
     Route::get('/indicadores/servicio', [ServicioController::class, 'indicadores']);
     Route::get('/indicadores/servicio/pdf', [ServicioController::class, 'indicadoresPdf']);
+
+    // RF-040 a RF-043: inventario de repuestos y repuestos usados en las órdenes.
+    Route::patch('/repuestos/{repuesto}/alternar-estado', [InventarioController::class, 'alternarEstado']);
+    Route::get('/repuestos/{repuesto}/movimientos', [InventarioController::class, 'movimientos']);
+    Route::post('/repuestos/{repuesto}/movimientos', [InventarioController::class, 'registrarMovimiento']);
+    Route::apiResource('repuestos', InventarioController::class);
+    Route::get('/ordenes/{orden}/repuestos', [InventarioController::class, 'repuestosOrden']);
+    Route::post('/ordenes/{orden}/repuestos', [InventarioController::class, 'agregarAOrden']);
+    Route::delete('/ordenes/{orden}/repuestos/{registro}', [InventarioController::class, 'quitarDeOrden']);
 
     Route::get('/cartera/resumen', [CarteraController::class, 'resumen']);
     Route::get('/facturas', [CarteraController::class, 'facturas']);

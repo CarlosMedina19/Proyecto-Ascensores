@@ -208,4 +208,39 @@ class PruebasOrdenesDerivadasTest extends TestCase
         $ajeno = $this->usuario('cliente', ['cliente_id' => Cliente::factory()->create()->id]);
         $this->actingAs($ajeno, 'sanctum')->getJson("/api/v1/indicadores/servicio/pdf?equipo_id={$this->equipo->id}")->assertForbidden();
     }
+
+    public function test_el_descuento_se_resta_antes_del_iva_y_no_supera_los_renglones(): void
+    {
+        $this->actingAs($this->coordinador, 'sanctum')->postJson('/api/v1/cotizaciones', [
+            'equipo_id' => $this->equipo->id, 'titulo' => 'Cambio de amortiguadores', 'iva_porcentaje' => 19, 'descuento' => 200000,
+            'items' => [['descripcion' => 'Amortiguador hidráulico', 'cantidad' => 2, 'valor_unitario' => 850000], ['descripcion' => 'Mano de obra', 'cantidad' => 1, 'valor_unitario' => 300000]],
+        ])->assertCreated()
+            ->assertJsonPath('datos.subtotal', 2000000)
+            ->assertJsonPath('datos.descuento', 200000)
+            ->assertJsonPath('datos.iva', 342000)
+            ->assertJsonPath('datos.total', 2142000);
+
+        $this->postJson('/api/v1/cotizaciones', [
+            'equipo_id' => $this->equipo->id, 'titulo' => 'x', 'descuento' => 5000,
+            'items' => [['descripcion' => 'x', 'cantidad' => 1, 'valor_unitario' => 1000]],
+        ])->assertUnprocessable()->assertJsonPath('mensaje', 'El descuento no puede ser mayor que el valor de los renglones.');
+    }
+
+    public function test_la_cotizacion_aprobada_se_factura_una_sola_vez_por_su_total(): void
+    {
+        $id = $this->cotizacion();
+        $contador = $this->usuario('contador');
+        $this->actingAs($contador, 'sanctum')->postJson("/api/v1/cotizaciones/{$id}/factura", ['numero' => 'FV-1001'])
+            ->assertUnprocessable()->assertJsonPath('mensaje', 'Solo una cotización aprobada por el cliente se puede facturar.');
+
+        $this->actingAs($this->usuario('cliente', ['cliente_id' => $this->cliente->id]), 'sanctum')
+            ->postJson("/api/v1/cotizaciones/{$id}/respuesta", ['decision' => 'aprobada'])->assertOk();
+        // El técnico no factura.
+        $this->actingAs($this->tecnico->usuario, 'sanctum')->postJson("/api/v1/cotizaciones/{$id}/factura", ['numero' => 'FV-1001'])->assertForbidden();
+
+        $this->actingAs($contador, 'sanctum')->postJson("/api/v1/cotizaciones/{$id}/factura", ['numero' => 'FV-1001'])
+            ->assertCreated()->assertJsonPath('datos.factura.numero', 'FV-1001');
+        $this->assertDatabaseHas('facturas', ['numero' => 'FV-1001', 'cliente_id' => $this->cliente->id, 'valor' => 2380000, 'saldo' => 2380000, 'fecha_vencimiento' => '2026-02-04']);
+        $this->postJson("/api/v1/cotizaciones/{$id}/factura", ['numero' => 'FV-1002'])->assertUnprocessable();
+    }
 }

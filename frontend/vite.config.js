@@ -9,5 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: [fileURLToPath(new URL('./src/pruebas/configuracion.js', import.meta.url))],
+    // Las pruebas de pantallas completas pasan de 5 s en equipos lentos o con Docker encendido.
+    testTimeout: 20000,
   },
 });

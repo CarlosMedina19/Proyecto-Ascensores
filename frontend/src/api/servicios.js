@@ -219,6 +219,21 @@ export const excel = {
 };
 
 // Cartera mínima: facturas, pagos y saldo por antigüedad
+// RF-040 a RF-043: inventario de repuestos y repuestos usados en las órdenes.
+export const inventario = {
+  listar: (filtros) => api.obtener('/repuestos', filtros),
+  ver: (id) => api.obtener(`/repuestos/${id}`),
+  crear: (datos) => api.crear('/repuestos', datos),
+  actualizar: (id, datos) => api.reemplazar(`/repuestos/${id}`, datos),
+  alternarEstado: (id) => api.actualizar(`/repuestos/${id}/alternar-estado`),
+  eliminar: (id) => api.eliminar(`/repuestos/${id}`),
+  movimientos: (id, filtros) => api.obtener(`/repuestos/${id}/movimientos`, filtros),
+  registrarMovimiento: (id, datos) => api.crear(`/repuestos/${id}/movimientos`, datos),
+  deOrden: (ordenId) => api.obtener(`/ordenes/${ordenId}/repuestos`),
+  agregarAOrden: (ordenId, datos) => api.crear(`/ordenes/${ordenId}/repuestos`, datos),
+  quitarDeOrden: (ordenId, registroId) => api.eliminar(`/ordenes/${ordenId}/repuestos/${registroId}`),
+};
+
 export const cartera = {
   resumen: () => api.obtener('/cartera/resumen'),
   facturas: (filtros) => api.obtener('/facturas', filtros),
@@ -255,6 +270,7 @@ export const servicio = {
   crearCotizacion: (datos) => api.crear('/cotizaciones', datos),
   responderCotizacion: (id, datos) => api.crear(`/cotizaciones/${id}/respuesta`, datos),
   ordenDesdeCotizacion: (id, datos = {}) => api.crear(`/cotizaciones/${id}/orden`, datos),
+  facturarCotizacion: (id, datos) => api.crear(`/cotizaciones/${id}/factura`, datos),
   indicadores: (filtros) => api.obtener('/indicadores/servicio', filtros),
   indicadoresPdf: (filtros = {}) => {
     const consulta = new URLSearchParams(Object.entries(filtros).filter(([, v]) => v !== '' && v != null)).toString();

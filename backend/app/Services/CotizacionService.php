@@ -6,6 +6,7 @@ use App\Exceptions\ReglaNegocioException;
 use App\Models\Configuracion;
 use App\Models\Cotizacion;
 use App\Models\Equipo;
+use App\Models\Factura;
 use App\Models\OrdenTrabajo;
 use App\Models\PlanillaResultado;
 use App\Models\Usuario;
@@ -72,8 +73,13 @@ class CotizacionService
                 'valor_total' => round((float) $item['cantidad'] * (float) $item['valor_unitario'], 2),
             ]);
             $subtotal = round($items->sum('valor_total'), 2);
+            // RF-044: total = renglones (mano de obra y repuestos) − descuento + IVA sobre la base con descuento.
+            $descuento = round((float) ($datos['descuento'] ?? 0), 2);
+            if ($descuento > $subtotal) {
+                throw new ReglaNegocioException('El descuento no puede ser mayor que el valor de los renglones.');
+            }
             $porcentajeIva = array_key_exists('iva_porcentaje', $datos) ? (float) $datos['iva_porcentaje'] : (float) Configuracion::valor('iva.porcentaje');
-            $iva = round($subtotal * $porcentajeIva / 100, 2);
+            $iva = round(($subtotal - $descuento) * $porcentajeIva / 100, 2);
 
             $cotizacion = Cotizacion::create([
                 'numero' => $this->siguienteNumero(),
@@ -83,8 +89,9 @@ class CotizacionService
                 'titulo' => $datos['titulo'],
                 'descripcion' => $datos['descripcion'] ?? null,
                 'subtotal' => $subtotal,
+                'descuento' => $descuento,
                 'iva' => $iva,
-                'total' => $subtotal + $iva,
+                'total' => round($subtotal - $descuento + $iva, 2),
                 'fecha_emision' => $datos['fecha_emision'] ?? now()->toDateString(),
                 'vigente_hasta' => $datos['vigente_hasta'] ?? now()->addDays(30)->toDateString(),
                 'estado' => 'enviada',
@@ -190,6 +197,40 @@ class CotizacionService
             ]);
 
             return $orden;
+        });
+    }
+
+    /**
+     * RF-045: la cotización aprobada pasa a facturación. Genera una sola factura, por el total de la
+     * cotización y vinculada a ella.
+     */
+    public function facturar(Cotizacion $cotizacion, array $datos, CarteraService $cartera): Factura
+    {
+        if ($cotizacion->estadoActual() !== 'aprobada') {
+            throw new ReglaNegocioException('Solo una cotización aprobada por el cliente se puede facturar.');
+        }
+        if ($cotizacion->factura_id) {
+            throw new ReglaNegocioException("La cotización ya tiene la factura {$cotizacion->factura?->numero}.");
+        }
+
+        return DB::transaction(function () use ($cotizacion, $datos, $cartera) {
+            $emision = $datos['fecha_emision'] ?? now()->toDateString();
+            $factura = $cartera->crearFactura([
+                'cliente_id' => $cotizacion->cliente_id,
+                'numero' => $datos['numero'],
+                'concepto' => "Cotización {$cotizacion->numero}: {$cotizacion->titulo}",
+                'fecha_emision' => $emision,
+                'fecha_vencimiento' => $datos['fecha_vencimiento'] ?? CarbonImmutable::parse($emision)->addDays(30)->toDateString(),
+                'valor' => (float) $cotizacion->total,
+            ]);
+            $cotizacion->update(['factura_id' => $factura->id]);
+            $cotizacion->equipo->historial()->create([
+                'usuario_id' => Auth::id(),
+                'evento' => 'cotizacion_facturada',
+                'descripcion' => "Cotización {$cotizacion->numero} facturada con la factura {$factura->numero}.",
+            ]);
+
+            return $factura;
         });
     }
 

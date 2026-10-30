@@ -27,6 +27,7 @@ import {
   Sun,
   Users,
   Wallet,
+  Package,
 } from 'lucide-react';
 import { useAutenticacion } from '../contexto/AutenticacionContexto';
 import { useInactividad } from '../hooks/useInactividad';
@@ -62,6 +63,7 @@ function opcionesMenu(esCliente, esTecnico) {
     { ruta: '/tecnicos', texto: 'Técnicos', icono: HardHat, permiso: 'tecnicos.ver' },
     { ruta: '/contratos', texto: esCliente ? 'Mis contratos' : 'Contratos', icono: FileText, permiso: 'contratos.ver' },
     { ruta: '/planes', texto: 'Planes y precios', icono: ClipboardList, permiso: 'planes.ver' },
+    { ruta: '/inventario', texto: 'Inventario', icono: Package, permiso: 'inventario.ver' },
     { ruta: '/cartera', texto: esCliente ? 'Mi estado de cuenta' : 'Cartera', icono: Wallet, permiso: 'cartera.ver' },
     { grupo: 'Servicio' },
     { ruta: '/emergencias', texto: 'Emergencias', icono: Siren, permiso: 'emergencias.ver', recorrido: 'emergencias' },

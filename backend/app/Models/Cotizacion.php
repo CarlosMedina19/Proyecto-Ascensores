@@ -14,7 +14,7 @@ class Cotizacion extends Model
     public const ESTADOS = ['enviada' => 'Esperando respuesta', 'aprobada' => 'Aprobada', 'rechazada' => 'Rechazada', 'vencida' => 'Vencida'];
 
     protected $fillable = [
-        'numero', 'equipo_id', 'cliente_id', 'orden_id', 'resultado_origen_id', 'titulo', 'descripcion', 'subtotal', 'iva', 'total',
+        'numero', 'equipo_id', 'cliente_id', 'orden_id', 'factura_id', 'resultado_origen_id', 'titulo', 'descuento', 'descripcion', 'subtotal', 'iva', 'total',
         'fecha_emision', 'vigente_hasta', 'estado', 'respondida_en', 'respondida_por', 'motivo_rechazo', 'creada_por',
     ];
 
@@ -22,6 +22,7 @@ class Cotizacion extends Model
     {
         return [
             'subtotal' => 'decimal:2',
+            'descuento' => 'decimal:2',
             'iva' => 'decimal:2',
             'total' => 'decimal:2',
             'fecha_emision' => 'date',
@@ -55,6 +56,12 @@ class Cotizacion extends Model
     public function resultadoOrigen(): BelongsTo
     {
         return $this->belongsTo(PlanillaResultado::class, 'resultado_origen_id');
+    }
+
+    /** RF-045: factura generada desde la cotización aprobada. */
+    public function factura(): BelongsTo
+    {
+        return $this->belongsTo(Factura::class, 'factura_id');
     }
 
     public function items(): HasMany

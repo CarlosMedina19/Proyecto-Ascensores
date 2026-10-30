@@ -128,6 +128,7 @@ export function ModalCotizacion({ equipo, hallazgo, alCerrar }) {
     titulo: hallazgo?.titulo || '',
     descripcion: hallazgo?.descripcion || '',
     iva_porcentaje: '19',
+    descuento: '',
     vigente_hasta: fechaIso(new Date(Date.now() + 30 * 86400000)),
     items: [{ ...RENGLON }],
   });
@@ -142,7 +143,9 @@ export function ModalCotizacion({ equipo, hallazgo, alCerrar }) {
 
   const cambiarRenglon = (i, campo) => (valor) => setDatos((d) => ({ ...d, items: d.items.map((r, j) => (j === i ? { ...r, [campo]: valor } : r)) }));
   const subtotal = datos.items.reduce((suma, r) => suma + numero(r.cantidad) * numero(r.valor_unitario), 0);
-  const iva = Math.round((subtotal * numero(datos.iva_porcentaje)) / 100);
+  // RF-044: el descuento se resta antes del IVA.
+  const descuento = Math.min(numero(datos.descuento), subtotal);
+  const iva = Math.round(((subtotal - descuento) * numero(datos.iva_porcentaje)) / 100);
 
   async function alEnviar(evento) {
     evento.preventDefault();
@@ -152,6 +155,7 @@ export function ModalCotizacion({ equipo, hallazgo, alCerrar }) {
         equipo_id: datos.equipo_id ? Number(datos.equipo_id) : null,
         resultado_origen_id: hallazgo?.resultado_id || null,
         iva_porcentaje: numero(datos.iva_porcentaje),
+        descuento: numero(datos.descuento),
         items: datos.items.map((r) => ({ descripcion: r.descripcion, cantidad: numero(r.cantidad), valor_unitario: numero(r.valor_unitario) })),
       }),
     );
@@ -218,6 +222,7 @@ export function ModalCotizacion({ equipo, hallazgo, alCerrar }) {
         </fieldset>
 
         <div className="formulario__fila">
+          <CampoTexto etiqueta="Descuento (COP)" inputMode="numeric" valor={datos.descuento} alCambiar={cambiar('descuento')} error={error('descuento')} placeholder="0" />
           <CampoTexto etiqueta="IVA (%)" inputMode="decimal" valor={datos.iva_porcentaje} alCambiar={cambiar('iva_porcentaje')} error={error('iva_porcentaje')} />
           <CampoTexto etiqueta="Vigente hasta" tipo="date" min={fechaIso()} valor={datos.vigente_hasta} alCambiar={cambiar('vigente_hasta')} error={error('vigente_hasta')} />
         </div>
@@ -226,13 +231,19 @@ export function ModalCotizacion({ equipo, hallazgo, alCerrar }) {
             <dt>Subtotal</dt>
             <dd>{dinero(subtotal)}</dd>
           </div>
+          {descuento > 0 && (
+            <div>
+              <dt>Descuento</dt>
+              <dd>− {dinero(descuento)}</dd>
+            </div>
+          )}
           <div>
             <dt>IVA</dt>
             <dd>{dinero(iva)}</dd>
           </div>
           <div className="totales__total">
             <dt>Total</dt>
-            <dd>{dinero(subtotal + iva)}</dd>
+            <dd>{dinero(subtotal - descuento + iva)}</dd>
           </div>
         </dl>
       </form>

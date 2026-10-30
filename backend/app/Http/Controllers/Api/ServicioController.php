@@ -16,6 +16,7 @@ use App\Models\OrdenTrabajo;
 use App\Models\Usuario;
 use App\Http\Resources\OrdenTrabajoResource;
 use App\Services\CalendarioHabilService;
+use App\Services\CarteraService;
 use App\Services\CertificacionService;
 use App\Services\CotizacionService;
 use App\Services\EmergenciaService;
@@ -330,8 +331,10 @@ class ServicioController extends Controller
             'cliente' => $c->cliente ? ['id' => $c->cliente->id, 'nombre' => $c->cliente->nombre] : null,
             'orden_id' => $c->orden_id,
             'orden' => $this->ordenCorta($c->orden),
+            'factura' => $c->factura ? ['id' => $c->factura->id, 'numero' => $c->factura->numero, 'estado' => $c->factura->estado] : null,
             'resultado_origen_id' => $c->resultado_origen_id,
             'subtotal' => (float) $c->subtotal,
+            'descuento' => (float) $c->descuento,
             'iva' => (float) $c->iva,
             'total' => (float) $c->total,
             'fecha_emision' => $c->fecha_emision->toDateString(),
@@ -407,6 +410,23 @@ class ServicioController extends Controller
             ->additional(['mensaje' => "Orden {$orden->numero} creada para la cotización {$cotizacion->numero}."])
             ->response()
             ->setStatusCode(201);
+    }
+
+    /** RF-045: factura de la cotización aprobada (contador o administrador). */
+    public function facturarCotizacion(Request $solicitud, Cotizacion $cotizacion): JsonResponse
+    {
+        $this->exigir($solicitud, 'facturas.crear', 'registrar facturas');
+        $datos = $solicitud->validate([
+            'numero' => ['required', 'string', 'max:40', Rule::unique('facturas', 'numero')],
+            'fecha_emision' => ['nullable', 'date'],
+            'fecha_vencimiento' => ['nullable', 'date', 'after_or_equal:fecha_emision'],
+        ], [], ['numero' => 'número de factura', 'fecha_vencimiento' => 'vencimiento']);
+        $factura = $this->cotizaciones->facturar($cotizacion, $datos, app(CarteraService::class));
+
+        return response()->json([
+            'datos' => $this->cotizacion($cotizacion->fresh(['equipo.edificio.cliente', 'cliente', 'items', 'respondidaPor', 'orden', 'factura']), true),
+            'mensaje' => "Factura {$factura->numero} registrada por $ ".number_format((float) $factura->valor, 0, ',', '.').'.',
+        ], 201);
     }
 
     // ---------- Indicadores y documentos ----------

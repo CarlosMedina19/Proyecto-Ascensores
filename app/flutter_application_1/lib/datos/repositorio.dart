@@ -171,6 +171,20 @@ class Repositorio {
     return (emergencia: Emergencia.desdeJson(respuesta['datos'] as Map<String, dynamic>), mensaje: respuesta['mensaje'] as String? ?? '');
   }
 
+  // RF-040 y RF-042: inventario y repuestos usados en la orden.
+  Future<List<RepuestoInventario>> repuestosActivos() async => (((await api.obtener('/repuestos', consulta: {'estado': 'activos', 'por_pagina': 100}))['datos'] as List?) ?? const [])
+      .map((r) => RepuestoInventario.desdeJson(r as Map<String, dynamic>))
+      .toList();
+
+  Future<List<RepuestoOrden>> repuestosDeOrden(int ordenId) async => (((await api.obtener('/ordenes/$ordenId/repuestos'))['datos'] as List?) ?? const [])
+      .map((r) => RepuestoOrden.desdeJson(r as Map<String, dynamic>))
+      .toList();
+
+  Future<String> agregarRepuesto(int ordenId, int repuestoId, double cantidad) async =>
+      (await api.crear('/ordenes/$ordenId/repuestos', {'repuesto_id': repuestoId, 'cantidad': cantidad}))['mensaje'] as String? ?? '';
+
+  Future<void> quitarRepuesto(int ordenId, int registroId) => api.eliminar('/ordenes/$ordenId/repuestos/$registroId');
+
   // RF-005 Clientes
   Future<Cliente> cliente(int id) async => Cliente.desdeJson((await api.obtener('/clientes/$id'))['datos'] as Map<String, dynamic>);
 }

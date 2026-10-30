@@ -849,3 +849,44 @@ class Emergencia {
   String get nombreTipo => nombresTipoEmergencia[tipo] ?? tipo;
   String get nombreEstado => nombresEstadoEmergencia[estado] ?? estado;
 }
+
+/// RF-040: repuesto del inventario (lo que el técnico necesita para elegirlo en una orden).
+class RepuestoInventario {
+  RepuestoInventario({required this.id, required this.codigo, required this.nombre, required this.unidad, required this.stock});
+
+  factory RepuestoInventario.desdeJson(Map<String, dynamic> json) => RepuestoInventario(
+    id: _entero(json['id'])!,
+    codigo: json['codigo'] as String? ?? '',
+    nombre: json['nombre'] as String? ?? '',
+    unidad: json['unidad'] as String? ?? 'unidad',
+    stock: _decimal(json['stock']) ?? 0,
+  );
+
+  final int id;
+  final String codigo;
+  final String nombre;
+  final String unidad;
+  final double stock;
+}
+
+/// RF-042: repuesto usado en una orden; se descuenta del inventario al finalizarla.
+class RepuestoOrden {
+  RepuestoOrden({required this.id, required this.repuesto, required this.cantidad, this.faltante = 0, this.descontada = 0});
+
+  factory RepuestoOrden.desdeJson(Map<String, dynamic> json) => RepuestoOrden(
+    id: _entero(json['id'])!,
+    repuesto: RepuestoInventario.desdeJson(json['repuesto'] as Map<String, dynamic>),
+    cantidad: _decimal(json['cantidad']) ?? 0,
+    descontada: _decimal(json['cantidad_descontada']) ?? 0,
+    faltante: _decimal(json['faltante']) ?? 0,
+  );
+
+  final int id;
+  final RepuestoInventario repuesto;
+  final double cantidad;
+  final double descontada;
+  final double faltante;
+}
+
+/// "2", "2,5": cantidad sin ceros de más.
+String cantidadTexto(double valor) => valor == valor.roundToDouble() ? valor.toStringAsFixed(0) : valor.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '').replaceAll('.', ',');

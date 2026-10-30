@@ -118,6 +118,12 @@ class OrdenTrabajo extends Model
     }
 
     /** RF-030: la planilla se diligencia solo en órdenes preventivas. */
+    /** RF-042: repuestos usados en la orden. */
+    public function repuestos(): HasMany
+    {
+        return $this->hasMany(OrdenRepuesto::class, 'orden_id');
+    }
+
     public function llevaPlanilla(): bool
     {
         return $this->servicio === 'preventivo';

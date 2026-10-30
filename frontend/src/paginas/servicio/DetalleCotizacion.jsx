@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Check, ClipboardList, X } from 'lucide-react';
+import { Check, ClipboardList, ReceiptText, X } from 'lucide-react';
 import { servicio } from '../../api/servicios';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { useFormulario } from '../../hooks/useFormulario';
 import { Alerta, Cargando, Datos, EncabezadoPagina, Insignia, Modal, Tabla, Tarjeta } from '../../componentes/Basicos';
-import { CampoArea } from '../../componentes/Campos';
+import { CampoArea, CampoTexto } from '../../componentes/Campos';
 import ModalOrdenDerivada from '../../componentes/ModalOrdenDerivada';
-import { dinero, fecha, fechaHora, numero } from '../../utilidades/formato';
+import { dinero, fecha, fechaHora, fechaIso, numero } from '../../utilidades/formato';
 import { ESTADOS_COTIZACION } from '../../utilidades/servicio';
 
 /** Detalle de la cotización. El cliente la aprueba o la rechaza con motivo, una sola vez. */
@@ -19,6 +19,7 @@ export default function DetalleCotizacion() {
   const [error, setError] = useState('');
   const [decision, setDecision] = useState(null);
   const [creandoOrden, setCreandoOrden] = useState(false);
+  const [facturando, setFacturando] = useState(false);
 
   useEffect(() => {
     servicio
@@ -33,6 +34,7 @@ export default function DetalleCotizacion() {
   const estado = ESTADOS_COTIZACION[cotizacion.estado];
   const puedeResponder = tienePermiso('cotizaciones.responder') && cotizacion.estado === 'enviada';
   const puedeCrearOrden = tienePermiso('ordenes.crear') && cotizacion.estado === 'aprobada' && !cotizacion.orden;
+  const puedeFacturar = tienePermiso('facturas.crear') && cotizacion.estado === 'aprobada' && !cotizacion.factura;
 
   return (
     <>
@@ -47,12 +49,27 @@ export default function DetalleCotizacion() {
             </button>
           </>
         )}
+        {puedeFacturar && (
+          <button type="button" className={puedeCrearOrden ? 'boton boton--secundario' : 'boton'} onClick={() => setFacturando(true)}>
+            <ReceiptText size={16} aria-hidden="true" /> Facturar
+          </button>
+        )}
         {puedeCrearOrden && (
           <button type="button" className="boton" onClick={() => setCreandoOrden(true)}>
             <ClipboardList size={16} aria-hidden="true" /> Crear orden de trabajo
           </button>
         )}
       </EncabezadoPagina>
+
+      {facturando && (
+        <ModalFacturar
+          cotizacion={cotizacion}
+          alCerrar={(nueva) => {
+            setFacturando(false);
+            if (nueva) setCotizacion(nueva);
+          }}
+        />
+      )}
 
       {creandoOrden && (
         <ModalOrdenDerivada
@@ -76,6 +93,7 @@ export default function DetalleCotizacion() {
               ['Respondida', cotizacion.respondida_en ? `${fechaHora(cotizacion.respondida_en)}${cotizacion.respondida_por ? ` · ${cotizacion.respondida_por}` : ''}` : '—'],
               ['Motivo del rechazo', cotizacion.motivo_rechazo || '—'],
               ['Orden de trabajo', cotizacion.orden ? <Link key="o" to={`/ordenes/${cotizacion.orden.id}`}>{cotizacion.orden.numero}</Link> : '—'],
+              ['Factura', cotizacion.factura ? <Link key="f" to="/cartera">{cotizacion.factura.numero}</Link> : '—'],
             ]}
           />
         </Tarjeta>
@@ -107,6 +125,12 @@ export default function DetalleCotizacion() {
             <dt>Subtotal</dt>
             <dd>{dinero(cotizacion.subtotal)}</dd>
           </div>
+          {cotizacion.descuento > 0 && (
+            <div>
+              <dt>Descuento</dt>
+              <dd>− {dinero(cotizacion.descuento)}</dd>
+            </div>
+          )}
           <div>
             <dt>IVA</dt>
             <dd>{dinero(cotizacion.iva)}</dd>
@@ -171,6 +195,56 @@ function ModalRespuesta({ cotizacion, decision, alCerrar }) {
         ) : (
           <CampoArea etiqueta="Motivo del rechazo" obligatorio rows={3} valor={datos.motivo} alCambiar={cambiar('motivo')} error={error('motivo')} placeholder="Precio, alcance, otro proveedor…" />
         )}
+      </form>
+    </Modal>
+  );
+}
+
+/** RF-045: la cotización aprobada pasa a facturación por su total (una sola factura). */
+function ModalFacturar({ cotizacion, alCerrar }) {
+  const notificar = useNotificar();
+  const hoy = fechaIso();
+  const { datos, cambiar, error, mensajeError, enviando, enviar } = useFormulario({
+    numero: '',
+    fecha_emision: hoy,
+    fecha_vencimiento: fechaIso(new Date(Date.now() + 30 * 86400000)),
+  });
+
+  async function alEnviar(evento) {
+    evento.preventDefault();
+    const r = await enviar(() => servicio.facturarCotizacion(cotizacion.id, datos));
+    if (r) {
+      notificar(r.mensaje);
+      alCerrar(r.datos);
+    }
+  }
+
+  return (
+    <Modal
+      titulo={`Facturar ${cotizacion.numero}`}
+      abierto
+      alCerrar={() => alCerrar(null)}
+      pie={
+        <>
+          <button type="button" className="boton boton--secundario" onClick={() => alCerrar(null)}>
+            Cancelar
+          </button>
+          <button type="submit" form="formulario-facturar" className="boton" disabled={enviando}>
+            {enviando ? 'Registrando…' : `Facturar ${dinero(cotizacion.total)}`}
+          </button>
+        </>
+      }
+    >
+      <form id="formulario-facturar" className="formulario" onSubmit={alEnviar} noValidate>
+        <Alerta>{mensajeError}</Alerta>
+        <p className="texto-suave texto-pequeno" style={{ margin: 0 }}>
+          La factura queda a nombre de {cotizacion.cliente?.nombre}, por el total aprobado ({dinero(cotizacion.total)}, IVA incluido), y vinculada a esta cotización.
+        </p>
+        <CampoTexto etiqueta="Número de factura" obligatorio valor={datos.numero} alCambiar={cambiar('numero')} error={error('numero')} placeholder="FV-1001" />
+        <div className="formulario__fila">
+          <CampoTexto etiqueta="Emisión" tipo="date" valor={datos.fecha_emision} alCambiar={cambiar('fecha_emision')} error={error('fecha_emision')} />
+          <CampoTexto etiqueta="Vencimiento" tipo="date" min={datos.fecha_emision} valor={datos.fecha_vencimiento} alCambiar={cambiar('fecha_vencimiento')} error={error('fecha_vencimiento')} />
+        </div>
       </form>
     </Modal>
   );

@@ -50,6 +50,7 @@ class OrdenTrabajoService
         private readonly MantenimientoService $mantenimientos,
         private readonly PlanillaService $planillas,
         private readonly InformeService $informes,
+        private readonly InventarioService $inventario,
     ) {}
 
     /** Consulta base según quién pregunta (RF-023). */
@@ -443,6 +444,14 @@ class OrdenTrabajoService
             'duracion_minutos' => $orden->duracion_minutos,
             'informe' => $orden->informe,
         ]);
+
+        // RF-042: los repuestos usados se descuentan del inventario al finalizar (no al cancelar).
+        $usados = $this->inventario->consumirOrden($orden);
+        if ($usados->isNotEmpty()) {
+            $faltan = $usados->filter(fn ($r) => (float) $r->fresh()->faltante > 0)->count();
+            $this->trazar($orden, 'repuestos_descontados', null, null, null, "Se descontaron {$usados->count()} repuesto(s) del inventario"
+                .($faltan ? "; {$faltan} con faltante registrado para reposición." : '.'));
+        }
 
         // Fase 4: cierra la planilla (avisa los ítems en M pendientes) y emite el informe PDF (RF-039).
         $this->planillas->completar($orden->fresh('planilla'));

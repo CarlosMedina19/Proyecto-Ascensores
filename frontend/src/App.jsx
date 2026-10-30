@@ -12,6 +12,8 @@ import Inicio from './paginas/Inicio';
 import Perfil from './paginas/Perfil';
 import ListaClientes from './paginas/clientes/ListaClientes';
 import Cartera from './paginas/cartera/Cartera';
+import Inventario from './paginas/inventario/Inventario';
+import DetalleRepuesto from './paginas/inventario/DetalleRepuesto';
 import FormularioCliente from './paginas/clientes/FormularioCliente';
 import DetalleCliente from './paginas/clientes/DetalleCliente';
 import ListaEdificios from './paginas/edificios/ListaEdificios';
@@ -91,6 +93,8 @@ export default function App() {
               <Route path="/equipos/:id/editar" element={conPermiso('equipos.editar', <FormularioEquipo />)} />
 
               <Route path="/cartera" element={conPermiso('cartera.ver', <Cartera />)} />
+              <Route path="/inventario" element={conPermiso('inventario.ver', <Inventario />)} />
+              <Route path="/inventario/:id" element={conPermiso('inventario.ver', <DetalleRepuesto />)} />
 
               <Route path="/usuarios" element={conPermiso('usuarios.ver', <ListaUsuarios />)} />
               <Route path="/usuarios/nuevo" element={conPermiso('usuarios.crear', <FormularioUsuario />)} />

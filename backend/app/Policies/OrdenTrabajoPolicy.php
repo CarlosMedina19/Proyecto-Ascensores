@@ -55,6 +55,12 @@ class OrdenTrabajoPolicy
         return $usuario->tienePermiso('ordenes.crear') || $this->ejecutar($usuario, $orden);
     }
 
+    /** RF-042: los repuestos usados los registra el técnico asignado o quien gestiona órdenes. */
+    public function registrarRepuestos(Usuario $usuario, OrdenTrabajo $orden): bool
+    {
+        return $usuario->tienePermiso('ordenes.editar') || $this->ejecutar($usuario, $orden);
+    }
+
     /** RF-025/RF-026: los estados de trabajo los avanza un técnico asignado a la orden. */
     public function ejecutar(Usuario $usuario, OrdenTrabajo $orden): bool
     {

@@ -76,6 +76,10 @@ class PermisoSeeder extends Seeder
         'cotizaciones.crear' => 'Crear y enviar cotizaciones a los clientes',
         'cotizaciones.responder' => 'Aprobar o rechazar cotizaciones (cliente)',
         'indicadores.ver' => 'Consultar los indicadores del servicio',
+        // RF-040 a RF-043: inventario de repuestos.
+        'inventario.ver' => 'Consultar repuestos, stock y movimientos de inventario',
+        'inventario.gestionar' => 'Registrar, editar, activar, desactivar y eliminar repuestos',
+        'inventario.movimientos' => 'Registrar entradas, salidas, devoluciones y ajustes de inventario',
     ];
 
     public function run(): void
@@ -110,6 +114,7 @@ class PermisoSeeder extends Seeder
             'coordinador' => array_merge(['resumen.ver', 'roles.ver', 'usuarios.ver', 'cartera.ver', 'datos.importar'], $permisosCatalogo, $permisosPlanes, [
                 'certificaciones.ver', 'certificaciones.gestionar', 'emergencias.ver', 'emergencias.reportar', 'emergencias.gestionar',
                 'cotizaciones.ver', 'cotizaciones.crear', 'indicadores.ver',
+                'inventario.ver', 'inventario.gestionar', 'inventario.movimientos',
             ]),
             // El supervisor solo consulta; no modifica datos.
             'supervisor' => [
@@ -128,6 +133,7 @@ class PermisoSeeder extends Seeder
                 'emergencias.ver',
                 'cotizaciones.ver',
                 'indicadores.ver',
+                'inventario.ver',
             ],
             'tecnico' => [
                 'edificios.ver',
@@ -143,6 +149,8 @@ class PermisoSeeder extends Seeder
                 'emergencias.ver',
                 'emergencias.reportar',
                 'emergencias.atender',
+                // RF-042: el técnico consulta el inventario para registrar los repuestos de sus órdenes.
+                'inventario.ver',
             ],
             // RF-015: solo el contador y el administrador cambian precios.
             'contador' => [
@@ -166,6 +174,7 @@ class PermisoSeeder extends Seeder
                 'cotizaciones.ver',
                 'cotizaciones.crear',
                 'indicadores.ver',
+                'inventario.ver',
             ],
             // El cliente consulta solo sus propios datos (las políticas filtran por cliente).
             'cliente' => [

@@ -5823,3 +5823,39 @@ textarea.campo__control[rows='2'] {
     flex-wrap: wrap;
   }
 }
+
+/* RF-042: repuestos usados en la orden. */
+.repuestos-orden {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.repuestos-orden li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+}
+
+.repuestos-orden__agregar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80px auto;
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .repuestos-orden__agregar {
+    grid-template-columns: minmax(0, 1fr) 80px;
+  }
+
+  .repuestos-orden__agregar .boton {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}

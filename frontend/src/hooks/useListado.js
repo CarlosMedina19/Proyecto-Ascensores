@@ -43,7 +43,8 @@ export function useListado(consultar, filtrosIniciales = {}, porPagina = filasSe
         por_pagina: porPagina,
       });
       if (numero === ultimaSolicitud.current) {
-        setRespuesta({ datos: resultado.datos || [], metadatos: resultado.metadatos || null });
+        // Se conserva la respuesta completa: algunas listas traen datos extra (por ejemplo, un resumen).
+        setRespuesta({ ...resultado, datos: resultado.datos || [], metadatos: resultado.metadatos || null });
       }
     } catch (e) {
       if (numero === ultimaSolicitud.current) setError(e.message);
@@ -70,5 +71,6 @@ export function useListado(consultar, filtrosIniciales = {}, porPagina = filasSe
     cambiarFiltro,
     setPagina,
     recargar,
+    respuesta,
   };
 }

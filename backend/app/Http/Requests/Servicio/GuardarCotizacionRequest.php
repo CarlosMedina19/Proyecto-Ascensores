@@ -23,6 +23,7 @@ class GuardarCotizacionRequest extends FormRequest
             'fecha_emision' => ['nullable', 'date'],
             'vigente_hasta' => ['nullable', 'date', 'after_or_equal:today'],
             'iva_porcentaje' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'descuento' => ['nullable', 'numeric', 'min:0', 'max:999999999999.99'],
             'items' => ['required', 'array', 'min:1', 'max:50'],
             'items.*.descripcion' => ['required', 'string', 'max:200'],
             'items.*.cantidad' => ['required', 'numeric', 'gt:0', 'max:100000'],

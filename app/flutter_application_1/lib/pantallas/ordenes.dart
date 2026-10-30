@@ -386,6 +386,8 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
             ),
             const SizedBox(height: 12),
             Seccion(titulo: 'Técnicos', hijos: [Text(orden.tecnicos.isEmpty ? 'Sin técnicos asignados' : orden.tecnicos.join(', '))]),
+            const SizedBox(height: 12),
+            SeccionRepuestos(orden: orden),
             // Fase 4: planilla del preventivo y firmas (RF-025, RF-030 a RF-039).
             if (orden.llevaPlanilla || orden.firmas.isNotEmpty || orden.puedeEjecutar) ...[
               const SizedBox(height: 12),
@@ -520,6 +522,170 @@ class _FormularioEstadoState extends State<_FormularioEstado> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// RF-042 y RF-052: repuestos usados en la orden. El técnico asignado los registra mientras la orden
+/// no esté finalizada ni cancelada; se descuentan del inventario al finalizarla.
+class SeccionRepuestos extends StatefulWidget {
+  const SeccionRepuestos({super.key, required this.orden});
+
+  final OrdenTrabajo orden;
+
+  @override
+  State<SeccionRepuestos> createState() => _SeccionRepuestosState();
+}
+
+class _SeccionRepuestosState extends State<SeccionRepuestos> {
+  List<RepuestoOrden>? _usados;
+
+  bool get _final => widget.orden.estado == 'finalizada' || widget.orden.estado == 'cancelada';
+  bool get _edita => !_final && widget.orden.puedeEjecutar;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  Future<void> _cargar() async {
+    try {
+      final usados = await context.read<Sesion>().repositorio.repuestosDeOrden(widget.orden.id);
+      if (mounted) setState(() => _usados = usados);
+    } catch (_) {
+      if (mounted) setState(() => _usados = const []);
+    }
+  }
+
+  Future<void> _agregar() async {
+    final mensajero = ScaffoldMessenger.of(context);
+    final elegido = await showModalBottomSheet<(RepuestoInventario, double)>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => const _FormularioRepuesto(),
+    );
+    if (elegido == null || !mounted) return;
+    try {
+      final mensaje = await context.read<Sesion>().repositorio.agregarRepuesto(widget.orden.id, elegido.$1.id, elegido.$2);
+      mensajero.showSnackBar(SnackBar(content: Text(mensaje)));
+      _cargar();
+    } catch (e) {
+      mensajero.showSnackBar(SnackBar(content: Text(mensajeError(e))));
+    }
+  }
+
+  Future<void> _quitar(RepuestoOrden usado) async {
+    final mensajero = ScaffoldMessenger.of(context);
+    try {
+      await context.read<Sesion>().repositorio.quitarRepuesto(widget.orden.id, usado.id);
+      _cargar();
+    } catch (e) {
+      mensajero.showSnackBar(SnackBar(content: Text(mensajeError(e))));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final usados = _usados;
+    if (usados == null || (usados.isEmpty && !_edita)) return const SizedBox.shrink();
+    return Seccion(
+      titulo: 'Repuestos usados',
+      accion: _edita ? TextButton.icon(onPressed: _agregar, icon: const Icon(Icons.add), label: const Text('Agregar')) : null,
+      hijos: [
+        if (usados.isEmpty) const Text('Registre los repuestos usados; se descuentan del inventario al finalizar la orden.'),
+        for (final u in usados)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.inventory_2_outlined, color: SigmaColores.primario),
+            title: Text(u.repuesto.nombre),
+            subtitle: Text('${u.repuesto.codigo} · ${cantidadTexto(u.cantidad)} ${u.repuesto.unidad}'),
+            trailing: _final
+                ? Insignia(texto: u.faltante > 0 ? 'Faltaron ${cantidadTexto(u.faltante)}' : 'Descontado', color: u.faltante > 0 ? SigmaColores.regular : SigmaColores.bueno)
+                : (_edita ? IconButton(onPressed: () => _quitar(u), icon: const Icon(Icons.delete_outline), tooltip: 'Quitar') : null),
+          ),
+      ],
+    );
+  }
+}
+
+class _FormularioRepuesto extends StatefulWidget {
+  const _FormularioRepuesto();
+
+  @override
+  State<_FormularioRepuesto> createState() => _FormularioRepuestoState();
+}
+
+class _FormularioRepuestoState extends State<_FormularioRepuesto> {
+  final _cantidad = TextEditingController(text: '1');
+  List<RepuestoInventario>? _repuestos;
+  RepuestoInventario? _elegido;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<Sesion>().repositorio.repuestosActivos().then((r) {
+      if (mounted) setState(() => _repuestos = r);
+    }).catchError((Object e) {
+      if (mounted) setState(() => _error = mensajeError(e));
+    });
+  }
+
+  @override
+  void dispose() {
+    _cantidad.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final repuestos = _repuestos;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.viewInsetsOf(context).bottom + 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Agregar repuesto', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 14),
+          if (repuestos == null && _error == null) const Cargando(),
+          if (repuestos != null)
+            DropdownButtonFormField<RepuestoInventario>(
+              initialValue: _elegido,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'RepuestoInventario'),
+              items: [
+                for (final r in repuestos)
+                  DropdownMenuItem(value: r, child: Text('${r.nombre} · stock ${cantidadTexto(r.stock)} ${r.unidad}', overflow: TextOverflow.ellipsis)),
+              ],
+              onChanged: (r) => setState(() => _elegido = r),
+            ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _cantidad,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(labelText: 'Cantidad${_elegido != null ? ' (${_elegido!.unidad})' : ''}'),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 10),
+            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ],
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: () {
+              final cantidad = double.tryParse(_cantidad.text.replaceAll(',', '.'));
+              if (_elegido == null || cantidad == null || cantidad <= 0) {
+                setState(() => _error = 'Elija el repuesto y una cantidad mayor que cero.');
+                return;
+              }
+              Navigator.of(context).pop((_elegido!, cantidad));
+            },
+            child: const Text('Agregar a la orden'),
+          ),
+        ],
       ),
     );
   }

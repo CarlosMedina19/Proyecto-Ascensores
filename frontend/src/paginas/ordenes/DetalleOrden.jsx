@@ -21,6 +21,7 @@ import {
 import SelectorTecnicos from './SelectorTecnicos';
 import PlanillaOrden from './PlanillaOrden';
 import FirmasInformes from './FirmasInformes';
+import RepuestosOrden from './RepuestosOrden';
 
 const EN_CURSO = ['en_camino', 'en_proceso'];
 const FINALES = ['finalizada', 'cancelada'];
@@ -384,6 +385,7 @@ export default function DetalleOrden() {
             </Tarjeta>
           )}
 
+          <RepuestosOrden orden={orden} notificar={notificar} />
           <FirmasInformes orden={orden} alCambiar={cargar} notificar={notificar} />
         </div>
       </div>
