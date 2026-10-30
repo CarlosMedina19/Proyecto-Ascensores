@@ -95,6 +95,30 @@ services:
       timeout: 5s
       retries: 20
 
+  # RNF-06: respaldo diario de la base de datos y de los archivos en backend/respaldos (14 días).
+  sigma_respaldos:
+    image: postgres:16-alpine
+    container_name: sigma_respaldos
+    restart: unless-stopped
+    entrypoint: ["sh", "/respaldo.sh"]
+    environment:
+      TZ: America/Bogota
+      PGHOST: sigma_db
+      PGDATABASE: ${DB_DATABASE}
+      PGUSER: ${DB_USERNAME}
+      PGPASSWORD: ${DB_PASSWORD}
+      RESPALDO_HORA: 3
+      RESPALDO_DIAS: 14
+    volumes:
+      - ./docker/respaldo.sh:/respaldo.sh:ro
+      - ./respaldos:/respaldos
+      - sigma_archivos:/archivos:ro
+    networks:
+      - sigma_interna
+    depends_on:
+      sigma_db:
+        condition: service_healthy
+
 volumes:
   sigma_pgdata:
     name: sigma_pgdata

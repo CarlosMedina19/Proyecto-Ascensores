@@ -46,6 +46,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->documentacionApi();
+
         Gate::policy(Usuario::class, UsuarioPolicy::class);
         Gate::policy(Rol::class, RolPolicy::class);
         Gate::policy(RegistroAuditoria::class, RegistroAuditoriaPolicy::class);
@@ -118,6 +120,33 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(3)->by($solicitud->ip())->response(
                 fn () => response()->json(['mensaje' => 'Demasiadas solicitudes. Espere un minuto.'], 429)
             );
+        });
+    }
+
+    /**
+     * RNF-11: documentación OpenAPI generada desde las rutas, validaciones y respuestas (Scramble).
+     * Scramble es dependencia de desarrollo: en producción no está instalado y esto no hace nada.
+     * Se ve en /docs/api (solo en desarrollo) y se exporta con `php artisan scramble:export`.
+     */
+    private function documentacionApi(): void
+    {
+        if (! class_exists(\Dedoc\Scramble\Scramble::class)) {
+            return;
+        }
+
+        // Scramble lee su configuración antes que este proveedor: título, versión y servidores se fijan
+        // directamente sobre el documento generado.
+        \Dedoc\Scramble\Scramble::configure()->withDocumentTransformers(function ($documento) {
+            $documento->info->title = 'SIGMA API';
+            $documento->info->setVersion('1.1');
+            $documento->info->setDescription('API de SIGMA (Sistema Integral de Gestión y Mantenimiento de Ascensores). '
+                .'Todas las rutas, salvo el ingreso, la recuperación de contraseña y el reporte por código QR, '
+                .'exigen el token que entrega POST /v1/iniciar-sesion en el encabezado Authorization: Bearer. '
+                .'Cada rol solo accede a las rutas que sus permisos le permiten.');
+            $documento->servers = [];
+            $documento->addServer(\Dedoc\Scramble\Support\Generator\Server::make('https://sigma.proyectoscampus.top/api')->setDescription('Producción'));
+            $documento->addServer(\Dedoc\Scramble\Support\Generator\Server::make('http://127.0.0.1:8000/api')->setDescription('Desarrollo'));
+            $documento->secure(\Dedoc\Scramble\Support\Generator\SecurityScheme::http('bearer'));
         });
     }
 }

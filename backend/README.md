@@ -82,7 +82,10 @@ Emergencias, Cotizaciones, Facturas, Pagos y Usuarios) con listas desplegables, 
   por ONAC); en otras ciudades se registra la norma local.
 - **Emergencias 24/7**: reporte desde el panel, la app o el **QR de la cabina sin iniciar sesión**
   (`/reportar/{código}`), tiempo objetivo de llegada configurable y seguimiento por estados.
-- **Cotizaciones** de correctivos que el cliente aprueba o rechaza desde su portal.
+- **Cotizaciones** de correctivos (con descuento) que el cliente aprueba o rechaza desde su portal; la aprobada
+  genera su orden de trabajo y su factura.
+- **Inventario de repuestos**: stock, stock mínimo con alerta, entradas, salidas, devoluciones y ajustes; los
+  repuestos usados en una orden se descuentan al finalizarla (el faltante queda registrado).
 - **Indicadores**: disponibilidad, MTBF, tiempo medio de respuesta y cumplimiento del plan.
 - Historial del ascensor con línea de tiempo y documentos; **recorrido guiado** de 5 pasos.
 
@@ -114,6 +117,30 @@ sigma.proyectoscampus.top {
 ```
 
 Nunca ejecutar `docker compose down -v` en producción (borra la base de datos y los archivos).
+
+### Respaldos
+
+`sigma_respaldos` guarda cada día, desde las 3:00 (hora de Colombia), un volcado de la base
+(`sigma_db_AAAAMMDD_HHMM.dump`) y los archivos (`sigma_archivos_AAAAMMDD_HHMM.tar.gz`) en
+`backend/respaldos/`, y conserva 14 días.
+
+```sh
+docker exec sigma_respaldos sh /respaldo.sh ahora          # respaldo inmediato
+# Restaurar la base (reemplaza los datos actuales):
+docker exec -i sigma_db pg_restore --clean --if-exists --no-owner -U "$DB_USERNAME" -d "$DB_DATABASE" < respaldos/sigma_db_AAAAMMDD_HHMM.dump
+# Restaurar los archivos:
+docker run --rm -v sigma_archivos:/archivos -v "$PWD/respaldos":/r alpine tar -xzf /r/sigma_archivos_AAAAMMDD_HHMM.tar.gz -C /archivos
+```
+
+## Documentación de la API
+
+`openapi.json` (OpenAPI 3.1) describe las 118 rutas con sus parámetros, validaciones y respuestas. Se genera
+desde el código con [Scramble](https://scramble.dedoc.co) (solo en desarrollo):
+
+```sh
+docker exec ascensores_app php artisan scramble:export --path=openapi.json   # regenerar el archivo
+# Vista interactiva en desarrollo: http://127.0.0.1:8000/docs/api
+```
 
 ## Pruebas
 

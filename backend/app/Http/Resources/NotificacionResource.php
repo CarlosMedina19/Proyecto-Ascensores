@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 
 /**
  * Notificación de la aplicación (canal database de Laravel).
+ *
+ * @mixin \Illuminate\Notifications\DatabaseNotification
  */
 class NotificacionResource extends RecursoApi
 {
