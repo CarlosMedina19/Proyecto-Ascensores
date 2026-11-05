@@ -165,7 +165,7 @@ class ExcelController extends Controller
             'checklist' => ['ítem del checklist', 'ítems del checklist'], 'facturas' => ['factura', 'facturas'],
             'certificaciones' => ['certificación', 'certificaciones'], 'emergencias' => ['emergencia', 'emergencias'],
             'cotizaciones' => ['cotización', 'cotizaciones'],
-            'pagos' => ['pago', 'pagos'], 'usuarios' => ['usuario', 'usuarios'],
+            'pagos' => ['pago', 'pagos'], 'usuarios' => ['usuario', 'usuarios'], 'repuestos' => ['repuesto', 'repuestos'],
         ];
         $partes = [];
         $actualizados = 0;

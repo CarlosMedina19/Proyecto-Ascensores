@@ -5,6 +5,8 @@ namespace App\Services\Excel;
 use App\Exceptions\ReglaNegocioException;
 use App\Http\Requests\Asignacion\GuardarAsignacionRequest;
 use App\Http\Requests\Cartera\GuardarFacturaRequest;
+use App\Http\Requests\Inventario\GuardarRepuestoRequest;
+use App\Http\Requests\Inventario\MovimientoInventarioRequest;
 use App\Http\Requests\Cartera\RegistrarPagoRequest;
 use App\Http\Requests\Cliente\ActualizarClienteRequest;
 use App\Http\Requests\Cliente\GuardarClienteRequest;
@@ -24,6 +26,7 @@ use App\Models\ChecklistItem;
 use App\Models\Cliente;
 use App\Models\Contrato;
 use App\Models\Cotizacion;
+use App\Models\Repuesto;
 use App\Models\Edificio;
 use App\Models\Emergencia;
 use App\Models\Equipo;
@@ -46,6 +49,7 @@ use App\Services\EdificioService;
 use App\Services\EmergenciaService;
 use App\Services\EquipoService;
 use App\Services\OrdenTrabajoService;
+use App\Services\InventarioService;
 use App\Services\PlanillaService;
 use App\Services\UsuarioService;
 use App\Support\Excel\Opciones;
@@ -85,6 +89,7 @@ class ImportacionService
         'facturas' => ['facturas.crear', 'facturas.crear'],
         'pagos' => ['pagos.registrar', 'pagos.registrar'],
         'usuarios' => ['usuarios.crear', 'usuarios.editar'],
+        'repuestos' => ['inventario.gestionar', 'inventario.gestionar'],
     ];
 
     /** Campo del formulario → columna de la plantilla, para ubicar cada error. */
@@ -105,6 +110,7 @@ class ImportacionService
         'cotizaciones' => ['equipo_id' => 'ascensor', 'iva_porcentaje' => 'iva', 'items' => 'valor', 'items.0.valor_unitario' => 'valor', 'items.0.descripcion' => 'titulo'],
         'pagos' => ['factura_id' => 'factura'],
         'usuarios' => ['rol_id' => 'rol', 'activo' => 'estado', 'cliente_id' => 'cliente'],
+        'repuestos' => ['activo' => 'estado', 'stock_contado' => 'stock'],
     ];
 
     private Usuario $usuario;
@@ -131,6 +137,7 @@ class ImportacionService
         private readonly CertificacionService $certificaciones,
         private readonly EmergenciaService $emergencias,
         private readonly CotizacionService $cotizaciones,
+        private readonly InventarioService $inventario,
     ) {}
 
     /**
@@ -804,6 +811,7 @@ class ImportacionService
             'titulo' => $titulo,
             'descripcion' => Plantilla::texto($v['descripcion'] ?? null),
             'iva_porcentaje' => Plantilla::numero($v['iva'] ?? null),
+            'descuento' => Plantilla::numero($v['descuento'] ?? null),
             'vigente_hasta' => Plantilla::fecha($v['vigente_hasta'] ?? null),
             'items' => [['descripcion' => mb_substr((string) $titulo, 0, 200), 'cantidad' => 1, 'valor_unitario' => Plantilla::numero($v['valor'])]],
         ], fn ($x) => $x !== null);
@@ -890,5 +898,46 @@ class ImportacionService
         $this->resultado['derivados']['invitaciones']++;
 
         return 'creado';
+    }
+
+    /**
+     * RF-040 y RF-041: repuestos. El stock de uno nuevo entra como inventario inicial; si cambia el de uno
+     * existente, se registra un ajuste (el stock solo cambia con movimientos).
+     */
+    private function importarRepuestos(array $v, int $fila): string
+    {
+        $codigo = Plantilla::texto($v['codigo']);
+        $this->unico('repuestos', (string) $codigo, 'codigo', $fila, 'El repuesto');
+        $estado = Plantilla::opcion($v['estado'] ?? null, Opciones::ESTADOS_REGISTRO);
+        $datos = array_filter([
+            'codigo' => $codigo,
+            'nombre' => Plantilla::texto($v['nombre']),
+            'marca' => Plantilla::texto($v['marca'] ?? null),
+            'referencia' => Plantilla::texto($v['referencia'] ?? null),
+            'unidad' => Plantilla::opcion($v['unidad'], Repuesto::UNIDADES),
+            'precio' => Plantilla::numero($v['precio']),
+            'stock_minimo' => Plantilla::numero($v['stock_minimo'] ?? null),
+            'activo' => $estado === '1' ? true : ($estado === '0' ? false : $estado),
+            'observaciones' => Plantilla::texto($v['observaciones'] ?? null),
+        ], fn ($x) => $x !== null);
+        $stock = Plantilla::numero($v['stock'] ?? null);
+
+        $existente = Repuesto::where('codigo', $codigo)->first();
+        $this->exigirPermiso('repuestos', (bool) $existente);
+        if (! $existente) {
+            $this->inventario->crear($this->validar(GuardarRepuestoRequest::class, $datos + ['stock' => $stock ?? 0]));
+
+            return 'creado';
+        }
+
+        $repuesto = $this->inventario->actualizar($existente, $this->validar(GuardarRepuestoRequest::class, $datos, ['repuesto' => $existente]));
+        if (is_numeric($stock) && round((float) $stock, 2) !== round((float) $repuesto->stock, 2)) {
+            if (! $this->usuario->tienePermiso('inventario.movimientos')) {
+                throw new FilaInvalida([['columna' => 'stock', 'motivo' => 'Su rol no puede ajustar el stock. Deje la columna Stock igual a la de SIGMA o vacía.']]);
+            }
+            $this->inventario->registrarMovimiento($repuesto, $this->validar(MovimientoInventarioRequest::class, ['tipo' => 'ajuste', 'stock_contado' => $stock, 'motivo' => 'Carga desde Excel.']));
+        }
+
+        return 'actualizado';
     }
 }

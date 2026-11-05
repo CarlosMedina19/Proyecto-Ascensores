@@ -7,6 +7,7 @@ use App\Models\Equipo;
 use App\Models\Factura;
 use App\Models\Periodicidad;
 use App\Models\PuertaPiso;
+use App\Models\Repuesto;
 use App\Models\Rol;
 use App\Models\Usuario;
 use App\Services\PlanService;
@@ -305,5 +306,57 @@ class PruebasExcelTest extends TestCase
             ->json('datos.id');
         $this->postJson("/api/v1/excel/importaciones/{$id}/confirmar")->assertOk();
         $this->assertDatabaseHas('clientes', ['codigo' => 'CL-C01', 'nit' => '901222333-4']);
+    }
+
+    public function test_la_plantilla_trae_el_diccionario_de_columnas_y_la_hoja_de_repuestos(): void
+    {
+        $libro = IOFactory::load(Plantilla::rutaArchivo());
+        $diccionario = $libro->getSheetByName('Diccionario');
+        $this->assertNotNull($diccionario);
+        $this->assertSame(['Hoja', 'Encabezado', 'Clave', 'Obligatorio'], array_slice($diccionario->rangeToArray('A1:D1')[0], 0, 4));
+        $filas = collect($diccionario->toArray())->skip(1);
+        // Una fila por cada columna de cada hoja de datos.
+        $this->assertSame(collect(Plantilla::hojas())->sum(fn ($h) => count($h['columnas'])), $filas->count());
+        $unidad = $filas->first(fn ($f) => $f[0] === 'Repuestos' && $f[2] === 'unidad');
+        $this->assertSame('Sí', $unidad[3]);
+        $this->assertStringContainsString('Unidad | Metro | Litro', $unidad[5]);
+        $this->assertNotNull($libro->getSheetByName('Repuestos'));
+    }
+
+    public function test_importa_repuestos_y_el_cambio_de_stock_queda_como_ajuste(): void
+    {
+        $this->actingAs($this->administrador, 'sanctum');
+        $fila = ['codigo' => 'ZAP-001', 'nombre' => 'Zapata de cabina', 'unidad' => 'Unidad', 'precio' => 45000, 'stock' => 12, 'stock_minimo' => 4, 'estado' => 'Activo'];
+        $id = $this->post('/api/v1/excel/importaciones', ['archivo' => $this->archivo(['repuestos' => [$fila, ['codigo' => 'MAL-002', 'nombre' => 'Sin unidad', 'precio' => -5]]])], ['Accept' => 'application/json'])
+            ->assertOk()->assertJsonPath('datos.totales.errores', 1)->json('datos.id');
+        $this->postJson("/api/v1/excel/importaciones/{$id}/confirmar")->assertOk();
+
+        $repuesto = Repuesto::where('codigo', 'ZAP-001')->firstOrFail();
+        $this->assertSame('12.00', $repuesto->stock);
+        $this->assertSame('entrada', $repuesto->movimientos()->value('tipo'));
+
+        // Reimportar con otro stock actualiza el repuesto con un ajuste.
+        $id = $this->post('/api/v1/excel/importaciones', ['archivo' => $this->archivo(['repuestos' => [['stock' => 9] + $fila]])], ['Accept' => 'application/json'])
+            ->assertOk()->json('datos.id');
+        $this->postJson("/api/v1/excel/importaciones/{$id}/confirmar")->assertOk();
+        $this->assertSame('9.00', $repuesto->fresh()->stock);
+        $this->assertSame('Carga desde Excel.', $repuesto->movimientos()->where('tipo', 'ajuste')->value('motivo'));
+
+        $exportado = $this->get('/api/v1/excel/exportar/inventario')->assertOk();
+        $this->assertStringContainsString('SIGMA_Inventario_', $exportado->headers->get('content-disposition'));
+        $ruta = tempnam(sys_get_temp_dir(), 'inventario').'.xlsx';
+        file_put_contents($ruta, $exportado->streamedContent());
+        $hoja = IOFactory::load($ruta)->getSheetByName('Repuestos');
+        $this->assertSame('ZAP-001', $hoja->getCell('A2')->getValue());
+        $this->assertEquals(9, $hoja->getCell('G2')->getValue());
+    }
+
+    public function test_la_cotizacion_importada_respeta_el_descuento(): void
+    {
+        $this->actingAs($this->administrador, 'sanctum');
+        $datos = $this->datosBasicos() + ['cotizaciones' => [['ascensor' => 'ASC-T1', 'titulo' => 'Cambio de amortiguadores', 'valor' => 2000000, 'descuento' => 200000, 'iva' => 19, 'vigente_hasta' => '31/01/2026']]];
+        $id = $this->post('/api/v1/excel/importaciones', ['archivo' => $this->archivo($datos)], ['Accept' => 'application/json'])->assertOk()->json('datos.id');
+        $this->postJson("/api/v1/excel/importaciones/{$id}/confirmar")->assertOk();
+        $this->assertEquals(2142000, (float) Equipo::where('codigo', 'ASC-T1')->firstOrFail()->cotizaciones()->value('total'));
     }
 }

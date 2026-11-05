@@ -9,6 +9,7 @@ import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Modal, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
 import { CampoArea, CampoSelector, CampoTexto } from '../../componentes/Campos';
 import AccionesRegistro from '../../componentes/AccionesRegistro';
+import HerramientasExcel from '../../componentes/HerramientasExcel';
 import { dinero } from '../../utilidades/formato';
 
 export const UNIDADES = { unidad: 'Unidad', metro: 'Metro', litro: 'Litro', kilogramo: 'Kilogramo', juego: 'Juego', caja: 'Caja' };
@@ -35,6 +36,7 @@ export default function Inventario() {
   return (
     <>
       <EncabezadoPagina titulo="Inventario de repuestos" descripcion={['Stock y stock mínimo', 'Entradas, salidas y ajustes', 'Consumo en las órdenes']}>
+        <HerramientasExcel modulo="inventario" alImportar={recargar} filtros={filtros} />
         {gestiona && (
           <button type="button" className="boton" onClick={() => setEditando({})}>
             <Plus size={16} aria-hidden="true" /> Registrar repuesto

@@ -75,6 +75,8 @@ function validacion(columna) {
 const libro = new ExcelJS.Workbook();
 libro.creator = 'SIGMA';
 libro.title = 'Plantilla de carga de datos';
+libro.description = 'Plantilla de SIGMA: una hoja por tipo de información; la hoja Diccionario describe cada columna.';
+libro.keywords = 'SIGMA, ascensores, mantenimiento, plantilla, importar';
 libro.created = new Date();
 
 // Instrucciones
@@ -85,9 +87,77 @@ estructura.instrucciones.forEach((texto, i) => {
   celda.value = texto;
   celda.alignment = { wrapText: true, vertical: 'top' };
   const esTitulo = i === 0;
-  const esSeccion = ['Cómo llenarla', 'Orden de carga', 'Formatos', 'Actualizar datos'].includes(texto);
+  const esSeccion = (estructura.secciones ?? []).includes(texto);
   celda.font = { name: FUENTE, size: esTitulo ? 16 : 11, bold: esTitulo || esSeccion, color: { argb: esTitulo || esSeccion ? MORADO : 'FF22124A' } };
 });
+
+// Diccionario: una fila por columna de cada hoja (encabezado exacto, tipo, valores permitidos y ejemplo).
+// Es la referencia para quien llena la plantilla a mano y para un asistente de IA.
+const TIPOS = {
+  texto: 'Texto',
+  entero: 'Número entero',
+  decimal: 'Número decimal (coma decimal)',
+  moneda: 'Pesos colombianos sin decimales',
+  fecha: 'Fecha (dd/mm/aaaa)',
+  hora: 'Hora 24 h (hh:mm)',
+  lista: 'Lista de valores',
+  correo: 'Correo electrónico',
+};
+const LISTAS_DINAMICAS = { tecnicos: 'Nombre o correo de un técnico registrado en SIGMA', planes: 'Nombre de un plan activo en SIGMA' };
+const textoEjemplo = (columna, valor) => {
+  if (valor === undefined || valor === null) return '';
+  if (columna.tipo === 'fecha') return valor.split('-').reverse().join('/');
+  return String(valor);
+};
+const diccionario = libro.addWorksheet('Diccionario', { views: [{ state: 'frozen', ySplit: 1 }], properties: { tabColor: { argb: MORADO } } });
+const encabezadosDiccionario = [
+  ['Hoja', 18],
+  ['Encabezado', 26],
+  ['Clave', 20],
+  ['Obligatorio', 12],
+  ['Tipo de dato', 26],
+  ['Valores permitidos o rango', 48],
+  ['Descripción', 70],
+  ['Ejemplo', 24],
+];
+encabezadosDiccionario.forEach(([titulo, ancho], i) => {
+  const celda = diccionario.getCell(1, i + 1);
+  celda.value = titulo;
+  celda.font = { name: FUENTE, size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+  celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: MORADO } };
+  celda.alignment = { vertical: 'middle' };
+  diccionario.getColumn(i + 1).width = ancho;
+});
+diccionario.getRow(1).height = 24;
+let filaDiccionario = 2;
+for (const hoja of estructura.hojas) {
+  for (const columna of hoja.columnas) {
+    let valores = '';
+    if (columna.soloLectura) valores = 'Lo calcula SIGMA; al importar se ignora.';
+    else if (columna.tipo === 'lista') valores = LISTAS_DINAMICAS[columna.lista] ?? estructura.listas[columna.lista].join(' | ');
+    else if (['entero', 'decimal'].includes(columna.tipo) && columna.min !== undefined) valores = `De ${String(columna.min).replace('.', ',')} a ${columna.max}`;
+    else if (columna.tipo === 'moneda') valores = `Mayor o igual a ${columna.min ?? 0}`;
+    if (columna.tipo === 'lista' && columna.libre) valores += ' (acepta otro valor)';
+    const fila = diccionario.getRow(filaDiccionario++);
+    fila.values = [
+      hoja.nombre,
+      columna.titulo,
+      columna.clave,
+      columna.soloLectura ? 'No (calculado)' : columna.obligatorio ? 'Sí' : 'No',
+      TIPOS[columna.tipo] ?? columna.tipo,
+      valores,
+      columna.ayuda,
+      textoEjemplo(columna, hoja.ejemplo[columna.clave]),
+    ];
+    fila.eachCell((celda) => {
+      celda.font = { name: FUENTE, size: 10, color: { argb: 'FF22124A' } };
+      celda.alignment = { vertical: 'top', wrapText: true };
+      celda.border = { bottom: { style: 'hair', color: { argb: BORDE } } };
+    });
+    if (columna.obligatorio && !columna.soloLectura) fila.getCell(4).font = { name: FUENTE, size: 10, bold: true, color: { argb: MORADO } };
+  }
+}
+diccionario.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: encabezadosDiccionario.length } };
 
 // Hojas de datos
 for (const hoja of estructura.hojas) {

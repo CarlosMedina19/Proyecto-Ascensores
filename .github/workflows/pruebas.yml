@@ -1,0 +1,94 @@
+# RNF-12 · Integración continua de SIGMA.
+# En cada push y pull request corre las pruebas del servidor (Laravel + PostgreSQL), del panel (React)
+# y de la app (Flutter). Solo verifica: no despliega ni toca el servidor.
+name: Pruebas
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: pruebas-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  servidor:
+    name: Servidor (Laravel)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ascensores_test
+          POSTGRES_USER: ascensores_user
+          POSTGRES_PASSWORD: ascensores_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ascensores_user -d ascensores_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_USERNAME: ascensores_user
+      DB_PASSWORD: ascensores_pass
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_pgsql, gd, zip, intl, bcmath
+          coverage: none
+      - name: Dependencias
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Configuración de pruebas
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Pruebas
+        run: php artisan test
+      - name: Vulnerabilidades conocidas
+        run: composer audit
+
+  panel:
+    name: Panel (React)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Pruebas
+        run: npm test
+      - name: Compilación
+        run: npm run build
+        env:
+          VITE_API_URL: /api/v1
+
+  app:
+    name: App (Flutter)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/flutter_application_1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Análisis
+        run: flutter analyze
+      - name: Pruebas
+        run: flutter test

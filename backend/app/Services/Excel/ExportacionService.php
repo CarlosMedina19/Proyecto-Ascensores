@@ -12,11 +12,13 @@ use App\Models\Pago;
 use App\Models\PlanillaResultado;
 use App\Models\PlanMantenimiento;
 use App\Models\PuertaPiso;
+use App\Models\Repuesto;
 use App\Models\Tecnico;
 use App\Models\Usuario;
 use App\Services\CarteraService;
 use App\Services\ClienteService;
 use App\Services\EquipoService;
+use App\Services\InventarioService;
 use App\Services\OrdenTrabajoService;
 use App\Services\UsuarioService;
 use App\Support\Excel\Opciones;
@@ -42,13 +44,14 @@ class ExportacionService
         'servicio' => ['certificaciones', 'emergencias', 'cotizaciones'],
         'cartera' => ['facturas', 'pagos'],
         'usuarios' => ['usuarios'],
-        'todo' => ['clientes', 'edificios', 'ascensores', 'puertas', 'certificaciones', 'ordenes', 'checklist', 'emergencias', 'cotizaciones', 'facturas', 'pagos', 'usuarios'],
+        'inventario' => ['repuestos'],
+        'todo' => ['clientes', 'edificios', 'ascensores', 'puertas', 'certificaciones', 'ordenes', 'checklist', 'emergencias', 'cotizaciones', 'facturas', 'pagos', 'usuarios', 'repuestos'],
     ];
 
     private const PERMISOS = [
         'clientes' => 'clientes.ver', 'edificios' => 'edificios.ver', 'ascensores' => 'equipos.ver', 'puertas' => 'equipos.ver',
         'ordenes' => 'ordenes.ver', 'checklist' => 'ordenes.ver', 'facturas' => 'cartera.ver', 'pagos' => 'cartera.ver', 'usuarios' => 'usuarios.ver',
-        'certificaciones' => 'certificaciones.ver', 'emergencias' => 'emergencias.ver', 'cotizaciones' => 'cotizaciones.ver',
+        'certificaciones' => 'certificaciones.ver', 'emergencias' => 'emergencias.ver', 'cotizaciones' => 'cotizaciones.ver', 'repuestos' => 'inventario.ver',
     ];
 
     public function __construct(
@@ -57,6 +60,7 @@ class ExportacionService
         private readonly ClienteService $clientes,
         private readonly UsuarioService $usuarios,
         private readonly CarteraService $cartera,
+        private readonly InventarioService $inventario,
     ) {}
 
     /** Filtros de la pantalla desde la que se exporta: solo sale lo que se está viendo. */
@@ -92,7 +96,7 @@ class ExportacionService
     /** Nombre del archivo descargado: SIGMA_Ascensores_2026-10-20.xlsx */
     public static function nombreArchivo(string $modulo, array $filtros = []): string
     {
-        $nombres = ['clientes' => 'Clientes', 'ascensores' => 'Ascensores', 'ordenes' => 'Ordenes', 'cartera' => 'Cartera', 'usuarios' => 'Usuarios', 'servicio' => 'Servicio', 'certificaciones' => 'Certificaciones', 'emergencias' => 'Emergencias', 'cotizaciones' => 'Cotizaciones', 'todo' => 'Datos'];
+        $nombres = ['clientes' => 'Clientes', 'ascensores' => 'Ascensores', 'ordenes' => 'Ordenes', 'cartera' => 'Cartera', 'usuarios' => 'Usuarios', 'servicio' => 'Servicio', 'certificaciones' => 'Certificaciones', 'emergencias' => 'Emergencias', 'cotizaciones' => 'Cotizaciones', 'inventario' => 'Inventario', 'todo' => 'Datos'];
 
         $tipos = ['conjunto' => 'Conjuntos', 'institucional' => 'Institucionales', 'residencial' => 'Residenciales'];
         $seccion = $tipos[$filtros['tipo_edificio'] ?? ''] ?? null;
@@ -367,7 +371,9 @@ class ExportacionService
                 'titulo' => $c->titulo,
                 'descripcion' => $c->descripcion,
                 'valor' => (float) $c->subtotal,
-                'iva' => (float) $c->subtotal > 0 ? round((float) $c->iva * 100 / (float) $c->subtotal, 2) : 0,
+                'descuento' => (float) $c->descuento ?: null,
+                // El IVA se calcula sobre el valor con descuento.
+                'iva' => ((float) $c->subtotal - (float) $c->descuento) > 0 ? round((float) $c->iva * 100 / ((float) $c->subtotal - (float) $c->descuento), 2) : 0,
                 'vigente_hasta' => $c->vigente_hasta?->toDateString(),
                 'total' => (float) $c->total,
                 'estado' => Cotizacion::ESTADOS[$c->estadoActual()] ?? $c->estadoActual(),
@@ -418,6 +424,24 @@ class ExportacionService
                 'rol' => Opciones::ROLES[$fila->rol?->nombre] ?? $fila->rol?->nombre,
                 'estado' => $fila->activo ? 'Activo' : 'Inactivo',
                 'cliente' => $fila->cliente?->codigo,
+            ];
+        }
+    }
+
+    private function filasRepuestos(Usuario $usuario): iterable
+    {
+        foreach ($this->inventario->consulta($this->filtros)->orderBy('codigo')->cursor() as $r) {
+            yield [
+                'codigo' => $r->codigo,
+                'nombre' => $r->nombre,
+                'marca' => $r->marca,
+                'referencia' => $r->referencia,
+                'unidad' => Repuesto::UNIDADES[$r->unidad] ?? $r->unidad,
+                'precio' => (float) $r->precio,
+                'stock' => (float) $r->stock,
+                'stock_minimo' => (float) $r->stock_minimo,
+                'estado' => $r->activo ? 'Activo' : 'Inactivo',
+                'observaciones' => $r->observaciones,
             ];
         }
     }

@@ -14,33 +14,63 @@
     "Cotizaciones",
     "Facturas",
     "Pagos",
-    "Usuarios"
+    "Usuarios",
+    "Repuestos"
   ],
   "instrucciones": [
     "SIGMA · Plantilla de carga de datos",
+    "Cada hoja es una tabla: la fila 1 tiene los encabezados y cada fila siguiente es un registro. La hoja Diccionario describe todas las columnas.",
+    "",
+    "Hojas de la plantilla",
+    "• Clientes: Empresas y personas a las que se presta el servicio.",
+    "• Edificios: Edificios de cada cliente (dirección, ciudad y contacto).",
+    "• Ascensores: Ascensores de cada edificio con su ficha técnica y su plan de mantenimiento.",
+    "• Puertas de piso: Tipo y estado de las puertas de piso (SIGMA crea una por parada).",
+    "• Certificaciones: Revisión anual de cada ascensor por un organismo de inspección.",
+    "• Órdenes de trabajo: Preventivos, correctivos e inspecciones, con su técnico y horario.",
+    "• Checklist: Resultados del checklist B · R · M de una orden.",
+    "• Emergencias: Emergencias y atrapamientos ya atendidos.",
+    "• Cotizaciones: Propuestas de correctivos enviadas al cliente.",
+    "• Facturas: Facturas de cada cliente.",
+    "• Pagos: Pagos aplicados a una factura.",
+    "• Usuarios: Cuentas de acceso a SIGMA y su rol.",
+    "• Repuestos: Inventario de repuestos con su stock y stock mínimo.",
     "",
     "Cómo llenarla",
-    "1. Llene una hoja por cada tipo de información. Cada fila es un registro.",
+    "1. Llene solo las hojas que necesite. Cada fila es un registro; no deje filas vacías en medio.",
     "2. Los encabezados con * son obligatorios. Pase el cursor sobre un encabezado para ver qué espera el campo.",
-    "3. Use las listas desplegables cuando la celda las tenga. Los valores fuera de la lista se rechazan al importar.",
-    "4. La fila 2 de cada hoja es un ejemplo: su primer valor empieza por EJEMPLO y SIGMA la ignora al importar. Puede borrarla o dejarla.",
-    "5. Los códigos relacionan las hojas: el código del cliente une Clientes, Edificios, Ascensores, Facturas y Pagos; el código del ascensor une Ascensores, Puertas de piso, Certificaciones, Órdenes de trabajo, Emergencias y Cotizaciones.",
+    "3. Encabezado morado: lo llena usted. Encabezado gris: lo calcula SIGMA; al importar se ignora.",
+    "4. Use las listas desplegables cuando la celda las tenga. Un valor fuera de la lista se rechaza al importar.",
+    "5. La fila 2 de cada hoja es un ejemplo: su primer valor empieza por EJEMPLO y SIGMA la ignora. Puede borrarla o dejarla.",
+    "6. No cambie el nombre de las hojas ni de los encabezados: SIGMA los usa para reconocer la información.",
+    "",
+    "Cómo se relacionan las hojas",
+    "• El código del cliente une Clientes, Edificios, Ascensores, Facturas, Pagos y Usuarios (rol Cliente).",
+    "• El nombre del edificio, junto con el código del cliente, une Edificios y Ascensores.",
+    "• El código del ascensor une Ascensores, Puertas de piso, Certificaciones, Órdenes de trabajo, Emergencias y Cotizaciones.",
+    "• El número de la orden une Órdenes de trabajo y Checklist. El número de la factura une Facturas y Pagos.",
     "",
     "Orden de carga",
-    "Clientes → Edificios → Ascensores → Puertas de piso → Certificaciones → Órdenes de trabajo → Checklist → Emergencias → Cotizaciones → Facturas → Pagos → Usuarios.",
-    "Puede subir todas las hojas en un solo archivo: SIGMA las procesa en ese orden.",
+    "Clientes → Edificios → Ascensores → Puertas de piso → Certificaciones → Órdenes de trabajo → Checklist → Emergencias → Cotizaciones → Facturas → Pagos → Usuarios → Repuestos.",
+    "Puede subir todas las hojas en un solo archivo: SIGMA las procesa en ese orden. Antes de guardar muestra una vista previa con las filas válidas y los errores (hoja, fila, columna y motivo).",
     "",
     "Formatos",
-    "• Fechas: día/mes/año (15/10/2026). Horas: 24 horas (07:30).",
-    "• Valores en pesos colombianos, sin decimales (1.250.000).",
+    "• Fechas: día/mes/año (15/10/2026); también se acepta año-mes-día (2026-10-15). Horas: 24 horas (07:30).",
+    "• Valores en pesos colombianos, sin decimales (1250000).",
     "• Velocidad en metros por segundo con coma decimal (1,0). Capacidad en kilogramos (630).",
     "• NIT sin puntos y con el dígito de verificación después del guion (900123456-1).",
     "",
     "Actualizar datos",
     "Si un código ya existe en SIGMA, la fila actualiza ese registro en lugar de crear otro. Exporte, corrija en Excel y vuelva a importar sin perder información.",
     "Las órdenes de trabajo, emergencias, cotizaciones, certificaciones, facturas y pagos que ya existen no se modifican desde Excel; se informan como existentes.",
-    "",
     "Al importar ascensores, SIGMA crea una puerta de piso por cada parada. La hoja Puertas de piso sirve para indicar su tipo y estado.",
+    "En Repuestos, el stock de un repuesto nuevo entra como inventario inicial; si cambia el de uno existente, SIGMA registra un ajuste con el motivo «Carga desde Excel».",
+    "",
+    "Si usa un asistente de IA para llenarla",
+    "• Pídale que lea primero la hoja Diccionario: tiene, por cada hoja, el encabezado exacto, si es obligatorio, el tipo de dato, los valores permitidos y un ejemplo.",
+    "• Debe escribir los encabezados tal como aparecen (con o sin el *), un registro por fila, sin celdas combinadas ni filas de totales.",
+    "• En las columnas de lista debe usar exactamente uno de los valores permitidos del Diccionario.",
+    "• Puede entregar cada hoja como CSV separado por comas o punto y coma, con la fila de encabezados de esa hoja.",
     "",
     "Certificación anual: en Bogotá la revisión general anual la exige el Acuerdo 470 de 2011 y se hace con la NTC 5926-1 por un organismo acreditado por ONAC. En otras ciudades registre la norma que aplique."
   ],
@@ -970,6 +1000,14 @@
           "ayuda": "Valor del trabajo sin IVA."
         },
         {
+          "clave": "descuento",
+          "titulo": "Descuento (COP)",
+          "tipo": "moneda",
+          "min": 0,
+          "ancho": 15,
+          "ayuda": "Descuento en pesos antes del IVA. No puede superar el valor antes de IVA. Deje vacío si no hay descuento."
+        },
+        {
           "clave": "iva",
           "titulo": "IVA (%)",
           "tipo": "decimal",
@@ -1008,7 +1046,8 @@
         "descripcion": "Incluye dos amortiguadores hidráulicos y mano de obra.",
         "valor": 2000000,
         "iva": 19,
-        "vigente_hasta": "2026-11-30"
+        "vigente_hasta": "2026-11-30",
+        "descuento": 100000
       }
     },
     {
@@ -1206,6 +1245,105 @@
         "estado": "Activo",
         "cliente": "EJEMPLO-CL-001"
       }
+    },
+    {
+      "nombre": "Repuestos",
+      "clave": "repuestos",
+      "columnas": [
+        {
+          "clave": "codigo",
+          "titulo": "Código",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 14,
+          "ayuda": "Código único del repuesto (letras, números, punto, guion). Si ya existe en SIGMA, la fila actualiza ese repuesto."
+        },
+        {
+          "clave": "nombre",
+          "titulo": "Nombre",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 30,
+          "ayuda": "Nombre del repuesto, por ejemplo Zapata de cabina."
+        },
+        {
+          "clave": "marca",
+          "titulo": "Marca",
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Fabricante del repuesto."
+        },
+        {
+          "clave": "referencia",
+          "titulo": "Referencia",
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Referencia o número de parte del fabricante."
+        },
+        {
+          "clave": "unidad",
+          "titulo": "Unidad",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "unidadesRepuesto",
+          "ancho": 13,
+          "ayuda": "Unidad en que se cuenta: Unidad, Metro, Litro, Kilogramo, Juego o Caja."
+        },
+        {
+          "clave": "precio",
+          "titulo": "Precio unitario (COP)",
+          "obligatorio": true,
+          "tipo": "moneda",
+          "min": 0,
+          "ancho": 16,
+          "ayuda": "Precio de una unidad, en pesos y sin decimales."
+        },
+        {
+          "clave": "stock",
+          "titulo": "Stock",
+          "tipo": "decimal",
+          "min": 0,
+          "max": 9999999999,
+          "ancho": 11,
+          "ayuda": "Cantidad disponible. En un repuesto nuevo queda como entrada de inventario; en uno existente, si cambia, SIGMA registra un ajuste."
+        },
+        {
+          "clave": "stock_minimo",
+          "titulo": "Stock mínimo",
+          "tipo": "decimal",
+          "min": 0,
+          "max": 9999999999,
+          "ancho": 12,
+          "ayuda": "Al llegar a esta cantidad, SIGMA avisa al coordinador para reponer. Deje 0 si no aplica."
+        },
+        {
+          "clave": "estado",
+          "titulo": "Estado",
+          "tipo": "lista",
+          "lista": "estadosRegistro",
+          "ancho": 11,
+          "ayuda": "Activo o Inactivo. Un repuesto inactivo no se usa en órdenes nuevas."
+        },
+        {
+          "clave": "observaciones",
+          "titulo": "Observaciones",
+          "tipo": "texto",
+          "ancho": 30,
+          "ayuda": "Notas internas (proveedor, ubicación en bodega…)."
+        }
+      ],
+      "ejemplo": {
+        "codigo": "EJEMPLO-ZAP-001",
+        "nombre": "Zapata de cabina",
+        "marca": "Schindler",
+        "referencia": "ZC-300",
+        "unidad": "Unidad",
+        "precio": 45000,
+        "stock": 12,
+        "stock_minimo": 4,
+        "estado": "Activo",
+        "observaciones": "Bodega principal, estante B"
+      }
     }
   ],
   "listas": {
@@ -1330,6 +1468,23 @@
       "Conforme",
       "Conforme con observaciones",
       "No conforme"
+    ],
+    "unidadesRepuesto": [
+      "Unidad",
+      "Metro",
+      "Litro",
+      "Kilogramo",
+      "Juego",
+      "Caja"
     ]
-  }
+  },
+  "secciones": [
+    "Hojas de la plantilla",
+    "Cómo llenarla",
+    "Cómo se relacionan las hojas",
+    "Orden de carga",
+    "Formatos",
+    "Actualizar datos",
+    "Si usa un asistente de IA para llenarla"
+  ]
 }
