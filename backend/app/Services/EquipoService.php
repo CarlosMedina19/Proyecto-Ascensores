@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\ReglaNegocioException;
+use App\Models\Ascensor;
 use App\Models\Edificio;
 use App\Models\Equipo;
 use App\Models\HistorialEquipo;
@@ -14,6 +15,18 @@ use Illuminate\Support\Facades\DB;
 
 class EquipoService
 {
+    /** @return array<string, int> clave del tipo (o "sin_tipo") => cantidad */
+    public function conteoPorTipo(array $filtros = []): array
+    {
+        $ids = $this->consulta($filtros)->setEagerLoads([])->select('equipos.id');
+        $conteo = Ascensor::whereIn('equipo_id', $ids)->whereNotNull('tipo_ascensor')
+            ->groupBy('tipo_ascensor')->selectRaw('tipo_ascensor, count(*) as total')
+            ->pluck('total', 'tipo_ascensor')->map(fn ($n) => (int) $n)->all();
+        $sinTipo = $this->consulta($filtros)->count() - array_sum($conteo);
+
+        return $sinTipo > 0 ? $conteo + ['sin_tipo' => $sinTipo] : $conteo;
+    }
+
     /** Consulta con los filtros del listado (también la usa la exportación a Excel). */
     public function consulta(array $filtros = []): Builder
     {
@@ -40,7 +53,9 @@ class EquipoService
             $consulta->where('estado', $filtros['estado']);
         }
 
-        if (! empty($filtros['tipo_ascensor'])) {
+        if (($filtros['tipo_ascensor'] ?? '') === 'sin_tipo') {
+            $consulta->whereDoesntHave('ascensor', fn ($consulta) => $consulta->whereNotNull('tipo_ascensor'));
+        } elseif (! empty($filtros['tipo_ascensor'])) {
             $consulta->whereHas('ascensor', fn ($consulta) => $consulta->where('tipo_ascensor', $filtros['tipo_ascensor']));
         }
 

@@ -103,7 +103,11 @@ const TIPOS = {
   lista: 'Lista de valores',
   correo: 'Correo electrónico',
 };
-const LISTAS_DINAMICAS = { tecnicos: 'Nombre o correo de un técnico registrado en SIGMA', planes: 'Nombre de un plan activo en SIGMA' };
+const LISTAS_DINAMICAS = {
+  tecnicos: 'Nombre o correo de un técnico registrado en SIGMA',
+  planes: 'Nombre de un plan activo en SIGMA',
+  tiposAscensor: `Los tipos activos de Configuración (por defecto: ${estructura.listas.tiposAscensor.join(' | ')})`,
+};
 const textoEjemplo = (columna, valor) => {
   if (valor === undefined || valor === null) return '';
   if (columna.tipo === 'fecha') return valor.split('-').reverse().join('/');

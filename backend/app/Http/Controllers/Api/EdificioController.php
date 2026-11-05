@@ -42,6 +42,7 @@ class EdificioController extends Controller
 
         return new EdificioResource($edificio->load([
             'cliente',
+            'conjunto',
             'equipos' => fn ($consulta) => $consulta->with('ascensor')->orderBy('codigo'),
         ]));
     }

@@ -87,7 +87,7 @@ describe('menú de la fase 2 según permisos', () => {
 
     expect(await screen.findByRole('link', { name: /calendario/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /^contratos$/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /planes y precios/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /planes de alquiler/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /configuración/i })).not.toBeInTheDocument();
   });
 
@@ -100,7 +100,7 @@ describe('menú de la fase 2 según permisos', () => {
 
     expect(await screen.findByRole('link', { name: /mis contratos/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /calendario/i })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /planes y precios/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /planes de alquiler/i })).not.toBeInTheDocument();
   });
 
   it('la campana muestra las notificaciones sin leer', async () => {

@@ -20,10 +20,11 @@ class GuardarAsignacionRequest extends FormRequest
     {
         return [
             'equipo_id' => ['required', 'integer', Rule::exists('equipos', 'id')->whereNull('deleted_at')],
-            'plan_id' => ['required', 'integer', Rule::exists('planes_mantenimiento', 'id')->whereNull('deleted_at')],
+            // El plan ya no es obligatorio: los planes son de alquiler del software; aquí basta la periodicidad.
+            'plan_id' => ['nullable', 'integer', Rule::exists('planes_mantenimiento', 'id')->whereNull('deleted_at')],
             'periodicidad_id' => ['required', 'integer', Rule::exists('periodicidades', 'id')],
             'contrato_id' => ['nullable', 'integer', Rule::exists('contratos', 'id')],
-            'precio' => ['nullable', 'numeric', 'gt:0', 'max:999999999999.99'],
+            'precio' => ['nullable', 'numeric', $this->filled('plan_id') ? 'gt:0' : 'min:0', 'max:999999999999.99'],
             'aplica_iva' => ['nullable', 'boolean'],
             'porcentaje_iva' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'fecha_inicio' => ['required', 'date'],

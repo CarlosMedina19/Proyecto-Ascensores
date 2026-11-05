@@ -54,13 +54,14 @@ class AsignacionPlanService
     {
         return DB::transaction(function () use ($datos) {
             $equipo = Equipo::with('edificio.cliente')->lockForUpdate()->findOrFail($datos['equipo_id']);
-            $plan = PlanMantenimiento::findOrFail($datos['plan_id']);
+            $plan = isset($datos['plan_id']) ? PlanMantenimiento::findOrFail($datos['plan_id']) : null;
             $periodicidad = Periodicidad::findOrFail($datos['periodicidad_id']);
             $contrato = isset($datos['contrato_id']) ? Contrato::with('equipos')->findOrFail($datos['contrato_id']) : null;
 
             $this->validarAsignacion($equipo, $plan, $periodicidad, $contrato);
 
-            $precio = $datos['precio'] ?? $plan->precioPara($periodicidad->id);
+            // Sin plan, el valor por visita es opcional (0 si no se indica).
+            $precio = $datos['precio'] ?? ($plan ? $plan->precioPara($periodicidad->id) : 0);
             if ($precio === null) {
                 throw new ReglaNegocioException("El plan «{$plan->nombre}» no tiene precio para la periodicidad «{$periodicidad->nombre}». Indique el precio.");
             }
@@ -71,7 +72,7 @@ class AsignacionPlanService
 
             $asignacion = AsignacionPlan::create([
                 'equipo_id' => $equipo->id,
-                'plan_id' => $plan->id,
+                'plan_id' => $plan?->id,
                 'periodicidad_id' => $periodicidad->id,
                 'contrato_id' => $contrato?->id,
                 'precio' => $precio,
@@ -84,21 +85,24 @@ class AsignacionPlanService
                 'hora_preferida' => $datos['hora_preferida'] ?? '08:00',
             ]);
 
-            HistorialPrecio::create([
-                'asignacion_id' => $asignacion->id,
-                'plan_id' => $plan->id,
-                'periodicidad_id' => $periodicidad->id,
-                'precio_anterior' => null,
-                'precio_nuevo' => $precio,
-                'motivo' => 'Precio pactado al asignar el plan',
-                'usuario_id' => Auth::id(),
-            ]);
+            // Un programa sin valor por visita (incluido en el alquiler) no abre historial de precios.
+            if ((float) $precio > 0) {
+                HistorialPrecio::create([
+                    'asignacion_id' => $asignacion->id,
+                    'plan_id' => $plan?->id,
+                    'periodicidad_id' => $periodicidad->id,
+                    'precio_anterior' => null,
+                    'precio_nuevo' => $precio,
+                    'motivo' => $plan ? 'Precio pactado al asignar el plan' : 'Valor por visita del programa de mantenimiento',
+                    'usuario_id' => Auth::id(),
+                ]);
+            }
 
             // RF-013: la asignación queda en el historial del ascensor.
             $equipo->historial()->create([
                 'usuario_id' => Auth::id(),
                 'evento' => 'plan_asignado',
-                'descripcion' => "Plan «{$plan->nombre}» cada {$periodicidad->meses} mes(es), vigente del {$fechaInicio} al {$fechaFin}.",
+                'descripcion' => ($plan ? "Plan «{$plan->nombre}»" : 'Mantenimiento preventivo')." cada {$periodicidad->meses} mes(es), vigente del {$fechaInicio} al {$fechaFin}.",
             ]);
 
             $this->programacion->programar($asignacion);
@@ -121,10 +125,10 @@ class AsignacionPlanService
             $plan = isset($datos['plan_id']) ? PlanMantenimiento::findOrFail($datos['plan_id']) : $asignacion->plan;
             $periodicidad = isset($datos['periodicidad_id']) ? Periodicidad::findOrFail($datos['periodicidad_id']) : $asignacion->periodicidad;
 
-            if ($plan->id === $asignacion->plan_id && $periodicidad->id === $asignacion->periodicidad_id) {
+            if ($plan?->id === $asignacion->plan_id && $periodicidad->id === $asignacion->periodicidad_id) {
                 throw new ReglaNegocioException('Seleccione un plan o una periodicidad diferente a la actual.');
             }
-            if (! $plan->activo) {
+            if ($plan && ! $plan->activo) {
                 throw new ReglaNegocioException('El plan seleccionado está inactivo.');
             }
             if (! $periodicidad->activo) {
@@ -133,7 +137,7 @@ class AsignacionPlanService
 
             $motivo = $datos['motivo'];
             $cambios = [
-                'plan' => [$asignacion->plan->nombre, $plan->nombre, $plan->id !== $asignacion->plan_id],
+                'plan' => [$asignacion->plan?->nombre, $plan?->nombre, $plan?->id !== $asignacion->plan_id],
                 'periodicidad' => ["{$asignacion->periodicidad->meses} meses", "{$periodicidad->meses} meses", $periodicidad->id !== $asignacion->periodicidad_id],
             ];
             foreach ($cambios as $campo => [$anterior, $nuevo, $cambio]) {
@@ -142,15 +146,15 @@ class AsignacionPlanService
                 }
             }
 
-            // Cada periodicidad tiene su propio precio (RF-012): se toma el del catálogo.
-            $precioNuevo = $plan->precioPara($periodicidad->id);
+            // Cada periodicidad tiene su propio precio (RF-012): se toma el del catálogo. Sin plan, se conserva.
+            $precioNuevo = $plan ? $plan->precioPara($periodicidad->id) : $asignacion->precio;
             if ($precioNuevo === null) {
                 throw new ReglaNegocioException("El plan «{$plan->nombre}» no tiene precio para la periodicidad «{$periodicidad->nombre}».");
             }
             if (! Montos::iguales($precioNuevo, $asignacion->precio)) {
                 HistorialPrecio::create([
                     'asignacion_id' => $asignacion->id,
-                    'plan_id' => $plan->id,
+                    'plan_id' => $plan?->id,
                     'periodicidad_id' => $periodicidad->id,
                     'precio_anterior' => $asignacion->precio,
                     'precio_nuevo' => $precioNuevo,
@@ -159,13 +163,13 @@ class AsignacionPlanService
                 ]);
             }
 
-            $asignacion->update(['plan_id' => $plan->id, 'periodicidad_id' => $periodicidad->id, 'precio' => $precioNuevo]);
+            $asignacion->update(['plan_id' => $plan?->id, 'periodicidad_id' => $periodicidad->id, 'precio' => $precioNuevo]);
             $asignacion->unsetRelation('periodicidad');
 
             $asignacion->equipo->historial()->create([
                 'usuario_id' => Auth::id(),
                 'evento' => 'cambio_plan',
-                'descripcion' => "Plan «{$plan->nombre}» cada {$periodicidad->meses} mes(es). Motivo: {$motivo}",
+                'descripcion' => ($plan ? "Plan «{$plan->nombre}»" : 'Mantenimiento preventivo')." cada {$periodicidad->meses} mes(es). Motivo: {$motivo}",
             ]);
 
             $this->programacion->programar($asignacion, "Cambio de plan o periodicidad: {$motivo}");
@@ -244,7 +248,7 @@ class AsignacionPlanService
             $asignacion->equipo->historial()->create([
                 'usuario_id' => Auth::id(),
                 'evento' => 'plan_finalizado',
-                'descripcion' => "Plan «{$asignacion->plan->nombre}» {$estado}. Motivo: {$motivo}",
+                'descripcion' => ($asignacion->plan ? "Plan «{$asignacion->plan->nombre}»" : 'Programa de mantenimiento')." {$estado}. Motivo: {$motivo}",
             ]);
 
             RegistroAuditoriaService::registrar('finalizado', $asignacion, ['estado' => $estado, 'motivo' => $motivo]);
@@ -253,7 +257,7 @@ class AsignacionPlanService
         });
     }
 
-    private function validarAsignacion(Equipo $equipo, PlanMantenimiento $plan, Periodicidad $periodicidad, ?Contrato $contrato): void
+    private function validarAsignacion(Equipo $equipo, ?PlanMantenimiento $plan, Periodicidad $periodicidad, ?Contrato $contrato): void
     {
         if ($equipo->estado === 'inactivo') {
             throw new ReglaNegocioException('El plan solo se asigna a ascensores activos.');
@@ -264,7 +268,7 @@ class AsignacionPlanService
         if ($equipo->asignacionActiva()->exists()) {
             throw new ReglaNegocioException('El ascensor ya tiene un plan activo. Use el cambio de plan.');
         }
-        if (! $plan->activo) {
+        if ($plan && ! $plan->activo) {
             throw new ReglaNegocioException('El plan seleccionado está inactivo.');
         }
         if (! $periodicidad->activo) {

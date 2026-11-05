@@ -28,6 +28,17 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Pasarela de pagos Wompi (PSE). Proyecto formativo: llaves de pruebas (pub_test_… / test_integrity_…).
+    'wompi' => [
+        'llave_publica' => env('WOMPI_LLAVE_PUBLICA'),
+        'secreto_integridad' => env('WOMPI_SECRETO_INTEGRIDAD'),
+        'secreto_eventos' => env('WOMPI_SECRETO_EVENTOS'),
+        'api' => env('WOMPI_API', 'https://sandbox.wompi.co/v1'),
+        'checkout' => env('WOMPI_CHECKOUT', 'https://checkout.wompi.co/p/'),
+        // Página del panel a la que Wompi devuelve al cliente después de pagar.
+        'retorno' => env('WOMPI_RETORNO', env('FRONTEND_URL', 'http://localhost:5173').'/pagos/resultado'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

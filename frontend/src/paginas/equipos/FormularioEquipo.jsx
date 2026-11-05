@@ -4,8 +4,9 @@ import { edificios, equipos, fotosEquipo, tecnicos } from '../../api/servicios';
 import { limpiarVacios, useFormulario } from '../../hooks/useFormulario';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { Alerta, Cargando, EncabezadoPagina, Tarjeta } from '../../componentes/Basicos';
-import { CampoArea, CampoSelector, CampoTexto } from '../../componentes/Campos';
-import { ESTADOS_EQUIPO, TIPOS_ASCENSOR, velocidad } from '../../utilidades/formato';
+import { CampoArea, CampoBuscador, CampoSelector, CampoTexto } from '../../componentes/Campos';
+import { ESTADOS_EQUIPO, TIPOS_EDIFICIO, velocidad } from '../../utilidades/formato';
+import { useTiposAscensor } from '../../hooks/useTiposAscensor';
 import { GaleriaFotos, SelectorFotos } from '../../componentes/FotosEquipo';
 
 const EQUIPO_VACIO = {
@@ -50,6 +51,7 @@ export default function FormularioEquipo() {
   const [cargando, setCargando] = useState(true);
   const [opcionesEdificios, setOpcionesEdificios] = useState([]);
   const [opcionesTecnicos, setOpcionesTecnicos] = useState([]);
+  const tiposAscensor = useTiposAscensor();
   const [fotosNuevas, setFotosNuevas] = useState([]);
   const [fotosGuardadas, setFotosGuardadas] = useState([]);
   const { datos, setDatos, cambiar, errores, error, mensajeError, enviando, enviar } = useFormulario({
@@ -86,6 +88,18 @@ export default function FormularioEquipo() {
       ascensor: { ...actual.ascensor, [campo]: valor },
     }));
   const errorFicha = (campo) => errores[`ascensor.${campo}`]?.[0];
+
+  /** El ascensor nuevo hereda del edificio el número de paradas (sus pisos) si aún no se escribió. */
+  function elegirEdificio(valor) {
+    const elegido = opcionesEdificios.find((e) => String(e.id) === String(valor));
+    setDatos((d) => {
+      const nuevo = { ...d, edificio_id: valor };
+      if (!editando && elegido?.pisos && !d.ascensor.paradas) {
+        nuevo.ascensor = { ...d.ascensor, paradas: String(elegido.pisos), puertas_piso: d.ascensor.puertas_piso || String(elegido.pisos) };
+      }
+      return nuevo;
+    });
+  }
 
   async function alEnviar(evento) {
     evento.preventDefault();
@@ -131,17 +145,19 @@ export default function FormularioEquipo() {
 
           <div className="formulario__seccion">Datos generales del ascensor</div>
           <div className="formulario__fila formulario__fila--4">
-            <CampoSelector
+            <CampoBuscador
               etiqueta="Edificio"
               obligatorio
               valor={String(datos.edificio_id)}
-              alCambiar={cambiar('edificio_id')}
+              alCambiar={elegirEdificio}
               error={error('edificio_id')}
+              placeholder="Busque por edificio, conjunto o cliente"
               opciones={opcionesEdificios
                 .filter((e) => e.activo || String(e.id) === String(datos.edificio_id))
                 .map((e) => ({
                   valor: String(e.id),
-                  texto: `${e.nombre} — ${e.cliente?.nombre ?? ''}`,
+                  texto: e.conjunto ? `${e.nombre} · ${e.conjunto.nombre}` : e.nombre,
+                  detalle: [e.cliente?.nombre, e.ciudad].filter(Boolean).join(' · '),
                 }))}
             />
             <CampoTexto
@@ -184,6 +200,27 @@ export default function FormularioEquipo() {
               error={error('fecha_instalacion')}
             />
           </div>
+          {edificioElegido && (
+            <div className="herencia" aria-label="Datos que el ascensor toma del edificio">
+              <span className="herencia__titulo">Heredado del edificio</span>
+              <span>
+                <small>Cliente</small>
+                {edificioElegido.cliente?.nombre ?? '—'}
+              </span>
+              <span>
+                <small>{TIPOS_EDIFICIO[edificioElegido.tipo]?.texto ?? 'Conjunto'}</small>
+                {edificioElegido.conjunto?.nombre ?? 'Sin conjunto'}
+              </span>
+              <span>
+                <small>Ciudad</small>
+                {[edificioElegido.ciudad, edificioElegido.departamento].filter(Boolean).join(', ')}
+              </span>
+              <span>
+                <small>Contacto</small>
+                {[edificioElegido.nombre_contacto, edificioElegido.telefono_contacto || edificioElegido.correo_contacto].filter(Boolean).join(' · ') || '—'}
+              </span>
+            </div>
+          )}
           <div className="formulario__fila formulario__fila--4 formulario__fila--ubicacion">
             <CampoTexto etiqueta="Ubicación" valor={ubicacion} alCambiar={() => {}} readOnly placeholder="Se toma del edificio" />
             <CampoSelector
@@ -252,7 +289,8 @@ export default function FormularioEquipo() {
               valor={datos.ascensor.tipo_ascensor}
               alCambiar={cambiarFicha('tipo_ascensor')}
               error={errorFicha('tipo_ascensor')}
-              opciones={Object.entries(TIPOS_ASCENSOR).map(([valor, texto]) => ({ valor, texto }))}
+              opciones={Object.entries(tiposAscensor).map(([valor, texto]) => ({ valor, texto }))}
+              ayuda="Los tipos se administran en Configuración."
             />
             <CampoSelector
               etiqueta="Accionamiento"

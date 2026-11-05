@@ -5,6 +5,7 @@ namespace App\Http\Requests\Tecnico;
 use App\Models\Usuario;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 /**
  * RF-022: datos personales, especialidades y disponibilidad del técnico.
@@ -40,6 +41,26 @@ class PerfilTecnicoRequest extends FormRequest
             'motivo_no_disponible' => ['nullable', 'required_if:disponibilidad,no_disponible', 'string', 'max:255'],
             'no_disponible_hasta' => ['nullable', 'date', 'after_or_equal:today'],
             'observaciones' => ['nullable', 'string', 'max:2000'],
+            // Días de trabajo (1 = lunes … 7 = domingo) con su hora de entrada y salida.
+            'horario' => ['nullable', 'array'],
+            'horario.*' => ['array:inicio,fin'],
+            'horario.*.inicio' => ['required', 'date_format:H:i'],
+            'horario.*.fin' => ['required', 'date_format:H:i'],
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function (Validator $validador) {
+                foreach ((array) $this->input('horario', []) as $dia => $jornada) {
+                    if (! in_array((string) $dia, ['1', '2', '3', '4', '5', '6', '7'], true)) {
+                        $validador->errors()->add('horario', 'Los días del horario van del 1 (lunes) al 7 (domingo).');
+                    } elseif (is_array($jornada) && isset($jornada['inicio'], $jornada['fin']) && $jornada['fin'] <= $jornada['inicio']) {
+                        $validador->errors()->add("horario.{$dia}.fin", 'La hora de salida debe ser posterior a la de entrada.');
+                    }
+                }
+            },
         ];
     }
 
@@ -52,6 +73,8 @@ class PerfilTecnicoRequest extends FormRequest
             'especialidades.*' => 'especialidad',
             'motivo_no_disponible' => 'motivo',
             'no_disponible_hasta' => 'fecha de regreso',
+            'horario.*.inicio' => 'hora de entrada',
+            'horario.*.fin' => 'hora de salida',
         ];
     }
 

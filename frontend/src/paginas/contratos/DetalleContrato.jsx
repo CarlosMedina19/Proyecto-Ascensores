@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Ban, MessageSquarePlus, Pencil, RefreshCw } from 'lucide-react';
+import { Ban, FileDown, MessageSquarePlus, Pencil, RefreshCw } from 'lucide-react';
 import { contratos } from '../../api/servicios';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
@@ -140,6 +140,18 @@ export default function DetalleContrato() {
   const [contrato, setContrato] = useState(null);
   const [error, setError] = useState('');
   const [modal, setModal] = useState(null);
+  const [descargando, setDescargando] = useState(false);
+
+  async function descargarPdf() {
+    setDescargando(true);
+    try {
+      await contratos.pdf(id, contrato.numero);
+    } catch (e) {
+      notificar(e.message, 'error');
+    } finally {
+      setDescargando(false);
+    }
+  }
 
   const cargar = useCallback(() => {
     setError('');
@@ -186,6 +198,9 @@ export default function DetalleContrato() {
           </>
         }
       >
+        <button type="button" className="boton boton--secundario" onClick={descargarPdf} disabled={descargando}>
+          <FileDown size={16} /> {descargando ? 'Generando…' : 'PDF'}
+        </button>
         {vigente && tienePermiso('contratos.editar') && (
           <button type="button" className="boton boton--secundario" onClick={() => setModal('cancelar')}>
             <Ban size={16} /> Cancelar
@@ -214,6 +229,21 @@ export default function DetalleContrato() {
             elementos={[
               ['Vigencia', `${fecha(contrato.fecha_inicio)} – ${fecha(contrato.fecha_fin)}`],
               ['Valor', dinero(contrato.valor)],
+              ...(contrato.plan
+                ? [
+                    ['Plan de alquiler', contrato.plan.nombre],
+                    ['Periodicidad', contrato.periodicidad ? periodicidad(contrato.periodicidad.meses) : null],
+                    [
+                      'Precio pactado',
+                      <>
+                        {dinero(contrato.precio_periodo)} por periodo{contrato.periodos ? ` · ${contrato.periodos} ${contrato.periodos === 1 ? 'periodo' : 'periodos'}` : ''}
+                        {contrato.precio_catalogo != null && Number(contrato.precio_catalogo) !== Number(contrato.precio_periodo) && (
+                          <div className="texto-pequeno texto-suave">Catálogo: {dinero(contrato.precio_catalogo)}</div>
+                        )}
+                      </>,
+                    ],
+                  ]
+                : []),
               ['Renovación', ESTADOS_RENOVACION[contrato.estado_renovacion]],
               [
                 'Contrato anterior',
@@ -222,10 +252,21 @@ export default function DetalleContrato() {
               ['Registrado', fechaHora(contrato.created_at)],
             ]}
           />
+          {contrato.servicios_pactados?.length > 0 && (
+            <>
+              <div className="separador" />
+              <div className="texto-pequeno texto-suave">Servicios incluidos en el plan</div>
+              <ul className="lista-servicios">
+                {contrato.servicios_pactados.map((s) => (
+                  <li key={s}>{s}</li>
+                ))}
+              </ul>
+            </>
+          )}
           {contrato.servicios && (
             <>
               <div className="separador" />
-              <div className="texto-pequeno texto-suave">Servicios</div>
+              <div className="texto-pequeno texto-suave">Alcance de los servicios</div>
               <p style={{ margin: '4px 0 0', whiteSpace: 'pre-line' }}>{contrato.servicios}</p>
             </>
           )}

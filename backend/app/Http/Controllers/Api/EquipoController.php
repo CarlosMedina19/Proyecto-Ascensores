@@ -26,7 +26,8 @@ class EquipoController extends Controller
         $this->authorize('viewAny', Equipo::class);
         $equipos = $this->servicioEquipo->listar($solicitud->all(), $this->porPagina($solicitud));
 
-        return EquipoResource::collection($equipos);
+        // Cuántos ascensores hay de cada tipo con los demás filtros, para las pestañas del listado.
+        return EquipoResource::collection($equipos)->additional(['por_tipo' => $this->servicioEquipo->conteoPorTipo($solicitud->except('tipo_ascensor'))]);
     }
 
     public function store(GuardarEquipoRequest $solicitud): JsonResponse

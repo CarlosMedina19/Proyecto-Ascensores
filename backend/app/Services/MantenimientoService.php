@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\ReglaNegocioException;
+use App\Models\Equipo;
 use App\Models\MantenimientoProgramado;
 use App\Models\Usuario;
 use Carbon\CarbonImmutable;
@@ -89,6 +90,51 @@ class MantenimientoService
             $this->notificaciones->eventoMantenimiento($mantenimiento, 'reprogramado');
 
             return $mantenimiento->fresh(['equipo.edificio.cliente', 'asignacion.plan', 'asignacion.periodicidad']);
+        });
+    }
+
+    /**
+     * Visita adicional en el día que elige el coordinador (desde el calendario). Usa el programa de
+     * mantenimiento activo del ascensor y su valor por visita; no cambia las visitas ya programadas.
+     */
+    public function agregarVisita(Equipo $equipo, string $fecha, ?string $hora = null, ?string $motivo = null): MantenimientoProgramado
+    {
+        $asignacion = $equipo->asignacionActiva()->with(['contrato', 'periodicidad'])->first();
+        if (! $asignacion) {
+            throw new ReglaNegocioException("El ascensor {$equipo->codigo} no tiene programa de mantenimiento. Prográmelo desde su hoja de vida.");
+        }
+        $dia = CarbonImmutable::parse($fecha);
+        if ($dia->lt(now()->startOfDay())) {
+            throw new ReglaNegocioException('No se puede programar una visita en una fecha pasada.');
+        }
+        if (! $this->calendario->esHabil($dia)) {
+            throw new ReglaNegocioException('La fecha cae en domingo o festivo. Elija un día hábil.');
+        }
+        if ($dia->gt($this->programacion->fechaLimite($asignacion))) {
+            throw new ReglaNegocioException('La fecha está fuera de la vigencia del programa de mantenimiento.');
+        }
+        if ($asignacion->mantenimientos()->pendientes()->whereDate('fecha_programada', $dia->toDateString())->exists()) {
+            throw new ReglaNegocioException("El ascensor {$equipo->codigo} ya tiene una visita ese día.");
+        }
+
+        return DB::transaction(function () use ($asignacion, $equipo, $dia, $hora, $motivo) {
+            $visita = MantenimientoProgramado::create([
+                'asignacion_id' => $asignacion->id,
+                'equipo_id' => $equipo->id,
+                'fecha_teorica' => $dia->toDateString(),
+                'fecha_programada' => $dia->toDateString(),
+                'precio' => $asignacion->precio,
+                'hora' => $hora ?? $asignacion->hora_preferida ?? '08:00',
+                'estado' => 'programado',
+                'adicional' => true,
+                'motivo' => $motivo,
+                'actualizado_por' => Auth::id(),
+            ]);
+            $this->programacion->actualizarProximo($asignacion);
+            RegistroAuditoriaService::registrar('creado', $visita, ['fecha' => $dia->toDateString(), 'adicional' => true, 'motivo' => $motivo]);
+            $this->notificaciones->eventoMantenimiento($visita, 'programado');
+
+            return $visita->fresh(['equipo.edificio.cliente', 'asignacion.plan', 'asignacion.periodicidad']);
         });
     }
 

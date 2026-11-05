@@ -64,6 +64,20 @@ export const edificios = {
   alternarEstado: (id) => api.actualizar(`/edificios/${id}/alternar-estado`),
 };
 
+// Conjuntos, instituciones y residencias: agrupan los edificios de un cliente.
+export const conjuntos = {
+  listar: (filtros) => api.obtener('/conjuntos', filtros),
+  obtener: (id) => api.obtener(`/conjuntos/${id}`),
+  crear: (datos) => api.crear('/conjuntos', datos),
+  actualizar: (id, datos) => api.actualizar(`/conjuntos/${id}`, datos),
+  eliminar: (id) => api.eliminar(`/conjuntos/${id}`),
+  alternarEstado: (id) => api.actualizar(`/conjuntos/${id}/alternar-estado`),
+};
+
+export const ubicaciones = {
+  listar: () => api.obtener('/ubicaciones'),
+};
+
 // RF-007, RF-008 y RF-009 Equipos, ascensores e historial
 export const equipos = {
   listar: (filtros) => api.obtener('/equipos', filtros),
@@ -88,6 +102,15 @@ export const configuracion = {
   obtener: () => api.obtener('/configuracion'),
   actualizar: (datos) => api.reemplazar('/configuracion', datos),
   periodicidades: () => api.obtener('/periodicidades'),
+};
+
+// Catálogos editables: especialidades de los técnicos y tipos de ascensor.
+export const catalogos = {
+  obtener: () => api.obtener('/catalogos'),
+  tiposAscensor: () => api.obtener('/tipos-ascensor'),
+  agregar: (catalogo, nombre) => api.crear(`/catalogos/${catalogo}`, { nombre }),
+  actualizar: (catalogo, id, datos) => api.actualizar(`/catalogos/${catalogo}/${id}`, datos),
+  eliminar: (catalogo, id) => api.eliminar(`/catalogos/${catalogo}/${id}`),
 };
 
 // RF-010, RF-012 y RF-015 Planes, precios por periodicidad e historial de precios
@@ -120,6 +143,8 @@ export const mantenimientos = {
   reprogramar: (id, datos) => api.actualizar(`/mantenimientos/${id}/reprogramar`, datos),
   cancelar: (id, motivo) => api.actualizar(`/mantenimientos/${id}/cancelar`, { motivo }),
   ejecutar: (id, datos) => api.actualizar(`/mantenimientos/${id}/ejecutar`, datos),
+  // Visita adicional en el día elegido en el calendario.
+  crear: (datos) => api.crear('/mantenimientos', datos),
 };
 
 // RF-019 a RF-021 Contratos y renovaciones
@@ -131,6 +156,7 @@ export const contratos = {
   registrarSeguimiento: (id, datos) => api.crear(`/contratos/${id}/seguimientos`, datos),
   renovar: (id, datos) => api.crear(`/contratos/${id}/renovar`, datos),
   cancelar: (id, motivo) => api.actualizar(`/contratos/${id}/cancelar`, { motivo }),
+  pdf: (id, numero) => descargarArchivo(`/contratos/${id}/pdf`, `SIGMA_Contrato_${numero}.pdf`),
 };
 
 // Panel de operación y búsqueda global (Ctrl+K)
@@ -203,7 +229,8 @@ export const planilla = {
 
 // Plantilla, exportación e importación en Excel (vista previa y confirmación)
 export const excel = {
-  plantilla: () => descargarArchivo('/excel/plantilla', 'SIGMA_Plantilla_Datos.xlsx'),
+  // Con módulo, solo trae sus hojas (Ascensores, Técnicos, Inventario…); sin módulo, la plantilla completa.
+  plantilla: (modulo) => descargarArchivo(`/excel/plantilla${modulo ? `?modulo=${modulo}` : ''}`, 'SIGMA_Plantilla_Datos.xlsx'),
   // Exporta solo lo que muestra la tabla: se envían sus filtros (tipo de edificio, estado, búsqueda…).
   exportar: (modulo, filtros = {}) => {
     const consulta = new URLSearchParams(Object.entries(filtros).filter(([, v]) => v !== '' && v !== null && v !== undefined)).toString();
@@ -240,6 +267,10 @@ export const cartera = {
   factura: (id) => api.obtener(`/facturas/${id}`),
   crearFactura: (datos) => api.crear('/facturas', datos),
   registrarPago: (datos) => api.crear('/pagos', datos),
+  // Pago en línea por PSE (Wompi): se abre el checkout y al volver se confirma la transacción.
+  pseConfiguracion: () => api.obtener('/pagos-en-linea/configuracion'),
+  pagarConPse: (facturaId, monto) => api.crear(`/facturas/${facturaId}/pago-en-linea`, monto ? { monto } : {}),
+  confirmarPse: (transaccionId) => api.crear('/pagos-en-linea/confirmar', { transaccion_id: transaccionId }),
 };
 
 // Servicio comercial: certificación anual, emergencias 24/7, cotizaciones, indicadores y documentos.

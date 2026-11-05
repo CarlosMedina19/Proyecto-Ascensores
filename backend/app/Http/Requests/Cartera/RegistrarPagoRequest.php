@@ -19,7 +19,8 @@ class RegistrarPagoRequest extends FormRequest
             'factura_id' => ['required', 'integer', Rule::exists('facturas', 'id')],
             'valor' => ['required', 'numeric', 'gt:0', 'max:999999999999.99'],
             'fecha' => ['required', 'date', 'before_or_equal:today'],
-            'medio' => ['required', Rule::in(array_keys(Pago::MEDIOS))],
+            // El medio PSE solo lo registra la pasarela cuando aprueba el pago.
+            'medio' => ['required', Rule::in(array_diff(array_keys(Pago::MEDIOS), ['pse']))],
             'referencia' => ['required', 'string', 'max:100'],
         ];
     }

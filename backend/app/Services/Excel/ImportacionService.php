@@ -5,8 +5,10 @@ namespace App\Services\Excel;
 use App\Exceptions\ReglaNegocioException;
 use App\Http\Requests\Asignacion\GuardarAsignacionRequest;
 use App\Http\Requests\Cartera\GuardarFacturaRequest;
+use App\Http\Requests\Conjunto\GuardarConjuntoRequest;
 use App\Http\Requests\Inventario\GuardarRepuestoRequest;
 use App\Http\Requests\Inventario\MovimientoInventarioRequest;
+use App\Http\Requests\Tecnico\PerfilTecnicoRequest;
 use App\Http\Requests\Cartera\RegistrarPagoRequest;
 use App\Http\Requests\Cliente\ActualizarClienteRequest;
 use App\Http\Requests\Cliente\GuardarClienteRequest;
@@ -25,7 +27,9 @@ use App\Models\Certificacion;
 use App\Models\ChecklistItem;
 use App\Models\Cliente;
 use App\Models\Contrato;
+use App\Models\Conjunto;
 use App\Models\Cotizacion;
+use App\Models\Especialidad;
 use App\Models\Repuesto;
 use App\Models\Edificio;
 use App\Models\Emergencia;
@@ -49,7 +53,9 @@ use App\Services\EdificioService;
 use App\Services\EmergenciaService;
 use App\Services\EquipoService;
 use App\Services\OrdenTrabajoService;
+use App\Services\ConjuntoService;
 use App\Services\InventarioService;
+use App\Services\TecnicoService;
 use App\Services\PlanillaService;
 use App\Services\UsuarioService;
 use App\Support\Excel\Opciones;
@@ -78,6 +84,7 @@ class ImportacionService
     /** Permiso para crear y para actualizar cada hoja. */
     private const PERMISOS = [
         'clientes' => ['clientes.crear', 'clientes.editar'],
+        'conjuntos' => ['edificios.crear', 'edificios.editar'],
         'edificios' => ['edificios.crear', 'edificios.editar'],
         'ascensores' => ['equipos.crear', 'equipos.editar'],
         'puertas' => ['equipos.editar', 'equipos.editar'],
@@ -90,12 +97,14 @@ class ImportacionService
         'pagos' => ['pagos.registrar', 'pagos.registrar'],
         'usuarios' => ['usuarios.crear', 'usuarios.editar'],
         'repuestos' => ['inventario.gestionar', 'inventario.gestionar'],
+        'tecnicos' => ['tecnicos.crear', 'tecnicos.editar'],
     ];
 
     /** Campo del formulario → columna de la plantilla, para ubicar cada error. */
     private const COLUMNAS = [
         'clientes' => ['nit' => 'documento', 'numero_documento' => 'documento'],
-        'edificios' => ['cliente_id' => 'cliente', 'nombre_contacto' => 'contacto', 'telefono_contacto' => 'telefono', 'correo_contacto' => 'correo', 'activo' => 'estado'],
+        'conjuntos' => ['cliente_id' => 'cliente', 'nombre_contacto' => 'contacto', 'telefono_contacto' => 'telefono', 'correo_contacto' => 'correo', 'activo' => 'estado'],
+        'edificios' => ['cliente_id' => 'cliente', 'conjunto_id' => 'conjunto', 'nombre_contacto' => 'contacto', 'telefono_contacto' => 'telefono', 'correo_contacto' => 'correo', 'activo' => 'estado'],
         'ascensores' => [
             'edificio_id' => 'edificio', 'fecha_instalacion' => 'anio_instalacion', 'tecnico_id' => 'tecnico',
             'ascensor.capacidad_kg' => 'capacidad_kg', 'ascensor.capacidad_personas' => 'personas', 'ascensor.velocidad_mpm' => 'velocidad_ms',
@@ -111,6 +120,7 @@ class ImportacionService
         'pagos' => ['factura_id' => 'factura'],
         'usuarios' => ['rol_id' => 'rol', 'activo' => 'estado', 'cliente_id' => 'cliente'],
         'repuestos' => ['activo' => 'estado', 'stock_contado' => 'stock'],
+        'tecnicos' => ['horario' => 'dias', 'especialidades' => 'especialidades', 'especialidades.0' => 'especialidades', 'activo' => 'estado'],
     ];
 
     private Usuario $usuario;
@@ -138,6 +148,8 @@ class ImportacionService
         private readonly EmergenciaService $emergencias,
         private readonly CotizacionService $cotizaciones,
         private readonly InventarioService $inventario,
+        private readonly ConjuntoService $conjuntos,
+        private readonly TecnicoService $tecnicos,
     ) {}
 
     /**
@@ -377,6 +389,19 @@ class ImportacionService
         return $equipo;
     }
 
+    private function conjunto(Cliente $cliente, ?string $nombre): ?Conjunto
+    {
+        if ($nombre === null) {
+            return null;
+        }
+        $conjunto = Conjunto::where('cliente_id', $cliente->id)->whereRaw('lower(nombre) = ?', [Str::lower($nombre)])->first();
+        if (! $conjunto) {
+            throw new FilaInvalida([['columna' => 'conjunto', 'motivo' => "El cliente {$cliente->codigo} no tiene un conjunto llamado «{$nombre}». Regístrelo en la hoja Conjuntos."]]);
+        }
+
+        return $conjunto;
+    }
+
     private function tecnico(?string $texto, string $columna = 'tecnico'): ?Tecnico
     {
         if ($texto === null) {
@@ -489,15 +514,17 @@ class ImportacionService
         $nombre = Plantilla::texto($v['nombre']);
         $this->unico('edificios', $cliente->codigo.'|'.$nombre, 'nombre', $fila, 'El edificio');
         $estado = Plantilla::opcion($v['estado'] ?? null, Opciones::ESTADOS_REGISTRO);
+        $conjunto = $this->conjunto($cliente, Plantilla::texto($v['conjunto'] ?? null));
         $datos = array_filter([
             'cliente_id' => $cliente->id,
-            'tipo' => Plantilla::opcion($v['tipo'], Opciones::tiposEdificio()),
+            'conjunto_id' => $conjunto?->id,
+            'tipo' => Plantilla::opcion($v['tipo'] ?? null, Opciones::tiposEdificio()),
             'nombre' => $nombre,
-            'direccion' => Plantilla::texto($v['direccion']),
-            'ciudad' => Plantilla::texto($v['ciudad']),
+            'direccion' => Plantilla::texto($v['direccion'] ?? null),
+            'ciudad' => Plantilla::texto($v['ciudad'] ?? null),
             'departamento' => Plantilla::texto($v['departamento'] ?? null),
             'pisos' => Plantilla::numero($v['pisos'] ?? null),
-            'nombre_contacto' => Plantilla::texto($v['contacto']),
+            'nombre_contacto' => Plantilla::texto($v['contacto'] ?? null),
             'telefono_contacto' => Plantilla::texto($v['telefono'] ?? null),
             'correo_contacto' => Plantilla::texto($v['correo'] ?? null),
             'activo' => $estado === null ? null : ($estado === '1' ? true : ($estado === '0' ? false : $estado)),
@@ -939,5 +966,131 @@ class ImportacionService
         }
 
         return 'actualizado';
+    }
+
+    /** Conjuntos, instituciones y residencias: si el nombre ya existe en el cliente, se actualiza. */
+    private function importarConjuntos(array $v, int $fila): string
+    {
+        $cliente = $this->cliente(Plantilla::texto($v['cliente']));
+        $nombre = Plantilla::texto($v['nombre']);
+        $this->unico('conjuntos', $cliente->codigo.'|'.$nombre, 'nombre', $fila, 'El conjunto');
+        $estado = Plantilla::opcion($v['estado'] ?? null, Opciones::ESTADOS_REGISTRO);
+        $datos = array_filter([
+            'cliente_id' => $cliente->id,
+            'tipo' => Plantilla::opcion($v['tipo'], Opciones::tiposEdificio()),
+            'nombre' => $nombre,
+            'direccion' => Plantilla::texto($v['direccion']),
+            'ciudad' => Plantilla::texto($v['ciudad']),
+            'departamento' => Plantilla::texto($v['departamento'] ?? null),
+            'codigo_postal' => Plantilla::texto($v['codigo_postal'] ?? null),
+            'nombre_contacto' => Plantilla::texto($v['contacto'] ?? null),
+            'telefono_contacto' => Plantilla::texto($v['telefono'] ?? null),
+            'correo_contacto' => Plantilla::texto($v['correo'] ?? null),
+            'activo' => $estado === null ? null : ($estado === '1' ? true : ($estado === '0' ? false : $estado)),
+        ], fn ($x) => $x !== null);
+
+        $existente = Conjunto::where('cliente_id', $cliente->id)->whereRaw('lower(nombre) = ?', [Str::lower($nombre)])->first();
+        $this->exigirPermiso('conjuntos', (bool) $existente);
+        if ($existente) {
+            $this->conjuntos->actualizar($existente, $this->validar(GuardarConjuntoRequest::class, $datos, ['conjunto' => $existente]));
+
+            return 'actualizado';
+        }
+        $this->conjuntos->crear($this->validar(GuardarConjuntoRequest::class, $datos));
+
+        return 'creado';
+    }
+
+    /**
+     * Técnicos: cuenta, documento, especialidades y horario. A los nuevos les llega el enlace
+     * para crear su contraseña; si el correo ya es de un técnico, se actualiza su perfil.
+     */
+    private function importarTecnicos(array $v, int $fila): string
+    {
+        $correo = Str::lower((string) Plantilla::texto($v['correo']));
+        $this->unico('tecnicos', $correo, 'correo', $fila, 'El correo');
+        $estado = Plantilla::opcion($v['estado'] ?? null, Opciones::ESTADOS_REGISTRO);
+        $perfil = array_filter([
+            'tipo_documento' => Str::upper((string) Plantilla::texto($v['tipo_documento'])),
+            'numero_documento' => Plantilla::texto($v['numero_documento']),
+            'telefono' => Plantilla::texto($v['telefono'] ?? null),
+            'especialidades' => $this->especialidades(Plantilla::texto($v['especialidades'])),
+            'horario' => $this->horario(Plantilla::texto($v['dias'] ?? null), Plantilla::hora($v['entrada'] ?? null), Plantilla::hora($v['salida'] ?? null)),
+        ], fn ($x) => $x !== null);
+
+        $existente = Usuario::where('correo', $correo)->first();
+        $this->exigirPermiso('tecnicos', (bool) $existente);
+        if ($existente) {
+            if (! $existente->esTecnico()) {
+                throw new FilaInvalida([['columna' => 'correo', 'motivo' => "El correo {$correo} es de un usuario que no tiene rol técnico."]]);
+            }
+            $this->tecnicos->guardarPerfil($existente, $this->validar(PerfilTecnicoRequest::class, $perfil, ['usuario' => $existente]));
+            if ($estado !== null && (bool) $existente->activo !== ($estado === '1')) {
+                $this->tecnicos->cambiarEstado($existente, $estado === '1');
+            }
+
+            return 'actualizado';
+        }
+
+        $datos = $this->validar(PerfilTecnicoRequest::class, $perfil);
+        $this->tecnicos->crear($datos + [
+            'nombre' => Plantilla::texto($v['nombre']),
+            'correo' => $correo,
+            // Contraseña aleatoria: el técnico crea la suya con el enlace que recibe por correo.
+            'password' => Str::password(16),
+            'activo' => $estado !== '0',
+        ]);
+        $this->autenticacion->enviarEnlaceRecuperacion($correo);
+        $this->resultado['derivados']['invitaciones']++;
+
+        return 'creado';
+    }
+
+    /** "Preventivo, Sistemas hidráulicos" → ids del catálogo (sin importar tildes ni mayúsculas). */
+    private function especialidades(?string $texto): array
+    {
+        $catalogo = Especialidad::where('activo', true)->pluck('nombre', 'id')->all();
+        $ids = [];
+        foreach (array_filter(array_map('trim', preg_split('/[,;]/', (string) $texto))) as $nombre) {
+            $id = Plantilla::opcion($nombre, $catalogo);
+            if (! isset($catalogo[$id])) {
+                throw new FilaInvalida([['columna' => 'especialidades', 'motivo' => "«{$nombre}» no es una especialidad activa. Use: ".implode(', ', $catalogo).'.']]);
+            }
+            $ids[] = (int) $id;
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * "Lunes a viernes", "Lun, Mié, Vie" o "Lunes a sábado" con la hora de entrada y salida
+     * → { "1": {"inicio": "07:00", "fin": "17:00"}, … }. Sin días, el técnico no tiene horario.
+     */
+    private function horario(?string $dias, ?string $entrada, ?string $salida): ?array
+    {
+        if ($dias === null) {
+            return null;
+        }
+        if ($entrada === null || $salida === null) {
+            throw new FilaInvalida([['columna' => $entrada === null ? 'entrada' : 'salida', 'motivo' => 'Indique la hora de entrada y la de salida de los días de trabajo.']]);
+        }
+        $numero = function (string $dia): ?int {
+            $clave = mb_substr(Plantilla::normalizar($dia), 0, 2);
+            $mapa = ['lu' => 1, 'ma' => 2, 'mi' => 3, 'ju' => 4, 'vi' => 5, 'sa' => 6, 'do' => 7];
+
+            return $mapa[$clave] ?? null;
+        };
+        $seleccion = [];
+        foreach (array_filter(array_map('trim', preg_split('/[,;\/]| y /u', $dias))) as $parte) {
+            $rango = array_map('trim', preg_split('/\s+a\s+|\s*-\s*/u', $parte));
+            $desde = $numero($rango[0]);
+            $hasta = $numero(end($rango));
+            if ($desde === null || $hasta === null || $hasta < $desde) {
+                throw new FilaInvalida([['columna' => 'dias', 'motivo' => "No se entiende «{$parte}». Escriba, por ejemplo, Lunes a viernes o Lun, Mié, Vie."]]);
+            }
+            $seleccion = [...$seleccion, ...range($desde, $hasta)];
+        }
+
+        return collect(array_unique($seleccion))->sort()->mapWithKeys(fn ($d) => [(string) $d => ['inicio' => $entrada, 'fin' => $salida]])->all();
     }
 }

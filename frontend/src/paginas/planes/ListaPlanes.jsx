@@ -32,8 +32,8 @@ export default function ListaPlanes() {
   return (
     <>
       <EncabezadoPagina
-        titulo="Planes de mantenimiento"
-        descripcion={['Servicios incluidos', 'Precio por visita', 'Periodicidad de 1 a 6 meses']}
+        titulo="Planes de alquiler del software"
+        descripcion={['Servicios incluidos', 'Un precio por cada periodo', 'Cada contrato puede ajustar su plan']}
       >
         {tienePermiso('planes.crear') && (
           <Link to="/planes/nuevo" className="boton">
@@ -85,7 +85,7 @@ export default function ListaPlanes() {
                   </>
                 ),
               },
-              { clave: 'precios', titulo: 'Precio por visita según periodicidad', render: (p) => <PreciosPlan precios={p.precios} /> },
+              { clave: 'precios', titulo: 'Precio según el periodo', render: (p) => <PreciosPlan precios={p.precios} /> },
               { clave: 'asignaciones', titulo: 'Ascensores', clase: 'tabular', render: (p) => p.asignaciones_activas_count ?? 0 },
               {
                 clave: 'activo',

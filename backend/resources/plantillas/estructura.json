@@ -4,6 +4,7 @@
   "marcadorEjemplo": "EJEMPLO",
   "orden": [
     "Clientes",
+    "Conjuntos",
     "Edificios",
     "Ascensores",
     "Puertas de piso",
@@ -15,6 +16,7 @@
     "Facturas",
     "Pagos",
     "Usuarios",
+    "Técnicos",
     "Repuestos"
   ],
   "instrucciones": [
@@ -23,6 +25,7 @@
     "",
     "Hojas de la plantilla",
     "• Clientes: Empresas y personas a las que se presta el servicio.",
+    "• Conjuntos: Conjuntos, instituciones y residencias de cada cliente; sus edificios heredan el tipo, la dirección y el contacto.",
     "• Edificios: Edificios de cada cliente (dirección, ciudad y contacto).",
     "• Ascensores: Ascensores de cada edificio con su ficha técnica y su plan de mantenimiento.",
     "• Puertas de piso: Tipo y estado de las puertas de piso (SIGMA crea una por parada).",
@@ -34,6 +37,7 @@
     "• Facturas: Facturas de cada cliente.",
     "• Pagos: Pagos aplicados a una factura.",
     "• Usuarios: Cuentas de acceso a SIGMA y su rol.",
+    "• Técnicos: Técnicos con su documento, especialidades y días y horas de trabajo.",
     "• Repuestos: Inventario de repuestos con su stock y stock mínimo.",
     "",
     "Cómo llenarla",
@@ -46,12 +50,13 @@
     "",
     "Cómo se relacionan las hojas",
     "• El código del cliente une Clientes, Edificios, Ascensores, Facturas, Pagos y Usuarios (rol Cliente).",
+    "• El nombre del conjunto, junto con el código del cliente, une Conjuntos y Edificios.",
     "• El nombre del edificio, junto con el código del cliente, une Edificios y Ascensores.",
     "• El código del ascensor une Ascensores, Puertas de piso, Certificaciones, Órdenes de trabajo, Emergencias y Cotizaciones.",
     "• El número de la orden une Órdenes de trabajo y Checklist. El número de la factura une Facturas y Pagos.",
     "",
     "Orden de carga",
-    "Clientes → Edificios → Ascensores → Puertas de piso → Certificaciones → Órdenes de trabajo → Checklist → Emergencias → Cotizaciones → Facturas → Pagos → Usuarios → Repuestos.",
+    "Clientes → Conjuntos → Edificios → Ascensores → Puertas de piso → Certificaciones → Órdenes de trabajo → Checklist → Emergencias → Cotizaciones → Facturas → Pagos → Usuarios → Técnicos → Repuestos.",
     "Puede subir todas las hojas en un solo archivo: SIGMA las procesa en ese orden. Antes de guardar muestra una vista previa con las filas válidas y los errores (hoja, fila, columna y motivo).",
     "",
     "Formatos",
@@ -61,6 +66,7 @@
     "• NIT sin puntos y con el dígito de verificación después del guion (900123456-1).",
     "",
     "Actualizar datos",
+    "Ciudades: escriba un municipio de Colombia del departamento indicado; SIGMA corrige mayúsculas y tildes (ibague, tolima → Ibagué, Tolima).",
     "Si un código ya existe en SIGMA, la fila actualiza ese registro en lugar de crear otro. Exporte, corrija en Excel y vuelva a importar sin perder información.",
     "Las órdenes de trabajo, emergencias, cotizaciones, certificaciones, facturas y pagos que ya existen no se modifican desde Excel; se informan como existentes.",
     "Al importar ascensores, SIGMA crea una puerta de piso por cada parada. La hoja Puertas de piso sirve para indicar su tipo y estado.",
@@ -203,6 +209,108 @@
       }
     },
     {
+      "nombre": "Conjuntos",
+      "clave": "conjuntos",
+      "columnas": [
+        {
+          "clave": "cliente",
+          "titulo": "Código del cliente",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Código del cliente dueño del conjunto (hoja Clientes)."
+        },
+        {
+          "clave": "nombre",
+          "titulo": "Conjunto, institución o residencia",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 32,
+          "ayuda": "Nombre del conjunto, la institución o la residencia. Si ya existe en ese cliente, la fila lo actualiza."
+        },
+        {
+          "clave": "tipo",
+          "titulo": "Tipo",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "tiposEdificio",
+          "ancho": 15,
+          "ayuda": "Conjunto, Institucional o Residencial. Sus edificios toman este tipo."
+        },
+        {
+          "clave": "direccion",
+          "titulo": "Dirección",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 26,
+          "ayuda": "Dirección principal. Los edificios nuevos la toman si no indican otra."
+        },
+        {
+          "clave": "departamento",
+          "titulo": "Departamento",
+          "tipo": "lista",
+          "lista": "departamentos",
+          "ancho": 18,
+          "ayuda": "Departamento de Colombia. Si lo deja vacío, SIGMA lo deduce de la ciudad."
+        },
+        {
+          "clave": "ciudad",
+          "titulo": "Ciudad",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Municipio del departamento indicado (se aceptan sin tildes: Ibague = Ibagué)."
+        },
+        {
+          "clave": "codigo_postal",
+          "titulo": "Código postal",
+          "tipo": "texto",
+          "ancho": 12,
+          "ayuda": "Código postal."
+        },
+        {
+          "clave": "contacto",
+          "titulo": "Contacto",
+          "tipo": "texto",
+          "ancho": 22,
+          "ayuda": "Persona de la administración."
+        },
+        {
+          "clave": "telefono",
+          "titulo": "Teléfono del contacto",
+          "tipo": "texto",
+          "ancho": 18,
+          "ayuda": "Teléfono del contacto."
+        },
+        {
+          "clave": "correo",
+          "titulo": "Correo del contacto",
+          "tipo": "correo",
+          "ancho": 26,
+          "ayuda": "Correo del contacto."
+        },
+        {
+          "clave": "estado",
+          "titulo": "Estado",
+          "tipo": "lista",
+          "lista": "estadosRegistro",
+          "ancho": 12,
+          "ayuda": "Activo o Inactivo."
+        }
+      ],
+      "ejemplo": {
+        "cliente": "EJEMPLO-CL-001",
+        "nombre": "Conjunto Residencial Mirador del Parque",
+        "tipo": "Conjunto",
+        "direccion": "Cra 15 # 100-20",
+        "departamento": "Bogotá D.C.",
+        "ciudad": "Bogotá",
+        "contacto": "Laura Gómez",
+        "telefono": "3101234567",
+        "estado": "Activo"
+      }
+    },
+    {
       "nombre": "Edificios",
       "clave": "edificios",
       "columnas": [
@@ -215,6 +323,13 @@
           "ayuda": "Código del cliente dueño del edificio (hoja Clientes)."
         },
         {
+          "clave": "conjunto",
+          "titulo": "Conjunto",
+          "tipo": "texto",
+          "ancho": 30,
+          "ayuda": "Nombre del conjunto, institución o residencia (hoja Conjuntos). Si lo indica, el edificio toma su tipo y, si están vacíos, su dirección, ciudad y contacto."
+        },
+        {
           "clave": "nombre",
           "titulo": "Edificio o sede",
           "obligatorio": true,
@@ -225,34 +340,35 @@
         {
           "clave": "tipo",
           "titulo": "Tipo",
-          "obligatorio": true,
+          "obligatorio": false,
           "tipo": "lista",
           "lista": "tiposEdificio",
           "ancho": 15,
-          "ayuda": "Conjunto, Institucional o Residencial."
+          "ayuda": "Conjunto, Institucional o Residencial. Obligatorio si no indica conjunto."
         },
         {
           "clave": "direccion",
           "titulo": "Dirección",
-          "obligatorio": true,
+          "obligatorio": false,
           "tipo": "texto",
           "ancho": 26,
-          "ayuda": "Dirección del edificio. También es la ubicación de sus ascensores."
+          "ayuda": "Dirección del edificio. También es la ubicación de sus ascensores. Obligatorio si no indica conjunto."
         },
         {
           "clave": "ciudad",
           "titulo": "Ciudad",
-          "obligatorio": true,
+          "obligatorio": false,
           "tipo": "texto",
           "ancho": 16,
-          "ayuda": "Ciudad o municipio."
+          "ayuda": "Municipio del departamento (se aceptan sin tildes: Ibague = Ibagué). Obligatorio si no indica conjunto."
         },
         {
           "clave": "departamento",
           "titulo": "Departamento",
-          "tipo": "texto",
+          "tipo": "lista",
           "ancho": 16,
-          "ayuda": "Departamento."
+          "ayuda": "Departamento de Colombia. Si lo deja vacío, SIGMA lo deduce de la ciudad.",
+          "lista": "departamentos"
         },
         {
           "clave": "pisos",
@@ -266,10 +382,10 @@
         {
           "clave": "contacto",
           "titulo": "Contacto",
-          "obligatorio": true,
+          "obligatorio": false,
           "tipo": "texto",
           "ancho": 22,
-          "ayuda": "Persona de contacto en el edificio."
+          "ayuda": "Persona de contacto en el edificio. Obligatorio si no indica conjunto."
         },
         {
           "clave": "telefono",
@@ -300,11 +416,12 @@
         "tipo": "Conjunto",
         "direccion": "Cra 15 # 100-20",
         "ciudad": "Bogotá",
-        "departamento": "Cundinamarca",
+        "departamento": "Bogotá D.C.",
         "pisos": 18,
         "contacto": "Laura Gómez",
         "telefono": "3101234567",
-        "estado": "Activo"
+        "estado": "Activo",
+        "conjunto": "Conjunto Residencial Mirador del Parque"
       }
     },
     {
@@ -1247,6 +1364,101 @@
       }
     },
     {
+      "nombre": "Técnicos",
+      "clave": "tecnicos",
+      "columnas": [
+        {
+          "clave": "nombre",
+          "titulo": "Nombre",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 28,
+          "ayuda": "Nombre completo del técnico."
+        },
+        {
+          "clave": "correo",
+          "titulo": "Correo",
+          "obligatorio": true,
+          "tipo": "correo",
+          "ancho": 30,
+          "ayuda": "Correo de ingreso a la app. Si ya existe un técnico con ese correo, la fila lo actualiza. A los nuevos les llega un enlace para crear su contraseña."
+        },
+        {
+          "clave": "tipo_documento",
+          "titulo": "Tipo de documento",
+          "obligatorio": true,
+          "tipo": "lista",
+          "lista": "tiposDocumentoTecnico",
+          "ancho": 14,
+          "ayuda": "CC, CE, PA o PEP."
+        },
+        {
+          "clave": "numero_documento",
+          "titulo": "Número de documento",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 18,
+          "ayuda": "Solo letras, números y guiones (5 a 20 caracteres). Único por técnico."
+        },
+        {
+          "clave": "telefono",
+          "titulo": "Teléfono",
+          "tipo": "texto",
+          "ancho": 16,
+          "ayuda": "Celular del técnico."
+        },
+        {
+          "clave": "especialidades",
+          "titulo": "Especialidades",
+          "obligatorio": true,
+          "tipo": "texto",
+          "ancho": 36,
+          "ayuda": "Una o varias, separadas por coma, tal como aparecen en Configuración (vea la hoja Diccionario)."
+        },
+        {
+          "clave": "dias",
+          "titulo": "Días de trabajo",
+          "tipo": "texto",
+          "ancho": 24,
+          "ayuda": "Ejemplos: Lunes a viernes, Lunes a sábado o Lun, Mié, Vie. Vacío = sin horario (recibe órdenes a cualquier hora)."
+        },
+        {
+          "clave": "entrada",
+          "titulo": "Hora de entrada",
+          "tipo": "hora",
+          "ancho": 12,
+          "ayuda": "Hora de entrada en formato 24 horas (07:00). Obligatoria si indica días."
+        },
+        {
+          "clave": "salida",
+          "titulo": "Hora de salida",
+          "tipo": "hora",
+          "ancho": 12,
+          "ayuda": "Hora de salida en formato 24 horas (17:00), posterior a la entrada."
+        },
+        {
+          "clave": "estado",
+          "titulo": "Estado",
+          "tipo": "lista",
+          "lista": "estadosRegistro",
+          "ancho": 12,
+          "ayuda": "Activo o Inactivo. Un técnico inactivo no ingresa ni recibe órdenes."
+        }
+      ],
+      "ejemplo": {
+        "nombre": "EJEMPLO · Felipe Gómez",
+        "correo": "felipe.gomez@sigma.co",
+        "tipo_documento": "CC",
+        "numero_documento": "1020304050",
+        "telefono": "3004567890",
+        "especialidades": "Mantenimiento preventivo, Sistemas hidráulicos",
+        "dias": "Lunes a viernes",
+        "entrada": "07:00",
+        "salida": "17:00",
+        "estado": "Activo"
+      }
+    },
+    {
       "nombre": "Repuestos",
       "clave": "repuestos",
       "columnas": [
@@ -1476,7 +1688,49 @@
       "Kilogramo",
       "Juego",
       "Caja"
-    ]
+    ],
+    "departamentos": [
+      "Amazonas",
+      "Antioquia",
+      "Arauca",
+      "Atlántico",
+      "Bogotá D.C.",
+      "Bolívar",
+      "Boyacá",
+      "Caldas",
+      "Caquetá",
+      "Casanare",
+      "Cauca",
+      "Cesar",
+      "Chocó",
+      "Cundinamarca",
+      "Córdoba",
+      "Guainía",
+      "Guaviare",
+      "Huila",
+      "La Guajira",
+      "Magdalena",
+      "Meta",
+      "Nariño",
+      "Norte de Santander",
+      "Putumayo",
+      "Quindío",
+      "Risaralda",
+      "San Andrés y Providencia",
+      "Santander",
+      "Sucre",
+      "Tolima",
+      "Valle del Cauca",
+      "Vaupés",
+      "Vichada"
+    ],
+    "tiposDocumentoTecnico": [
+      "CC",
+      "CE",
+      "PA",
+      "PEP"
+    ],
+    "especialidades": []
   },
   "secciones": [
     "Hojas de la plantilla",
@@ -1486,5 +1740,75 @@
     "Formatos",
     "Actualizar datos",
     "Si usa un asistente de IA para llenarla"
-  ]
+  ],
+  "modulos": {
+    "clientes": {
+      "nombre": "SIGMA_Plantilla_Clientes.xlsx",
+      "hojas": [
+        "clientes",
+        "conjuntos",
+        "edificios"
+      ]
+    },
+    "ascensores": {
+      "nombre": "SIGMA_Plantilla_Ascensores.xlsx",
+      "hojas": [
+        "conjuntos",
+        "edificios",
+        "ascensores",
+        "puertas"
+      ]
+    },
+    "tecnicos": {
+      "nombre": "SIGMA_Plantilla_Tecnicos.xlsx",
+      "hojas": [
+        "tecnicos"
+      ]
+    },
+    "inventario": {
+      "nombre": "SIGMA_Plantilla_Inventario.xlsx",
+      "hojas": [
+        "repuestos"
+      ]
+    },
+    "ordenes": {
+      "nombre": "SIGMA_Plantilla_Ordenes.xlsx",
+      "hojas": [
+        "ordenes",
+        "checklist"
+      ]
+    },
+    "cartera": {
+      "nombre": "SIGMA_Plantilla_Cartera.xlsx",
+      "hojas": [
+        "facturas",
+        "pagos"
+      ]
+    },
+    "usuarios": {
+      "nombre": "SIGMA_Plantilla_Usuarios.xlsx",
+      "hojas": [
+        "usuarios",
+        "tecnicos"
+      ]
+    },
+    "certificaciones": {
+      "nombre": "SIGMA_Plantilla_Certificaciones.xlsx",
+      "hojas": [
+        "certificaciones"
+      ]
+    },
+    "emergencias": {
+      "nombre": "SIGMA_Plantilla_Emergencias.xlsx",
+      "hojas": [
+        "emergencias"
+      ]
+    },
+    "cotizaciones": {
+      "nombre": "SIGMA_Plantilla_Cotizaciones.xlsx",
+      "hojas": [
+        "cotizaciones"
+      ]
+    }
+  }
 }

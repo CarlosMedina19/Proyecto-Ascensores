@@ -135,7 +135,7 @@ export default function DetallePlan() {
         descripcion={
           <>
             <Insignia tipo={plan.activo ? 'exito' : 'neutro'}>{plan.activo ? 'Activo' : 'Inactivo'}</Insignia> ·{' '}
-            {plan.asignaciones_activas_count ?? 0} ascensores con este plan
+            {plan.contratos_vigentes_count ?? 0} contratos vigentes con este plan
           </>
         }
       >

@@ -6,7 +6,9 @@ use App\Http\Controllers\Api\BusquedaController;
 use App\Http\Controllers\Api\CarteraController;
 use App\Http\Controllers\Api\InventarioController;
 use App\Http\Controllers\Api\ClienteController;
+use App\Http\Controllers\Api\CatalogoController;
 use App\Http\Controllers\Api\ConfiguracionController;
+use App\Http\Controllers\Api\ConjuntoController;
 use App\Http\Controllers\Api\ContratoController;
 use App\Http\Controllers\Api\EdificioController;
 use App\Http\Controllers\Api\EquipoController;
@@ -16,6 +18,7 @@ use App\Http\Controllers\Api\FotoEquipoController;
 use App\Http\Controllers\Api\MantenimientoController;
 use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\OrdenTrabajoController;
+use App\Http\Controllers\Api\PagoEnLineaController;
 use App\Http\Controllers\Api\PanelController;
 use App\Http\Controllers\Api\PermisoController;
 use App\Http\Controllers\Api\PlanController;
@@ -39,6 +42,9 @@ Route::get('/verificar-correo/{usuario}/{hash}', [AutenticacionController::class
 // Reporte de fallas por el QR de la cabina, sin iniciar sesión.
 Route::get('/publico/ascensores/{codigo}', [ServicioController::class, 'ascensorPublico'])->middleware('throttle:30,1');
 Route::post('/publico/ascensores/{codigo}/reportes', [ServicioController::class, 'reportarPorQr'])->middleware('throttle:reporte-qr');
+
+// Eventos de la pasarela Wompi (PSE): sin sesión, firmados con el secreto de eventos.
+Route::post('/publico/wompi/eventos', [PagoEnLineaController::class, 'evento'])->middleware('throttle:60,1');
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -76,6 +82,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/clientes/{cliente}/contactos', [ClienteController::class, 'agregarContacto']);
     Route::apiResource('clientes', ClienteController::class);
     Route::apiResource('edificios', EdificioController::class);
+    Route::patch('/conjuntos/{conjunto}/alternar-estado', [EstadoRegistroController::class, 'conjunto']);
+    Route::apiResource('conjuntos', ConjuntoController::class);
+    Route::get('/ubicaciones', [ConjuntoController::class, 'ubicaciones']);
 
     // RF-007, RF-008 y RF-009: equipos, ascensores e historial.
     Route::get('/equipos/{equipo}/historial', [EquipoController::class, 'historial']);
@@ -96,6 +105,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/configuracion', [ConfiguracionController::class, 'update']);
     Route::get('/periodicidades', [ConfiguracionController::class, 'periodicidades']);
     Route::get('/festivos', [ConfiguracionController::class, 'festivos']);
+    Route::get('/tipos-ascensor', [CatalogoController::class, 'tiposAscensor']);
+    Route::get('/catalogos', [CatalogoController::class, 'index']);
+    Route::post('/catalogos/{catalogo}', [CatalogoController::class, 'store']);
+    Route::patch('/catalogos/{catalogo}/{id}', [CatalogoController::class, 'update'])->whereNumber('id');
+    Route::delete('/catalogos/{catalogo}/{id}', [CatalogoController::class, 'destroy'])->whereNumber('id');
 
     // RF-010, RF-012 y RF-015: planes, precios por periodicidad e historial de precios.
     Route::put('/planes/{plan}/precios', [PlanController::class, 'actualizarPrecios']);
@@ -113,6 +127,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // RF-017 y RF-018: calendario de mantenimientos preventivos.
     Route::get('/mantenimientos', [MantenimientoController::class, 'index']);
+    Route::post('/mantenimientos', [MantenimientoController::class, 'store']);
     Route::get('/mantenimientos/{mantenimiento}', [MantenimientoController::class, 'show']);
     Route::patch('/mantenimientos/{mantenimiento}/reprogramar', [MantenimientoController::class, 'reprogramar']);
     Route::patch('/mantenimientos/{mantenimiento}/cancelar', [MantenimientoController::class, 'cancelar']);
@@ -121,6 +136,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // RF-019 a RF-021: contratos y renovaciones.
     Route::post('/contratos/{contrato}/seguimientos', [ContratoController::class, 'registrarSeguimiento']);
     Route::post('/contratos/{contrato}/renovar', [ContratoController::class, 'renovar']);
+    Route::get('/contratos/{contrato}/pdf', [ContratoController::class, 'pdf']);
     Route::patch('/contratos/{contrato}/cancelar', [ContratoController::class, 'cancelar']);
     Route::apiResource('contratos', ContratoController::class)->except(['destroy']);
 
@@ -189,6 +205,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/facturas', [CarteraController::class, 'crearFactura']);
     Route::get('/facturas/{factura}', [CarteraController::class, 'verFactura']);
     Route::post('/pagos', [CarteraController::class, 'registrarPago']);
+    Route::get('/pagos-en-linea/configuracion', [PagoEnLineaController::class, 'configuracion']);
+    Route::post('/facturas/{factura}/pago-en-linea', [PagoEnLineaController::class, 'iniciar'])->middleware('throttle:20,1');
+    Route::post('/pagos-en-linea/confirmar', [PagoEnLineaController::class, 'confirmar'])->middleware('throttle:30,1');
 
     Route::get('/checklist/items', [PlanillaController::class, 'catalogo']);
     Route::get('/ordenes/{orden}/planilla', [PlanillaController::class, 'show']);

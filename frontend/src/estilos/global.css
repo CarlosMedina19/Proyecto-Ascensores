@@ -5859,3 +5859,768 @@ textarea.campo__control[rows='2'] {
     justify-content: center;
   }
 }
+
+/* Selector con búsqueda (CampoBuscador). */
+.combo {
+  position: relative;
+}
+
+.combo .campo__control {
+  padding-right: 34px;
+  text-overflow: ellipsis;
+}
+
+.combo__flecha,
+.combo__boton {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-texto-suave);
+}
+
+.combo__flecha {
+  pointer-events: none;
+}
+
+.combo__boton {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  right: 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.combo__boton:hover {
+  background: var(--color-superficie-suave);
+  color: var(--color-texto);
+}
+
+.combo__lista {
+  position: absolute;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  max-height: 264px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 10px;
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-elevada);
+}
+
+.combo__opcion {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.combo__opcion small {
+  font-size: 12px;
+  color: var(--color-texto-suave);
+}
+
+.combo__opcion[aria-selected='true'] {
+  background: var(--color-primario-suave);
+}
+
+.combo__opcion--elegida {
+  font-weight: 600;
+}
+
+.combo__vacio {
+  padding: 10px;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.filtros__combo {
+  min-width: 230px;
+}
+
+.filtros__combo .campo__control {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .filtros__combo {
+    flex: 1 1 100%;
+  }
+}
+
+/* Datos que un registro toma de su padre (edificio → ascensor). */
+.herencia {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  align-items: baseline;
+  padding: 10px 14px;
+  border: 1px dashed var(--color-borde-fuerte);
+  border-radius: 10px;
+  background: var(--color-superficie-suave);
+  font-size: 13px;
+}
+
+.herencia__titulo {
+  font-weight: 600;
+  color: var(--color-primario);
+}
+
+.herencia small {
+  display: block;
+  font-size: 11px;
+  color: var(--color-texto-suave);
+}
+
+/* Catálogos editables de Configuración. */
+.catalogo__nuevo {
+  display: flex;
+  gap: 8px;
+}
+
+.catalogo {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.catalogo__fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 4px 0;
+  border-top: 1px solid var(--color-borde);
+}
+
+.catalogo__fila--inactiva .catalogo__nombre {
+  color: var(--color-texto-suave);
+}
+
+.catalogo__nombre {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+}
+
+.catalogo__nombre small {
+  display: block;
+  font-size: 12px;
+  color: var(--color-texto-suave);
+}
+
+.catalogo__acciones {
+  display: flex;
+  gap: 2px;
+}
+
+.catalogo__editar {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+  align-items: center;
+}
+
+/* Pestañas de ascensores por tipo, con su cantidad. */
+.pestanas-tipo {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 2px 12px;
+  scrollbar-width: thin;
+}
+
+.pestanas-tipo__boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 999px;
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pestanas-tipo__boton span {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--color-superficie-suave);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-texto-suave);
+}
+
+.pestanas-tipo__boton[aria-selected="true"] {
+  border-color: var(--color-primario);
+  background: var(--color-primario-suave);
+  font-weight: 600;
+}
+
+.pestanas-tipo__boton[aria-selected="true"] span {
+  background: var(--color-primario);
+  color: var(--color-sobre-primario);
+}
+
+/* Días y horas de trabajo del técnico. */
+.horario__plantillas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.horario__dias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 8px;
+}
+
+.horario__dia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  background: var(--color-superficie-suave);
+}
+
+.horario__dia--activo {
+  border-color: var(--color-primario-medio);
+  background: var(--color-primario-suave);
+}
+
+.horario__nombre {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 92px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.horario__horas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.horario__horas .campo__control {
+  width: 96px;
+  height: 34px;
+  padding: 0 6px;
+}
+
+.horario__descanso {
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+/* ---------- Galería de fotos del ascensor: principal destacada y visor ---------- */
+
+.galeria {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr;
+}
+
+.galeria--2 {
+  grid-template-columns: 2fr 1fr;
+}
+
+.galeria--3 {
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.galeria--3 .galeria__item--principal {
+  grid-row: span 2;
+}
+
+.galeria__item {
+  position: relative;
+  margin: 0;
+  min-height: 0;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--radio-medio);
+  border: 1px solid var(--color-borde);
+  background: var(--color-superficie-media);
+}
+
+.galeria--3 .galeria__item:not(.galeria__item--principal) {
+  aspect-ratio: auto;
+}
+
+.galeria--3 .galeria__item--principal,
+.galeria--2 .galeria__item--principal {
+  aspect-ratio: 4 / 3;
+}
+
+.galeria--2 .galeria__item:not(.galeria__item--principal) {
+  aspect-ratio: auto;
+}
+
+.galeria__ver {
+  all: unset;
+  position: absolute;
+  inset: 0;
+  cursor: zoom-in;
+}
+
+.galeria__ver img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 400ms var(--curva-salida, ease-out);
+}
+
+.galeria__velo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(to top, rgb(10 6 24 / 55%), transparent 55%);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.galeria__velo svg {
+  padding: 9px;
+  box-sizing: content-box;
+  border-radius: 999px;
+  background: rgb(10 6 24 / 45%);
+  backdrop-filter: blur(4px);
+}
+
+.galeria__ver:focus-visible {
+  box-shadow: inset var(--anillo);
+}
+
+.galeria__pie {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  pointer-events: none;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.galeria__pie span {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgb(10 6 24 / 55%);
+}
+
+.galeria__quitar {
+  all: unset;
+  cursor: pointer;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  color: #fff;
+  background: rgb(10 6 24 / 60%);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 200ms ease, background 150ms ease;
+}
+
+.galeria__quitar:hover {
+  background: var(--color-peligro);
+}
+
+.galeria__quitar:focus-visible {
+  opacity: 1;
+  box-shadow: var(--anillo);
+}
+
+@media (hover: hover) {
+  .galeria__item:hover .galeria__ver img {
+    transform: scale(1.04);
+  }
+
+  .galeria__item:hover .galeria__velo,
+  .galeria__item:hover .galeria__pie,
+  .galeria__item:hover .galeria__quitar,
+  .galeria__ver:focus-visible .galeria__velo {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* En pantallas táctiles no hay hover: el pie y el botón de eliminar se ven siempre. */
+@media (hover: none) {
+  .galeria__pie,
+  .galeria__quitar {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Mientras carga, un brillo que recorre la tarjeta. */
+.galeria .fotos__cargando,
+.visor .fotos__cargando {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(100deg, var(--color-superficie-media) 30%, var(--color-superficie-suave) 50%, var(--color-superficie-media) 70%);
+  background-size: 200% 100%;
+  animation: galeria-brillo 1.4s linear infinite;
+}
+
+.visor .fotos__cargando {
+  width: min(70vw, 900px);
+  height: 60vh;
+  border-radius: var(--radio-medio);
+}
+
+@keyframes galeria-brillo {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.visor {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: rgb(8 5 18 / 92%);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  animation: visor-entrada 180ms ease-out;
+}
+
+@keyframes visor-entrada {
+  from {
+    opacity: 0;
+  }
+}
+
+.visor__barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+}
+
+.visor__titulo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.visor__titulo strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+}
+
+.visor__titulo small {
+  font-size: 12px;
+  color: rgb(255 255 255 / 65%);
+}
+
+.visor__escenario {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: 0 72px;
+}
+
+.visor__imagen {
+  max-width: 100%;
+  max-height: calc(100vh - 150px);
+  border-radius: 10px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 50%);
+  object-fit: contain;
+  animation: visor-foto 220ms ease-out;
+}
+
+@keyframes visor-foto {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+.visor__boton {
+  all: unset;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 10%);
+  transition: background 150ms ease;
+}
+
+.visor__boton:hover {
+  background: rgb(255 255 255 / 20%);
+}
+
+.visor__boton:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-primario-claro);
+}
+
+.visor__flecha {
+  position: absolute;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  transform: translateY(-50%);
+}
+
+.visor__flecha--anterior {
+  left: 14px;
+}
+
+.visor__flecha--siguiente {
+  right: 14px;
+}
+
+.visor__puntos {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+}
+
+.visor__punto {
+  all: unset;
+  cursor: pointer;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 35%);
+  transition: width 200ms ease, background 200ms ease;
+}
+
+.visor__punto[aria-current='true'] {
+  width: 22px;
+  background: #fff;
+}
+
+.visor__punto:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-primario-claro);
+}
+
+@media (max-width: 640px) {
+  .visor__escenario {
+    padding: 0 8px;
+  }
+
+  .visor__flecha {
+    top: auto;
+    bottom: 10px;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .galeria__ver img,
+  .galeria__velo,
+  .galeria__pie,
+  .visor,
+  .visor__imagen,
+  .galeria .fotos__cargando,
+  .visor .fotos__cargando {
+    animation: none;
+    transition: none;
+  }
+}
+
+.servicio-propio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border-radius: 999px;
+  background: var(--color-primario-suave);
+  font-size: 13px;
+}
+
+.servicio-propio button {
+  all: unset;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+}
+
+.servicio-propio button:hover {
+  background: var(--color-superficie);
+}
+
+.lista-servicios {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 3px;
+  font-size: 14px;
+}
+
+/* Calendario: programar en un día y arrastrar visitas para reagendarlas. */
+.calendario__celda,
+.agenda__dia {
+  position: relative;
+}
+
+.calendario__agregar,
+.agenda__agregar {
+  all: unset;
+  cursor: pointer;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.agenda__agregar {
+  top: 10px;
+  right: 10px;
+}
+
+.calendario__celda:hover .calendario__agregar,
+.agenda__dia:hover .agenda__agregar,
+.calendario__agregar:focus-visible,
+.agenda__agregar:focus-visible {
+  opacity: 1;
+}
+
+.calendario__agregar:focus-visible,
+.agenda__agregar:focus-visible {
+  box-shadow: var(--anillo);
+}
+
+@media (hover: none) {
+  .calendario__agregar,
+  .agenda__agregar {
+    opacity: 1;
+  }
+}
+
+[draggable="true"].calendario__evento,
+[draggable="true"].agenda__evento {
+  cursor: grab;
+}
+
+[draggable="true"].calendario__evento:active,
+[draggable="true"].agenda__evento:active {
+  cursor: grabbing;
+}
+
+.soltar-aqui {
+  outline: 2px dashed var(--color-primario);
+  outline-offset: -3px;
+  background: var(--color-primario-suave) !important;
+}
+
+/* Resultado del pago por PSE. */
+.resultado-pago {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 460px;
+  margin: 12px auto;
+  text-align: center;
+}
+
+.resultado-pago h2 {
+  margin: 4px 0 0;
+  font-family: var(--fuente-titulos);
+}
+
+.resultado-pago p {
+  margin: 0 0 8px;
+  color: var(--color-texto-suave);
+}
+
+.resultado-pago--exito svg {
+  color: var(--color-exito);
+}
+
+.resultado-pago--alerta svg {
+  color: var(--color-alerta);
+}
+
+.resultado-pago--peligro svg {
+  color: var(--color-peligro);
+}
+
+.resultado-pago dl {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 6px 18px;
+  margin: 0 0 12px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.resultado-pago dt {
+  color: var(--color-texto-suave);
+}
+
+.resultado-pago dd {
+  margin: 0;
+  font-weight: 600;
+}

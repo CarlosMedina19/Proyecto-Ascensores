@@ -7,18 +7,24 @@ import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, 
 import AccionesRegistro from '../../componentes/AccionesRegistro';
 import HerramientasExcel from '../../componentes/HerramientasExcel';
 import { ResumenAscensor } from '../../componentes/Despliegues';
-import { ESTADOS_EQUIPO, TIPOS_ASCENSOR, TIPOS_EDIFICIO, numero } from '../../utilidades/formato';
+import { ESTADOS_EQUIPO, TIPOS_EDIFICIO, numero } from '../../utilidades/formato';
+import { useTiposAscensor } from '../../hooks/useTiposAscensor';
 
 /** Todos los ascensores, o solo los de un tipo de edificio cuando se abre desde Clientes en el menú. */
 export default function ListaEquipos({ tipo }) {
   const { tienePermiso, esCliente } = useAutenticacion();
   const navegar = useNavigate();
-  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina, recargar } = useListado(equipos.listar, {
+  const tiposAscensor = useTiposAscensor();
+  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina, recargar, respuesta } = useListado(equipos.listar, {
     estado: '',
     tipo_ascensor: '',
     tipo_edificio: tipo || '',
   }, filasSegunPantalla(84));
   const grupo = TIPOS_EDIFICIO[tipo];
+  // Pestañas por tipo de ascensor con su cantidad (con los demás filtros aplicados).
+  const porTipo = respuesta?.por_tipo ?? {};
+  const totalTipos = Object.values(porTipo).reduce((a, b) => a + b, 0);
+  const pestanas = Object.entries(porTipo).sort(([a], [b]) => (a === 'sin_tipo') - (b === 'sin_tipo') || (tiposAscensor[a] ?? a).localeCompare(tiposAscensor[b] ?? b));
 
   return (
     <>
@@ -40,6 +46,24 @@ export default function ListaEquipos({ tipo }) {
       </EncabezadoPagina>
 
 
+      {totalTipos > 0 && (
+        <div className="pestanas-tipo" role="tablist" aria-label="Tipo de ascensor">
+          {[['', totalTipos], ...pestanas].map(([clave, n]) => (
+            <button
+              key={clave || 'todos'}
+              type="button"
+              role="tab"
+              aria-selected={filtros.tipo_ascensor === clave}
+              className="pestanas-tipo__boton"
+              onClick={() => cambiarFiltro('tipo_ascensor', clave)}
+            >
+              {clave === '' ? 'Todos' : clave === 'sin_tipo' ? 'Sin tipo' : tiposAscensor[clave] ?? clave}
+              <span>{n}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <Tarjeta sinRelleno>
         <div className="filtros">
           <div className="filtros__busqueda">
@@ -55,14 +79,6 @@ export default function ListaEquipos({ tipo }) {
           <select className="campo__control" value={filtros.estado} onChange={(e) => cambiarFiltro('estado', e.target.value)} aria-label="Estado">
             <option value="">Todos los estados</option>
             {Object.entries(ESTADOS_EQUIPO).map(([valor, { texto }]) => (
-              <option key={valor} value={valor}>
-                {texto}
-              </option>
-            ))}
-          </select>
-          <select className="campo__control" value={filtros.tipo_ascensor} onChange={(e) => cambiarFiltro('tipo_ascensor', e.target.value)} aria-label="Tipo de ascensor">
-            <option value="">Todos los tipos</option>
-            {Object.entries(TIPOS_ASCENSOR).map(([valor, texto]) => (
               <option key={valor} value={valor}>
                 {texto}
               </option>
@@ -113,7 +129,7 @@ export default function ListaEquipos({ tipo }) {
                 render: (e) =>
                   e.ascensor ? (
                     <>
-                      {TIPOS_ASCENSOR[e.ascensor.tipo_ascensor] || 'Sin tipo'}
+                      {e.ascensor.tipo_ascensor_texto || 'Sin tipo'}
                       <div className="tabla__secundario">{`${numero(e.ascensor.capacidad_kg, ' kg')} · ${e.ascensor.paradas ?? '—'} paradas`}</div>
                     </>
                   ) : (

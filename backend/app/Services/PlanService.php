@@ -19,7 +19,7 @@ class PlanService
     public function listar(array $filtros = [], int $porPagina = 15): LengthAwarePaginator
     {
         $consulta = PlanMantenimiento::with(['precios.periodicidad'])
-            ->withCount(['asignaciones as asignaciones_activas_count' => fn ($c) => $c->where('estado', 'activa')]);
+            ->withCount(['asignaciones as asignaciones_activas_count' => fn ($c) => $c->where('estado', 'activa'), 'contratos as contratos_vigentes_count' => fn ($c) => $c->where('estado', 'vigente')]);
 
         if (! empty($filtros['busqueda'])) {
             $coincidencia = DB::getDriverName() === 'pgsql' ? 'ilike' : 'like';

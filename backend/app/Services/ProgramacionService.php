@@ -94,9 +94,11 @@ class ProgramacionService
         $asignacion->loadMissing(['periodicidad', 'contrato']);
         $base ??= $asignacion->ultimo_mantenimiento ?? $asignacion->fecha_inicio;
 
-        // Las visitas que ya tienen una orden de trabajo en curso se conservan (fase 3).
+        // Las visitas que ya tienen una orden de trabajo en curso se conservan (fase 3), igual que
+        // las adicionales que se agregaron a mano desde el calendario.
         $asignacion->mantenimientos()
             ->pendientes()
+            ->where('adicional', false)
             ->whereDoesntHave('ordenActiva')
             ->update([
                 'estado' => 'cancelado',
@@ -104,7 +106,7 @@ class ProgramacionService
                 'actualizado_por' => Auth::id(),
                 'updated_at' => now(),
             ]);
-        $conservadas = $asignacion->mantenimientos()->pendientes()->pluck('fecha_teorica')
+        $conservadas = $asignacion->mantenimientos()->pendientes()->where('adicional', false)->pluck('fecha_teorica')
             ->map(fn ($fecha) => substr((string) $fecha, 0, 10))
             ->flip();
 

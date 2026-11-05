@@ -24,7 +24,7 @@ class MantenimientoProgramado extends Model
 
     protected $fillable = [
         'asignacion_id', 'equipo_id', 'fecha_programada', 'fecha_teorica', 'precio', 'estado',
-        'fecha_ejecucion', 'motivo', 'observacion', 'actualizado_por', 'hora',
+        'fecha_ejecucion', 'motivo', 'observacion', 'actualizado_por', 'hora', 'adicional',
     ];
 
     protected function casts(): array

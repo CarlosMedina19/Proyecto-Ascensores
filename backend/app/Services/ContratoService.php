@@ -6,6 +6,8 @@ use App\Exceptions\ReglaNegocioException;
 use App\Models\Cliente;
 use App\Models\Contrato;
 use App\Models\Equipo;
+use App\Models\Periodicidad;
+use App\Models\PlanMantenimiento;
 use App\Models\SeguimientoRenovacion;
 use App\Models\Usuario;
 use Carbon\CarbonImmutable;
@@ -22,7 +24,7 @@ class ContratoService
 
     public function listar(array $filtros = [], int $porPagina = 15): LengthAwarePaginator
     {
-        $consulta = Contrato::with('cliente')->withCount('equipos');
+        $consulta = Contrato::with(['cliente', 'plan', 'periodicidad'])->withCount('equipos');
         $usuario = Auth::user();
 
         if ($usuario instanceof Usuario && $usuario->esCliente()) {
@@ -58,6 +60,7 @@ class ContratoService
             }
 
             $this->validarEquipos($cliente, $datos['equipos'], $datos['fecha_inicio'], $datos['fecha_fin']);
+            $datos = $this->ajustarPlan($datos);
 
             $contrato = Contrato::create([
                 ...collect($datos)->except('equipos')->all(),
@@ -70,7 +73,7 @@ class ContratoService
 
             RegistroAuditoriaService::registrar('creado', $contrato, $contrato->toArray() + ['equipos' => $datos['equipos']]);
 
-            return $contrato->load(['cliente', 'equipos.edificio']);
+            return $contrato->load(['cliente', 'plan', 'periodicidad', 'equipos.edificio']);
         });
     }
 
@@ -86,6 +89,7 @@ class ContratoService
             $equipos = $datos['equipos'] ?? $contrato->equipos()->pluck('equipos.id')->all();
 
             $this->validarEquipos($contrato->cliente, $equipos, $inicio, $fin, $contrato->id);
+            $datos = $this->ajustarPlan($datos + ['fecha_inicio' => $inicio, 'fecha_fin' => $fin], $contrato);
 
             $contrato->update(collect($datos)->except('equipos')->all());
             if (isset($datos['equipos'])) {
@@ -102,8 +106,42 @@ class ContratoService
 
             RegistroAuditoriaService::registrar('actualizado', $contrato, $contrato->getChanges() + (isset($datos['equipos']) ? ['equipos' => $datos['equipos']] : []));
 
-            return $contrato->fresh(['cliente', 'equipos.edificio']);
+            return $contrato->fresh(['cliente', 'plan', 'periodicidad', 'equipos.edificio']);
         });
+    }
+
+    /**
+     * El plan de alquiler pactado: sin precio se toma el del catálogo para la periodicidad, sin servicios
+     * se copian los del plan y sin valor total se calcula precio × periodos de la vigencia.
+     */
+    private function ajustarPlan(array $datos, ?Contrato $actual = null): array
+    {
+        if (array_key_exists('plan_id', $datos) && $datos['plan_id'] === null) {
+            return [...$datos, 'periodicidad_id' => null, 'precio_periodo' => null, 'servicios_pactados' => null];
+        }
+        $planId = $datos['plan_id'] ?? $actual?->plan_id;
+        if (! $planId) {
+            return $datos;
+        }
+        $plan = PlanMantenimiento::findOrFail($planId);
+        $periodicidad = Periodicidad::findOrFail($datos['periodicidad_id'] ?? $actual?->periodicidad_id);
+        $cambioPlan = isset($datos['plan_id']) && $actual?->plan_id !== (int) $datos['plan_id'];
+
+        if (! array_key_exists('precio_periodo', $datos) || $datos['precio_periodo'] === null) {
+            $datos['precio_periodo'] = ! $cambioPlan && $actual?->precio_periodo !== null && $actual->periodicidad_id === $periodicidad->id
+                ? $actual->precio_periodo
+                : $plan->precioPara($periodicidad->id);
+        }
+        if (! array_key_exists('servicios_pactados', $datos) && ($cambioPlan || ! $actual)) {
+            $datos['servicios_pactados'] = $plan->servicios_incluidos ?? [];
+        }
+        if (! isset($datos['valor'])) {
+            $provisional = new Contrato(['fecha_inicio' => $datos['fecha_inicio'], 'fecha_fin' => $datos['fecha_fin']]);
+            $provisional->setRelation('periodicidad', $periodicidad);
+            $datos['valor'] = round((float) $datos['precio_periodo'] * $provisional->periodos(), 2);
+        }
+
+        return [...$datos, 'plan_id' => $plan->id, 'periodicidad_id' => $periodicidad->id];
     }
 
     /**
@@ -156,6 +194,11 @@ class ContratoService
             $nuevo = $this->crear([
                 'cliente_id' => $contrato->cliente_id,
                 'contrato_anterior_id' => $contrato->id,
+                // El contrato nuevo conserva el plan pactado (precio, periodicidad y servicios).
+                'plan_id' => $contrato->plan_id,
+                'periodicidad_id' => $contrato->periodicidad_id,
+                'precio_periodo' => $contrato->precio_periodo,
+                'servicios_pactados' => $contrato->servicios_pactados,
                 'fecha_inicio' => $inicio,
                 'fecha_fin' => $datos['fecha_fin'],
                 'valor' => $datos['valor'] ?? $contrato->valor,
@@ -174,7 +217,7 @@ class ContratoService
 
             RegistroAuditoriaService::registrar('renovado', $contrato, ['contrato_nuevo' => $nuevo->numero]);
 
-            return $nuevo->fresh(['cliente', 'equipos.edificio', 'contratoAnterior']);
+            return $nuevo->fresh(['cliente', 'plan', 'periodicidad', 'equipos.edificio', 'contratoAnterior']);
         });
     }
 
@@ -191,7 +234,7 @@ class ContratoService
             }
             RegistroAuditoriaService::registrar('cancelado', $contrato, ['motivo' => $motivo]);
 
-            return $contrato->fresh(['cliente', 'equipos.edificio']);
+            return $contrato->fresh(['cliente', 'plan', 'periodicidad', 'equipos.edificio']);
         });
     }
 

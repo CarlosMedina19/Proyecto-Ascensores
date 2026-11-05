@@ -40,6 +40,7 @@ class MantenimientoProgramadoResource extends RecursoApi
             'hora' => $this->hora ? substr($this->hora, 0, 5) : null,
             'precio' => $this->precio,
             'estado' => $this->estado,
+            'adicional' => (bool) $this->adicional,
             'fecha_ejecucion' => $this->fecha_ejecucion?->format('Y-m-d'),
             'motivo' => $this->motivo,
             'observacion' => $this->observacion,

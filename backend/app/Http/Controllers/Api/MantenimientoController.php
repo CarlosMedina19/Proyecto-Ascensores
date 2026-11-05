@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Mantenimiento\AgregarVisitaRequest;
 use App\Http\Requests\Mantenimiento\EjecutarMantenimientoRequest;
 use App\Http\Requests\Mantenimiento\ListarMantenimientosRequest;
 use App\Http\Requests\Mantenimiento\ReprogramarMantenimientoRequest;
 use App\Http\Requests\MotivoRequest;
 use App\Http\Resources\MantenimientoProgramadoResource;
+use App\Models\Equipo;
 use App\Models\MantenimientoProgramado;
 use App\Services\MantenimientoService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**
@@ -45,6 +48,20 @@ class MantenimientoController extends Controller
         return new MantenimientoProgramadoResource($this->detalle(
             $this->servicioMantenimiento->reprogramar($mantenimiento, $solicitud->validated('fecha'), $solicitud->validated('motivo'), $solicitud->validated('hora'))
         ));
+    }
+
+    /** Visita adicional en el día elegido en el calendario. */
+    public function store(AgregarVisitaRequest $solicitud): JsonResponse
+    {
+        abort_unless($solicitud->user()->tienePermiso('mantenimientos.gestionar'), 403, 'Su rol no puede programar mantenimientos.');
+        $visita = $this->servicioMantenimiento->agregarVisita(
+            Equipo::findOrFail($solicitud->validated('equipo_id')),
+            $solicitud->validated('fecha'),
+            $solicitud->validated('hora'),
+            $solicitud->validated('motivo'),
+        );
+
+        return (new MantenimientoProgramadoResource($this->detalle($visita)))->response()->setStatusCode(201);
     }
 
     public function cancelar(MotivoRequest $solicitud, MantenimientoProgramado $mantenimiento): MantenimientoProgramadoResource

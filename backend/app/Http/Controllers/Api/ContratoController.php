@@ -12,9 +12,11 @@ use App\Http\Resources\ContratoResource;
 use App\Http\Resources\SeguimientoRenovacionResource;
 use App\Models\Contrato;
 use App\Services\ContratoService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 
 /**
  * RF-019, RF-020 y RF-021: contratos, seguimiento de renovación y alertas de vencimiento.
@@ -94,10 +96,37 @@ class ContratoController extends Controller
         ));
     }
 
+    /** PDF del contrato: partes, vigencia, plan pactado, valor, ascensores y condiciones. */
+    public function pdf(Request $solicitud, Contrato $contrato): Response
+    {
+        $this->authorize('view', $contrato);
+        $contrato = $this->detalle($contrato);
+        $html = view('pdf.contrato', [
+            'contrato' => $contrato,
+            'precioCatalogo' => $contrato->plan?->precioPara((int) $contrato->periodicidad_id),
+            'estados' => ['vigente' => 'Vigente', 'vencido' => 'Vencido', 'renovado' => 'Renovado', 'cancelado' => 'Cancelado'],
+            'generadoPor' => $solicitud->user()?->nombre ?? 'SIGMA',
+        ])->render();
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('letter')
+            ->setOption('dpi', 96)
+            ->setOption('isFontSubsettingEnabled', false)
+            ->setOption('fontDir', storage_path('fonts'))
+            ->setOption('fontCache', storage_path('fonts'))
+            ->output();
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"SIGMA_Contrato_{$contrato->numero}.pdf\"",
+        ]);
+    }
+
     private function detalle(Contrato $contrato): Contrato
     {
         return $contrato->load([
             'cliente',
+            'plan',
+            'periodicidad',
             'contratoAnterior',
             'equipos.edificio',
             'seguimientos' => fn ($c) => $c->with('usuario')->latest('created_at')->latest('id'),

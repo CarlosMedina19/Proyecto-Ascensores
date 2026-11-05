@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarPlus, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { festivos as servicioFestivos, mantenimientos, ordenes } from '../../api/servicios';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { Alerta, Cargando, ListaDescripcion } from '../../componentes/Basicos';
 import { ESTADOS_ORDEN, diasHasta, estadoMantenimiento, fechaIso } from '../../utilidades/formato';
 import ModalMantenimiento from './ModalMantenimiento';
+import { ModalProgramarVisita, ModalReagendar } from './ModalVisitaCalendario';
 
 const HORA_INICIO = 6;
 const HORA_FIN = 19;
@@ -24,7 +25,7 @@ const LEYENDA = [
   { clase: 'preventivo', texto: 'Preventivo' },
   { clase: 'correctivo', texto: 'Correctivo' },
   { clase: 'inspeccion', texto: 'Inspección' },
-  { clase: 'visita', texto: 'Visita del plan sin orden' },
+  { clase: 'visita', texto: 'Visita programada sin orden' },
 ];
 
 const formatoMes = new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric' });
@@ -32,6 +33,41 @@ const formatoDia = new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'num
 const formatoCorto = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' });
 
 const inicioDelDia = (dia) => new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
+
+// Solo las visitas pendientes sin orden se pueden arrastrar a otro día.
+const PENDIENTES = ['programado', 'reprogramado'];
+const arrastrable = (evento) => evento.tipo === 'visita' && PENDIENTES.includes(evento.datos.estado);
+
+/** Propiedades de una celda o columna que recibe una visita arrastrada. */
+function zonaDeSoltar(clave, alSoltar, calcularHora) {
+  if (!alSoltar) return {};
+  return {
+    onDragOver: (e) => {
+      if (!e.dataTransfer.types.includes('text/sigma-visita')) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      e.currentTarget.classList.add('soltar-aqui');
+    },
+    onDragLeave: (e) => e.currentTarget.classList.remove('soltar-aqui'),
+    onDrop: (e) => {
+      e.preventDefault();
+      e.currentTarget.classList.remove('soltar-aqui');
+      const id = e.dataTransfer.getData('text/sigma-visita');
+      if (id) alSoltar(id, clave, calcularHora?.(e));
+    },
+  };
+}
+
+function propiedadesArrastre(evento, alSoltar) {
+  if (!alSoltar || !arrastrable(evento)) return {};
+  return {
+    draggable: true,
+    onDragStart: (e) => {
+      e.dataTransfer.setData('text/sigma-visita', String(evento.datos.id));
+      e.dataTransfer.effectAllowed = 'move';
+    },
+  };
+}
 
 function sumarDias(dia, dias) {
   const nuevo = new Date(dia);
@@ -97,7 +133,7 @@ function desdeVisita(m) {
     duracion: DURACION_VISITA,
     clase: 'visita',
     titulo: `${m.equipo?.codigo ?? ''} · ${m.equipo?.edificio?.nombre ?? ''}`,
-    detalle: `${m.hora ?? ''} · ${m.plan?.nombre ?? 'Preventivo'} · sin orden`,
+    detalle: `${m.hora ?? ''} · ${m.adicional ? 'Visita adicional' : (m.plan?.nombre ?? 'Preventivo')} · sin orden`,
     estado: estadoMantenimiento(m).texto,
     finalizada: m.estado === 'ejecutado',
   };
@@ -117,7 +153,7 @@ function conCarriles(eventos) {
   return ubicados.map((u) => ({ ...u, carriles: Math.max(finDeCarril.length, 1) }));
 }
 
-function Evento({ evento, carril = 0, carriles = 1, alAbrir }) {
+function Evento({ evento, carril = 0, carriles = 1, alAbrir, alSoltar }) {
   const inicio = minutosDe(evento.hora) - HORA_INICIO * 60;
   const clases = ['agenda__evento', `agenda__evento--${evento.clase}`];
   if (evento.finalizada) clases.push('agenda__evento--finalizada');
@@ -134,7 +170,8 @@ function Evento({ evento, carril = 0, carriles = 1, alAbrir }) {
         width: `calc(${100 / carriles}% - 8px)`,
       }}
       onClick={() => alAbrir(evento)}
-      title={`${evento.titulo} · ${evento.detalle} · ${evento.estado}`}
+      title={`${evento.titulo} · ${evento.detalle} · ${evento.estado}${arrastrable(evento) && alSoltar ? ' · Arrástrela para reagendarla' : ''}`}
+      {...propiedadesArrastre(evento, alSoltar)}
     >
       <b>
         {evento.critica && '● '}
@@ -147,7 +184,7 @@ function Evento({ evento, carril = 0, carriles = 1, alAbrir }) {
 }
 
 /** Vista de día o de semana: columnas por día con la rejilla de horas. */
-function VistaHoras({ dias, porDia, festivos, alAbrir }) {
+function VistaHoras({ dias, porDia, festivos, alAbrir, alSoltar, alProgramar }) {
   const [ahora, setAhora] = useState(() => new Date());
   useEffect(() => {
     const temporizador = setInterval(() => setAhora(new Date()), 60000);
@@ -169,6 +206,11 @@ function VistaHoras({ dias, porDia, festivos, alAbrir }) {
             <div key={clave} className={`agenda__dia${clave === hoy ? ' hoy' : ''}`}>
               <small>{DIAS_CORTOS[dia.getDay()]}</small>
               <b className="tabular">{dia.getDate()}</b>
+              {alProgramar && !festivos[clave] && dia.getDay() !== 0 && clave >= hoy && (
+                <button type="button" className="agenda__agregar" onClick={() => alProgramar(clave)} aria-label={`Programar mantenimiento el ${formatoDia.format(dia)}`} title="Programar mantenimiento">
+                  <Plus size={13} />
+                </button>
+              )}
               {festivos[clave] && (
                 <span className="agenda__festivo" title={festivos[clave]}>
                   Festivo
@@ -211,12 +253,23 @@ function VistaHoras({ dias, porDia, festivos, alAbrir }) {
           if (clave === hoy) clases.push('hoy');
           if (festivos[clave] || dia.getDay() === 0) clases.push('inhabil');
           return (
-            <div key={clave} className={clases.join(' ')} role="group" aria-label={`${capitalizar(formatoDia.format(dia))}: ${eventos.length} eventos`}>
+            <div
+              key={clave}
+              className={clases.join(' ')}
+              role="group"
+              aria-label={`${capitalizar(formatoDia.format(dia))}: ${eventos.length} eventos`}
+              {...zonaDeSoltar(clave, alSoltar, (e) => {
+                // Hora según la altura donde se suelta, en pasos de 30 minutos (6:00 a 18:00).
+                const minutos = ((e.clientY - e.currentTarget.getBoundingClientRect().top) / ALTO_HORA) * 60;
+                const total = Math.min(Math.max(HORA_INICIO * 60 + Math.round(minutos / 30) * 30, 6 * 60), 18 * 60);
+                return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+              })}
+            >
               {horas.map((h) => (
                 <i key={h} className="agenda__linea" style={{ top: (h - HORA_INICIO) * ALTO_HORA }} aria-hidden="true" />
               ))}
               {conCarriles(eventos).map(({ evento, carril, carriles }) => (
-                <Evento key={evento.clave} evento={evento} carril={carril} carriles={carriles} alAbrir={alAbrir} />
+                <Evento key={evento.clave} evento={evento} carril={carril} carriles={carriles} alAbrir={alAbrir} alSoltar={alSoltar} />
               ))}
               {clave === hoy && minutoActual >= 0 && minutoActual <= horas.length * 60 && (
                 <i className="agenda__ahora" style={{ top: (minutoActual / 60) * ALTO_HORA }} aria-label="Hora actual" />
@@ -229,7 +282,7 @@ function VistaHoras({ dias, porDia, festivos, alAbrir }) {
   );
 }
 
-function VistaMes({ mes, porDia, festivos, alAbrir, alVerDia }) {
+function VistaMes({ mes, porDia, festivos, alAbrir, alVerDia, alSoltar, alProgramar }) {
   const dias = diasDelMes(mes);
   const hoy = fechaIso();
 
@@ -248,10 +301,15 @@ function VistaMes({ mes, porDia, festivos, alAbrir, alVerDia }) {
         if (dia.getDay() === 0 || festivos[clave]) clases.push('calendario__celda--domingo');
         if (clave === hoy) clases.push('calendario__celda--hoy');
         return (
-          <div key={clave} className={clases.join(' ')} role="gridcell" aria-label={`${clave}: ${eventos.length} eventos`}>
+          <div key={clave} className={clases.join(' ')} role="gridcell" aria-label={`${clave}: ${eventos.length} eventos`} {...zonaDeSoltar(clave, alSoltar)}>
             <button type="button" className="calendario__numero tabular" onClick={() => alVerDia(dia)} title="Ver el día">
               {dia.getDate()}
             </button>
+            {alProgramar && !festivos[clave] && dia.getDay() !== 0 && clave >= hoy && (
+              <button type="button" className="calendario__agregar" onClick={() => alProgramar(clave)} aria-label={`Programar mantenimiento el ${clave}`} title="Programar mantenimiento">
+                <Plus size={13} />
+              </button>
+            )}
             {festivos[clave] && <span className="calendario__festivo">{festivos[clave]}</span>}
             {eventos.slice(0, MAXIMO_POR_DIA).map((e) => (
               <button
@@ -259,7 +317,8 @@ function VistaMes({ mes, porDia, festivos, alAbrir, alVerDia }) {
                 type="button"
                 className={`calendario__evento calendario__evento--${e.clase}`}
                 onClick={() => alAbrir(e)}
-                title={`${e.titulo} · ${e.detalle} · ${e.estado}`}
+                title={`${e.titulo} · ${e.detalle} · ${e.estado}${arrastrable(e) && alSoltar ? ' · Arrástrela para reagendarla' : ''}`}
+                {...propiedadesArrastre(e, alSoltar)}
               >
                 {e.hora && <span className="tabular">{e.hora} </span>}
                 <b>{e.titulo.split(' · ')[0]}</b> <span>{e.titulo.split(' · ')[1]}</span>
@@ -296,10 +355,14 @@ export default function Calendario() {
   const [festivos, setFestivos] = useState({});
   const [error, setError] = useState('');
   const [visita, setVisita] = useState(null);
+  const [programar, setProgramar] = useState(null); // fecha del día elegido
+  const [reagendar, setReagendar] = useState(null); // { visita, fecha, hora }
 
   const verOrdenes = tienePermiso('ordenes.ver');
   // RF-023: el técnico solo ve las órdenes que tiene asignadas.
   const verVisitas = tienePermiso('mantenimientos.ver') && !esTecnico;
+  // Quien gestiona mantenimientos puede agregar visitas en cualquier día y arrastrarlas a otro.
+  const gestiona = verVisitas && tienePermiso('mantenimientos.gestionar');
 
   const { desde, hasta, diasVisibles } = useMemo(() => {
     if (vista === 'dia') return { desde: ancla, hasta: ancla, diasVisibles: [ancla] };
@@ -346,6 +409,19 @@ export default function Calendario() {
     else setVisita(evento.datos);
   }
 
+  function soltarVisita(id, fecha, hora) {
+    const evento = (eventos || []).find((e) => e.tipo === 'visita' && String(e.datos.id) === String(id));
+    if (!evento || (evento.fecha === fecha && (!hora || hora === evento.hora))) return;
+    setReagendar({ visita: evento.datos, fecha, hora });
+  }
+
+  const alGuardarCambio = (mensaje) => {
+    setProgramar(null);
+    setReagendar(null);
+    notificar(mensaje);
+    cargar();
+  };
+
   function mover(delta) {
     setAncla((actual) => {
       if (vista === 'dia') return sumarDias(actual, delta);
@@ -379,11 +455,18 @@ export default function Calendario() {
             elementos={
               esTecnico
                 ? ['Sus órdenes asignadas', 'Toque una orden para avanzar su estado']
-                : ['Sin cruces de horario por técnico', 'Domingos y festivos pasan al siguiente día hábil']
+                : gestiona
+                  ? ['Arrastre una visita a otro día u hora para reagendarla', 'Use + en un día para programar un mantenimiento', 'Domingos y festivos no se programan']
+                  : ['Sin cruces de horario por técnico', 'Domingos y festivos pasan al siguiente día hábil']
             }
           />
         </div>
         <div className="pagina__acciones">
+          {gestiona && (
+            <button type="button" className="boton" onClick={() => setProgramar(fechaIso(ancla) < fechaIso() ? fechaIso() : fechaIso(ancla))}>
+              <CalendarPlus size={16} aria-hidden="true" /> Programar mantenimiento
+            </button>
+          )}
           <div className="segmento" role="group" aria-label="Vista del calendario">
             {VISTAS.map((v) => (
               <button key={v.valor} type="button" aria-pressed={vista === v.valor} onClick={() => setVista(v.valor)}>
@@ -437,6 +520,8 @@ export default function Calendario() {
             porDia={porDia}
             festivos={festivos}
             alAbrir={abrir}
+            alSoltar={gestiona ? soltarVisita : null}
+            alProgramar={gestiona ? setProgramar : null}
             alVerDia={(dia) => {
               setAncla(dia);
               setVista('dia');
@@ -444,11 +529,13 @@ export default function Calendario() {
           />
         ) : (
           <div className="agenda__desplazable">
-            <VistaHoras dias={columnas} porDia={porDia} festivos={festivos} alAbrir={abrir} />
+            <VistaHoras dias={columnas} porDia={porDia} festivos={festivos} alAbrir={abrir} alSoltar={gestiona ? soltarVisita : null} alProgramar={gestiona ? setProgramar : null} />
           </div>
         )}
       </section>
 
+      {programar && <ModalProgramarVisita fecha={programar} alCerrar={() => setProgramar(null)} alGuardar={alGuardarCambio} />}
+      {reagendar && <ModalReagendar {...reagendar} alCerrar={() => setReagendar(null)} alGuardar={alGuardarCambio} />}
       {visita && (
         <ModalMantenimiento
           mantenimiento={visita}

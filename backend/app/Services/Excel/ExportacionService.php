@@ -5,6 +5,7 @@ namespace App\Services\Excel;
 use App\Exceptions\ReglaNegocioException;
 use App\Models\Certificacion;
 use App\Models\Cliente;
+use App\Models\Conjunto;
 use App\Models\Cotizacion;
 use App\Models\Edificio;
 use App\Models\Emergencia;
@@ -35,21 +36,22 @@ class ExportacionService
 {
     /** Hojas que descarga cada módulo. */
     public const MODULOS = [
-        'clientes' => ['clientes', 'edificios'],
+        'clientes' => ['clientes', 'conjuntos', 'edificios'],
         'ascensores' => ['ascensores', 'puertas'],
+        'tecnicos' => ['tecnicos'],
         'ordenes' => ['ordenes', 'checklist'],
         'certificaciones' => ['certificaciones'],
         'emergencias' => ['emergencias'],
         'cotizaciones' => ['cotizaciones'],
         'servicio' => ['certificaciones', 'emergencias', 'cotizaciones'],
         'cartera' => ['facturas', 'pagos'],
-        'usuarios' => ['usuarios'],
+        'usuarios' => ['usuarios', 'tecnicos'],
         'inventario' => ['repuestos'],
-        'todo' => ['clientes', 'edificios', 'ascensores', 'puertas', 'certificaciones', 'ordenes', 'checklist', 'emergencias', 'cotizaciones', 'facturas', 'pagos', 'usuarios', 'repuestos'],
+        'todo' => ['clientes', 'conjuntos', 'edificios', 'ascensores', 'puertas', 'certificaciones', 'ordenes', 'checklist', 'emergencias', 'cotizaciones', 'facturas', 'pagos', 'usuarios', 'tecnicos', 'repuestos'],
     ];
 
     private const PERMISOS = [
-        'clientes' => 'clientes.ver', 'edificios' => 'edificios.ver', 'ascensores' => 'equipos.ver', 'puertas' => 'equipos.ver',
+        'clientes' => 'clientes.ver', 'conjuntos' => 'edificios.ver', 'edificios' => 'edificios.ver', 'tecnicos' => 'tecnicos.ver', 'ascensores' => 'equipos.ver', 'puertas' => 'equipos.ver',
         'ordenes' => 'ordenes.ver', 'checklist' => 'ordenes.ver', 'facturas' => 'cartera.ver', 'pagos' => 'cartera.ver', 'usuarios' => 'usuarios.ver',
         'certificaciones' => 'certificaciones.ver', 'emergencias' => 'emergencias.ver', 'cotizaciones' => 'cotizaciones.ver', 'repuestos' => 'inventario.ver',
     ];
@@ -96,7 +98,7 @@ class ExportacionService
     /** Nombre del archivo descargado: SIGMA_Ascensores_2026-10-20.xlsx */
     public static function nombreArchivo(string $modulo, array $filtros = []): string
     {
-        $nombres = ['clientes' => 'Clientes', 'ascensores' => 'Ascensores', 'ordenes' => 'Ordenes', 'cartera' => 'Cartera', 'usuarios' => 'Usuarios', 'servicio' => 'Servicio', 'certificaciones' => 'Certificaciones', 'emergencias' => 'Emergencias', 'cotizaciones' => 'Cotizaciones', 'inventario' => 'Inventario', 'todo' => 'Datos'];
+        $nombres = ['clientes' => 'Clientes', 'ascensores' => 'Ascensores', 'ordenes' => 'Ordenes', 'cartera' => 'Cartera', 'usuarios' => 'Usuarios', 'servicio' => 'Servicio', 'certificaciones' => 'Certificaciones', 'emergencias' => 'Emergencias', 'cotizaciones' => 'Cotizaciones', 'inventario' => 'Inventario', 'tecnicos' => 'Tecnicos', 'todo' => 'Datos'];
 
         $tipos = ['conjunto' => 'Conjuntos', 'institucional' => 'Institucionales', 'residencial' => 'Residenciales'];
         $seccion = $tipos[$filtros['tipo_edificio'] ?? ''] ?? null;
@@ -109,11 +111,14 @@ class ExportacionService
         $dinamicas = [
             'tecnicos' => Tecnico::with('usuario')->get()->filter(fn ($t) => $t->usuario?->activo)->map(fn ($t) => $t->usuario->nombre)->sort()->values()->all(),
             'planes' => PlanMantenimiento::where('activo', true)->orderBy('nombre')->pluck('nombre')->all(),
+            'tiposAscensor' => Plantilla::lista('tiposAscensor'),
+            'especialidades' => Plantilla::lista('especialidades'),
         ];
         foreach ($dinamicas as $nombre => $valores) {
             $columna = Plantilla::columnaLista($nombre);
-            foreach ($valores as $i => $valor) {
-                $listas->setCellValue($columna.($i + 2), $valor);
+            // Se borran los valores de la plantilla base antes de escribir los actuales.
+            for ($fila = 2; $fila <= max(count($valores) + 1, 60); $fila++) {
+                $listas->setCellValue($columna.$fila, $valores[$fila - 2] ?? null);
             }
         }
     }
@@ -191,13 +196,14 @@ class ExportacionService
 
     private function filasEdificios(Usuario $usuario): iterable
     {
-        $consulta = Edificio::with('cliente')
+        $consulta = Edificio::with(['cliente', 'conjunto'])
             ->whereIn('cliente_id', $this->clientes->consulta($this->filtros)->reorder()->select('clientes.id'))
             ->when($this->filtros['tipo_edificio'] ?? null, fn ($q, $tipo) => $q->where('tipo', $tipo))
             ->orderBy('cliente_id')->orderBy('nombre');
         foreach ($this->deCliente($consulta, $usuario)->cursor() as $edificio) {
             yield [
                 'cliente' => $edificio->cliente?->codigo,
+                'conjunto' => $edificio->conjunto?->nombre,
                 'nombre' => $edificio->nombre,
                 'tipo' => Opciones::tiposEdificio()[$edificio->tipo] ?? $edificio->tipo,
                 'direccion' => $edificio->direccion,
@@ -442,6 +448,89 @@ class ExportacionService
                 'stock_minimo' => (float) $r->stock_minimo,
                 'estado' => $r->activo ? 'Activo' : 'Inactivo',
                 'observaciones' => $r->observaciones,
+            ];
+        }
+    }
+
+    /**
+     * Plantilla vacía para descargar: con módulo (ascensores, técnicos, inventario…) trae solo sus hojas,
+     * con el diccionario de esas hojas y las listas al día. Devuelve [ruta temporal, nombre del archivo].
+     *
+     * @return array{0: string, 1: string}
+     */
+    public function plantilla(?string $modulo): array
+    {
+        $libro = IOFactory::load(Plantilla::rutaArchivo());
+        $this->llenarListas($libro->getSheetByName('Listas'));
+        $config = Plantilla::estructura()['modulos'][$modulo ?? ''] ?? null;
+
+        if ($config) {
+            $nombres = array_map(fn ($clave) => Plantilla::hoja($clave)['nombre'], $config['hojas']);
+            foreach (Plantilla::hojas() as $hoja) {
+                if (! in_array($hoja['nombre'], $nombres, true)) {
+                    $libro->removeSheetByIndex($libro->getIndex($libro->getSheetByName($hoja['nombre'])));
+                }
+            }
+            // El diccionario deja solo las columnas de las hojas incluidas.
+            $diccionario = $libro->getSheetByName('Diccionario');
+            for ($fila = $diccionario->getHighestRow(); $fila >= 2; $fila--) {
+                if (! in_array($diccionario->getCell("A{$fila}")->getValue(), $nombres, true)) {
+                    $diccionario->removeRow($fila);
+                }
+            }
+            $instrucciones = $libro->getSheetByName('Instrucciones');
+            $instrucciones->insertNewRowBefore(2, 2);
+            $instrucciones->setCellValue('A2', 'Esta plantilla trae solo las hojas: '.implode(', ', $nombres).'. Las demás están en la plantilla completa (Clientes → Plantilla).');
+            $instrucciones->getStyle('A2')->getFont()->setBold(true)->getColor()->setARGB('FF4E29AA');
+            $libro->setActiveSheetIndexByName($nombres[0]);
+        }
+
+        $ruta = tempnam(sys_get_temp_dir(), 'sigma').'.xlsx';
+        IOFactory::createWriter($libro, 'Xlsx')->save($ruta);
+
+        return [$ruta, $config['nombre'] ?? Plantilla::estructura()['nombre']];
+    }
+
+    private function filasConjuntos(Usuario $usuario): iterable
+    {
+        $consulta = Conjunto::with('cliente')
+            ->whereIn('cliente_id', $this->clientes->consulta($this->filtros)->reorder()->select('clientes.id'))
+            ->when($this->filtros['tipo_edificio'] ?? null, fn ($q, $tipo) => $q->where('tipo', $tipo))
+            ->orderBy('cliente_id')->orderBy('nombre');
+        foreach ($this->deCliente($consulta, $usuario)->cursor() as $c) {
+            yield [
+                'cliente' => $c->cliente?->codigo,
+                'nombre' => $c->nombre,
+                'tipo' => Opciones::tiposEdificio()[$c->tipo] ?? $c->tipo,
+                'direccion' => $c->direccion,
+                'departamento' => $c->departamento,
+                'ciudad' => $c->ciudad,
+                'codigo_postal' => $c->codigo_postal,
+                'contacto' => $c->nombre_contacto,
+                'telefono' => $c->telefono_contacto,
+                'correo' => $c->correo_contacto,
+                'estado' => $c->activo ? 'Activo' : 'Inactivo',
+            ];
+        }
+    }
+
+    private function filasTecnicos(Usuario $usuario): iterable
+    {
+        $tecnicos = Tecnico::with(['usuario', 'especialidades'])->get()->filter(fn ($t) => $t->usuario)->sortBy(fn ($t) => $t->usuario->nombre);
+        foreach ($tecnicos as $t) {
+            $horario = $t->horario ?: [];
+            $jornada = $horario ? reset($horario) : null;
+            yield [
+                'nombre' => $t->usuario->nombre,
+                'correo' => $t->usuario->correo,
+                'tipo_documento' => $t->tipo_documento,
+                'numero_documento' => $t->numero_documento,
+                'telefono' => $t->telefono,
+                'especialidades' => $t->especialidades->pluck('nombre')->implode(', '),
+                'dias' => $horario ? implode(', ', array_map(fn ($d) => Tecnico::DIAS[(int) $d], array_keys($horario))) : null,
+                'entrada' => $jornada['inicio'] ?? null,
+                'salida' => $jornada['fin'] ?? null,
+                'estado' => $t->usuario->activo ? 'Activo' : 'Inactivo',
             ];
         }
     }

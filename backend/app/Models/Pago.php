@@ -10,7 +10,7 @@ class Pago extends Model
 {
     protected $table = 'pagos';
 
-    public const MEDIOS = ['transferencia' => 'Transferencia', 'consignacion' => 'Consignación', 'cheque' => 'Cheque', 'efectivo' => 'Efectivo'];
+    public const MEDIOS = ['transferencia' => 'Transferencia', 'consignacion' => 'Consignación', 'cheque' => 'Cheque', 'efectivo' => 'Efectivo', 'pse' => 'PSE (en línea)'];
 
     protected $fillable = ['cliente_id', 'factura_id', 'valor', 'fecha', 'medio', 'referencia', 'registrado_por'];
 

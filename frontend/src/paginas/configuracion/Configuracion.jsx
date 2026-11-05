@@ -5,6 +5,7 @@ import { useFormulario } from '../../hooks/useFormulario';
 import { Alerta, Cargando, EncabezadoPagina, Tarjeta } from '../../componentes/Basicos';
 import { CampoTexto, Casilla } from '../../componentes/Campos';
 import { periodicidad } from '../../utilidades/formato';
+import Catalogos from './Catalogos';
 
 const CANALES = [
   { valor: 'database', texto: 'En la aplicación (campana de notificaciones)' },
@@ -82,7 +83,7 @@ export default function Configuracion() {
 
   return (
     <>
-      <EncabezadoPagina titulo="Configuración" descripcion={['Avisos', 'Contratos', 'Emergencias', 'Certificación anual', 'Impuestos']} />
+      <EncabezadoPagina titulo="Configuración" descripcion={['Avisos', 'Contratos', 'Emergencias', 'Certificación anual', 'Impuestos', 'Especialidades y tipos de ascensor']} />
       <form className="formulario" onSubmit={guardar} noValidate>
         <Alerta>{mensajeError}</Alerta>
 
@@ -179,6 +180,8 @@ export default function Configuracion() {
           </button>
         </div>
       </form>
+
+      <Catalogos />
     </>
   );
 }

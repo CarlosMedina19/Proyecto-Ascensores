@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarClock, Plus } from 'lucide-react';
-import { asignaciones, contratos, planes } from '../../api/servicios';
+import { asignaciones, configuracion, contratos } from '../../api/servicios';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { useFormulario } from '../../hooks/useFormulario';
@@ -24,61 +24,38 @@ function PieModal({ alCerrar, alGuardar, enviando, texto, peligro }) {
   );
 }
 
-/** Planes activos con sus precios, para los selectores. */
-function usePlanesActivos() {
+/** Periodicidades activas (cada cuántos meses se visita el ascensor). */
+function usePeriodicidades() {
   const [lista, setLista] = useState(null);
   useEffect(() => {
-    planes
-      .listar({ activo: 1, por_pagina: 100 })
-      .then((r) => setLista(r.datos))
+    configuracion
+      .periodicidades()
+      .then((r) => setLista(r.datos.filter((p) => p.activo).sort((a, b) => a.meses - b.meses)))
       .catch(() => setLista([]));
   }, []);
   return lista;
 }
 
-/** Selectores de plan y periodicidad: solo se ofrecen las periodicidades con precio en el plan. */
-function SelectorPlan({ listaPlanes, datos, cambiar, error }) {
-  const plan = listaPlanes.find((p) => String(p.id) === String(datos.plan_id));
-  const precios = (plan?.precios || []).slice().sort((a, b) => a.periodicidad.meses - b.periodicidad.meses);
-  const precio = precios.find((p) => String(p.periodicidad_id) === String(datos.periodicidad_id));
-
+/** Frecuencia de las visitas preventivas. Los planes son de alquiler del software: aquí no se elige plan. */
+function SelectorFrecuencia({ periodicidades, datos, cambiar, error }) {
   return (
-    <>
-      <div className="formulario__fila">
-        <CampoSelector
-          etiqueta="Plan"
-          obligatorio
-          valor={datos.plan_id}
-          alCambiar={cambiar('plan_id')}
-          error={error('plan_id')}
-          opciones={listaPlanes.map((p) => ({ valor: String(p.id), texto: p.nombre }))}
-        />
-        <CampoSelector
-          etiqueta="Periodicidad"
-          obligatorio
-          valor={datos.periodicidad_id}
-          alCambiar={cambiar('periodicidad_id')}
-          error={error('periodicidad_id')}
-          disabled={!plan}
-          opciones={precios.map((p) => ({ valor: String(p.periodicidad_id), texto: `${periodicidad(p.periodicidad.meses)} · ${dinero(p.precio)}` }))}
-        />
-      </div>
-      {precio && (
-        <p className="texto-pequeno texto-suave" style={{ margin: 0 }}>
-          Precio del catálogo por visita: <strong>{dinero(precio.precio)}</strong>
-        </p>
-      )}
-    </>
+    <CampoSelector
+      etiqueta="Frecuencia de mantenimiento"
+      obligatorio
+      valor={datos.periodicidad_id}
+      alCambiar={cambiar('periodicidad_id')}
+      error={error('periodicidad_id')}
+      opciones={periodicidades.map((p) => ({ valor: String(p.id), texto: periodicidad(p.meses) }))}
+    />
   );
 }
 
-/** RF-013 y RF-014: asignar un plan al ascensor con su vigencia. */
+/** RF-013 y RF-014: programa de mantenimiento del ascensor (frecuencia, vigencia y hora de las visitas). */
 function ModalAsignar({ equipo, alCerrar, alGuardar }) {
   const { tienePermiso } = useAutenticacion();
-  const listaPlanes = usePlanesActivos();
+  const periodicidades = usePeriodicidades();
   const [listaContratos, setListaContratos] = useState([]);
   const { datos, cambiar, error, mensajeError, enviando, enviar } = useFormulario({
-    plan_id: '',
     periodicidad_id: '',
     contrato_id: '',
     fecha_inicio: fechaIso(),
@@ -101,7 +78,6 @@ function ModalAsignar({ equipo, alCerrar, alGuardar }) {
     const respuesta = await enviar(() =>
       asignaciones.crear({
         equipo_id: equipo.id,
-        plan_id: datos.plan_id ? Number(datos.plan_id) : null,
         periodicidad_id: datos.periodicidad_id ? Number(datos.periodicidad_id) : null,
         contrato_id: datos.contrato_id ? Number(datos.contrato_id) : null,
         fecha_inicio: datos.fecha_inicio,
@@ -111,18 +87,23 @@ function ModalAsignar({ equipo, alCerrar, alGuardar }) {
         hora_preferida: datos.hora_preferida || null,
       }),
     );
-    if (respuesta) alGuardar('Plan asignado y mantenimientos programados.');
+    if (respuesta) alGuardar('Mantenimientos programados.');
   }
 
   return (
-    <Modal abierto ancho titulo={`Asignar plan a ${equipo.codigo}`} alCerrar={alCerrar} pie={<PieModal alCerrar={alCerrar} alGuardar={guardar} enviando={enviando} texto="Asignar plan" />}>
-      {listaPlanes === null ? (
+    <Modal
+      abierto
+      ancho
+      titulo={`Programar mantenimiento de ${equipo.codigo}`}
+      alCerrar={alCerrar}
+      pie={<PieModal alCerrar={alCerrar} alGuardar={guardar} enviando={enviando} texto="Programar visitas" />}
+    >
+      {periodicidades === null ? (
         <Cargando />
       ) : (
         <div className="formulario">
           <Alerta>{mensajeError}</Alerta>
-          {!listaPlanes.length && <Alerta tipo="alerta">No hay planes activos. Cree un plan antes de asignarlo.</Alerta>}
-          <SelectorPlan listaPlanes={listaPlanes} datos={datos} cambiar={cambiar} error={error} />
+          <SelectorFrecuencia periodicidades={periodicidades} datos={datos} cambiar={cambiar} error={error} />
           {listaContratos.length > 0 && (
             <CampoSelector
               etiqueta="Contrato"
@@ -150,7 +131,7 @@ function ModalAsignar({ equipo, alCerrar, alGuardar }) {
             ayuda="Hora acordada con el cliente (6:00 a 18:00). Cada visita se puede reprogramar."
           />
           {tienePermiso('precios.editar') && (
-            <CampoTexto etiqueta="Precio pactado (opcional)" tipo="number" min="1" step="1000" valor={datos.precio} alCambiar={cambiar('precio')} error={error('precio')} ayuda="Vacío: se usa el precio del catálogo." />
+            <CampoTexto etiqueta="Valor por visita (opcional)" tipo="number" min="0" step="1000" valor={datos.precio} alCambiar={cambiar('precio')} error={error('precio')} ayuda="Vacío: las visitas van incluidas en el contrato." />
           )}
           <Casilla etiqueta="Aplica IVA" valor={datos.aplica_iva} alCambiar={cambiar('aplica_iva')} />
         </div>
@@ -159,11 +140,10 @@ function ModalAsignar({ equipo, alCerrar, alGuardar }) {
   );
 }
 
-/** RF-016: cambio de plan o periodicidad con motivo. */
+/** RF-016: cambio de la frecuencia de mantenimiento con motivo. */
 function ModalCambiarPlan({ asignacion, alCerrar, alGuardar }) {
-  const listaPlanes = usePlanesActivos();
+  const periodicidades = usePeriodicidades();
   const { datos, cambiar, error, mensajeError, enviando, enviar } = useFormulario({
-    plan_id: String(asignacion.plan_id),
     periodicidad_id: String(asignacion.periodicidad_id),
     motivo: '',
   });
@@ -171,23 +151,22 @@ function ModalCambiarPlan({ asignacion, alCerrar, alGuardar }) {
   async function guardar() {
     const respuesta = await enviar(() =>
       asignaciones.cambiarPlan(asignacion.id, {
-        plan_id: Number(datos.plan_id),
         periodicidad_id: datos.periodicidad_id ? Number(datos.periodicidad_id) : null,
         motivo: datos.motivo,
       }),
     );
-    if (respuesta) alGuardar('Plan actualizado. Las visitas pendientes se reprogramaron.');
+    if (respuesta) alGuardar('Frecuencia actualizada. Las visitas pendientes se reprogramaron.');
   }
 
   return (
-    <Modal abierto ancho titulo="Cambiar plan o periodicidad" alCerrar={alCerrar} pie={<PieModal alCerrar={alCerrar} alGuardar={guardar} enviando={enviando} texto="Guardar cambio" />}>
-      {listaPlanes === null ? (
+    <Modal abierto ancho titulo="Cambiar la frecuencia de mantenimiento" alCerrar={alCerrar} pie={<PieModal alCerrar={alCerrar} alGuardar={guardar} enviando={enviando} texto="Guardar cambio" />}>
+      {periodicidades === null ? (
         <Cargando />
       ) : (
         <div className="formulario">
           <Alerta>{mensajeError}</Alerta>
           <Alerta tipo="info">Aplica desde la siguiente visita pendiente. Las visitas ya ejecutadas no cambian.</Alerta>
-          <SelectorPlan listaPlanes={listaPlanes} datos={datos} cambiar={cambiar} error={error} />
+          <SelectorFrecuencia periodicidades={periodicidades} datos={datos} cambiar={cambiar} error={error} />
           <CampoArea etiqueta="Motivo" obligatorio valor={datos.motivo} alCambiar={cambiar('motivo')} error={error('motivo')} rows={2} />
         </div>
       )}
@@ -205,24 +184,24 @@ function ModalSimple({ tipo, asignacion, alCerrar, alGuardar }) {
 
   const configuracion = {
     precio: {
-      titulo: 'Cambiar precio pactado',
+      titulo: 'Cambiar valor por visita',
       texto: 'Guardar precio',
       llamada: () => asignaciones.cambiarPrecio(asignacion.id, { precio: Number(datos.precio), motivo: datos.motivo }),
       mensaje: 'Precio actualizado en las visitas pendientes.',
       aviso: 'El nuevo precio aplica a las visitas pendientes. Las ejecutadas conservan su precio.',
     },
     vigencia: {
-      titulo: 'Cambiar vigencia del plan',
+      titulo: 'Cambiar vigencia del programa',
       texto: 'Guardar vigencia',
       llamada: () => asignaciones.cambiarVigencia(asignacion.id, { fecha_fin: datos.fecha_fin, motivo: datos.motivo }),
       mensaje: 'Vigencia actualizada.',
       aviso: 'Las visitas se reprograman hasta la nueva fecha final (sin pasar la del contrato).',
     },
     finalizar: {
-      titulo: 'Finalizar plan',
-      texto: 'Finalizar plan',
+      titulo: 'Finalizar programa de mantenimiento',
+      texto: 'Finalizar programa',
       llamada: () => asignaciones.finalizar(asignacion.id, datos.motivo),
-      mensaje: 'Plan finalizado.',
+      mensaje: 'Programa de mantenimiento finalizado.',
       aviso: 'Se cancelan las visitas pendientes. El historial se conserva.',
       peligro: true,
     },
@@ -253,7 +232,7 @@ function ModalSimple({ tipo, asignacion, alCerrar, alGuardar }) {
 }
 
 /**
- * Tarjeta del plan de mantenimiento del ascensor: plan vigente, próximas visitas,
+ * Tarjeta del programa de mantenimiento del ascensor: frecuencia vigente, próximas visitas,
  * acciones y cambios registrados.
  */
 export default function PlanDelEquipo({ equipo, alCambiar }) {
@@ -285,11 +264,11 @@ export default function PlanDelEquipo({ equipo, alCambiar }) {
 
   if (!resumen) {
     return (
-      <Tarjeta titulo="Plan de mantenimiento">
-        <EstadoVacio titulo="Sin plan asignado" descripcion="El ascensor no tiene mantenimientos preventivos programados.">
-          {tienePermiso('asignaciones.crear') && tienePermiso('planes.ver') && equipo.estado !== 'inactivo' && (
+      <Tarjeta titulo="Programa de mantenimiento">
+        <EstadoVacio titulo="Sin mantenimientos programados" descripcion="Indique cada cuánto se visita el ascensor y SIGMA programa las visitas en días hábiles.">
+          {tienePermiso('asignaciones.crear') && equipo.estado !== 'inactivo' && (
             <button type="button" className="boton" onClick={() => setModal('asignar')}>
-              <Plus size={16} /> Asignar plan
+              <Plus size={16} /> Programar mantenimiento
             </button>
           )}
         </EstadoVacio>
@@ -322,11 +301,11 @@ export default function PlanDelEquipo({ equipo, alCambiar }) {
 
   return (
     <Tarjeta
-      titulo="Plan de mantenimiento"
+      titulo="Programa de mantenimiento"
       acciones={
         puedeEditar && (
           <button type="button" className="boton boton--secundario boton--pequeno" onClick={() => setModal('plan')}>
-            Cambiar plan
+            Cambiar frecuencia
           </button>
         )
       }
@@ -346,7 +325,7 @@ export default function PlanDelEquipo({ equipo, alCambiar }) {
 
       <Datos
         elementos={[
-          ['Plan', tienePermiso('planes.ver') ? <Link to={`/planes/${asignacion.plan_id}`}>{asignacion.plan?.nombre}</Link> : asignacion.plan?.nombre],
+          ...(asignacion.plan ? [['Plan', tienePermiso('planes.ver') ? <Link to={`/planes/${asignacion.plan_id}`}>{asignacion.plan.nombre}</Link> : asignacion.plan.nombre]] : []),
           ['Periodicidad', periodicidad(asignacion.periodicidad?.meses)],
           ['Hora de las visitas', asignacion.hora_preferida],
           ['Precio por visita', `${dinero(asignacion.precio)}${asignacion.aplica_iva ? ` + IVA ${Number(asignacion.porcentaje_iva)} %` : ''}`],
@@ -377,7 +356,7 @@ export default function PlanDelEquipo({ equipo, alCambiar }) {
                 Cambiar vigencia
               </button>
               <button type="button" className="boton boton--fantasma boton--pequeno" onClick={() => setModal('finalizar')}>
-                Finalizar plan
+                Finalizar programa
               </button>
             </>
           )}
@@ -408,7 +387,7 @@ export default function PlanDelEquipo({ equipo, alCambiar }) {
           {cambios.length > 0 && (
             <>
               <div className="separador" />
-              <p className="etiqueta-superior">Cambios del plan</p>
+              <p className="etiqueta-superior">Cambios del programa</p>
               <LineaTiempo eventos={cambios} />
             </>
           )}

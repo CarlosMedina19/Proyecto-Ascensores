@@ -13,6 +13,8 @@ class EdificioResource extends RecursoApi
             'identificador_uuid' => $this->identificador_uuid,
             'cliente_id' => $this->cliente_id,
             'cliente' => new ClienteResource($this->whenLoaded('cliente')),
+            'conjunto_id' => $this->conjunto_id,
+            'conjunto' => $this->whenLoaded('conjunto', fn () => $this->conjunto ? ['id' => $this->conjunto->id, 'nombre' => $this->conjunto->nombre, 'tipo' => $this->conjunto->tipo] : null),
             'tipo' => $this->tipo,
             'nombre' => $this->nombre,
             'direccion' => $this->direccion,

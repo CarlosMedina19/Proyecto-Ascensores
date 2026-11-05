@@ -2,11 +2,11 @@
 
 namespace App\Support\Excel;
 
-use App\Models\Ascensor;
 use App\Models\ChecklistItem;
 use App\Models\Edificio;
 use App\Models\Pago;
 use App\Models\PuertaPiso;
+use App\Models\TipoAscensor;
 
 /** Valores internos ↔ etiquetas de las listas de la plantilla. */
 class Opciones
@@ -47,7 +47,7 @@ class Opciones
 
     public static function tiposAscensor(): array
     {
-        return Ascensor::TIPOS;
+        return TipoAscensor::opciones(true);
     }
 
     public static function tiposPuertaPiso(): array

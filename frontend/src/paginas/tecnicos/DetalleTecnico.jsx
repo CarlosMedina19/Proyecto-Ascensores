@@ -94,6 +94,7 @@ export default function DetalleTecnico() {
               ['Documento', tecnico.numero_documento ? `${tecnico.tipo_documento} ${tecnico.numero_documento}` : null],
               ['Teléfono', tecnico.telefono],
               ['Disponibilidad', tecnico.disponibilidad === 'disponible' ? 'Disponible' : tecnico.disponibilidad ? 'No disponible' : null],
+              ['Horario de trabajo', tecnico.horario_texto || 'Sin horario (cualquier hora)'],
               ['Motivo', tecnico.motivo_no_disponible],
               ['Disponible desde', tecnico.no_disponible_hasta ? fecha(tecnico.no_disponible_hasta) : null],
               ['Órdenes activas', tecnico.ordenes_activas ?? 0],

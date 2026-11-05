@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\ReglaNegocioException;
 use App\Http\Controllers\Controller;
 use App\Models\Cliente;
+use App\Models\Conjunto;
 use App\Models\Edificio;
 use App\Models\Equipo;
 use App\Models\PlanMantenimiento;
@@ -57,6 +58,13 @@ class EstadoRegistroController extends Controller
         $this->exigir($solicitud, 'edificios.editar', 'activar o desactivar edificios');
 
         return $this->alternar($edificio, 'activo', 'edificios', "Edificio {$edificio->nombre}");
+    }
+
+    public function conjunto(Request $solicitud, Conjunto $conjunto): JsonResponse
+    {
+        $this->exigir($solicitud, 'edificios.editar', 'activar o desactivar conjuntos');
+
+        return $this->alternar($conjunto, 'activo', 'edificios', "Conjunto {$conjunto->nombre}");
     }
 
     public function plan(Request $solicitud, PlanMantenimiento $plan): JsonResponse

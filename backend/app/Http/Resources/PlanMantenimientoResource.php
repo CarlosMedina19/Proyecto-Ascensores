@@ -17,6 +17,7 @@ class PlanMantenimientoResource extends RecursoApi
             'activo' => (bool) $this->activo,
             'precios' => PrecioPlanResource::collection($this->whenLoaded('precios')),
             'asignaciones_activas_count' => $this->whenHas('asignaciones_activas_count'),
+            'contratos_vigentes_count' => $this->whenHas('contratos_vigentes_count'),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

@@ -71,6 +71,7 @@ const nombresTipoAscensor = {
 class Ascensor {
   Ascensor({
     this.tipo,
+    this.tipoTexto,
     this.capacidadKg,
     this.velocidadMpm,
     this.paradas,
@@ -86,6 +87,7 @@ class Ascensor {
 
   factory Ascensor.desdeJson(Map<String, dynamic> json) => Ascensor(
     tipo: json['tipo_ascensor'] as String?,
+    tipoTexto: json['tipo_ascensor_texto'] as String?,
     capacidadKg: _entero(json['capacidad_kg']),
     velocidadMpm: _decimal(json['velocidad_mpm']),
     paradas: _entero(json['paradas']),
@@ -100,6 +102,7 @@ class Ascensor {
   );
 
   final String? tipo;
+  final String? tipoTexto;
   final int? capacidadKg;
   final double? velocidadMpm;
   final int? paradas;
@@ -112,7 +115,7 @@ class Ascensor {
   final String? operadorPuertas;
   final String? especificaciones;
 
-  String? get nombreTipo => tipo == null ? null : nombresTipoAscensor[tipo] ?? tipo;
+  String? get nombreTipo => tipo == null ? null : tipoTexto ?? nombresTipoAscensor[tipo] ?? tipo;
 }
 
 class Edificio {

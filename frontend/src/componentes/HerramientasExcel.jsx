@@ -56,7 +56,7 @@ export default function HerramientasExcel({ modulo, alImportar, filtros }) {
         <button
           type="button"
           className="boton boton--fantasma"
-          onClick={() => descargar(excel.plantilla, 'plantilla')}
+          onClick={() => descargar(() => excel.plantilla(modulo), 'plantilla')}
           disabled={!!ocupado}
           aria-label="Descargar plantilla vacía"
           title="Descargar plantilla vacía"

@@ -18,7 +18,8 @@ class Contrato extends Model
     protected $table = 'contratos';
 
     protected $fillable = [
-        'numero', 'cliente_id', 'contrato_anterior_id', 'fecha_inicio', 'fecha_fin', 'valor', 'servicios',
+        'numero', 'cliente_id', 'plan_id', 'periodicidad_id', 'precio_periodo', 'servicios_pactados',
+        'contrato_anterior_id', 'fecha_inicio', 'fecha_fin', 'valor', 'servicios',
         'condiciones', 'estado', 'estado_renovacion', 'alerta_vencimiento_en', 'creado_por',
     ];
 
@@ -28,6 +29,8 @@ class Contrato extends Model
             'fecha_inicio' => 'date',
             'fecha_fin' => 'date',
             'valor' => 'decimal:2',
+            'precio_periodo' => 'decimal:2',
+            'servicios_pactados' => 'array',
             'alerta_vencimiento_en' => 'datetime',
         ];
     }
@@ -35,6 +38,28 @@ class Contrato extends Model
     public function cliente(): BelongsTo
     {
         return $this->belongsTo(Cliente::class, 'cliente_id');
+    }
+
+    /** Plan de alquiler del software que se pactó (puede ajustarse en el contrato). */
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(PlanMantenimiento::class, 'plan_id')->withTrashed();
+    }
+
+    public function periodicidad(): BelongsTo
+    {
+        return $this->belongsTo(Periodicidad::class, 'periodicidad_id');
+    }
+
+    /** Periodos de facturación que caben en la vigencia (un trimestre empezado cuenta completo). */
+    public function periodos(): ?int
+    {
+        if (! $this->periodicidad || ! $this->fecha_inicio || ! $this->fecha_fin) {
+            return null;
+        }
+        $meses = $this->fecha_inicio->diffInMonths($this->fecha_fin->copy()->addDay());
+
+        return max(1, (int) ceil(round($meses, 2) / $this->periodicidad->meses));
     }
 
     public function equipos(): BelongsToMany

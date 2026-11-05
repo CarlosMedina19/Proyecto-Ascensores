@@ -5,6 +5,7 @@ import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { useFormulario } from '../../hooks/useFormulario';
 import { Alerta, Cargando, EncabezadoPagina, Tarjeta } from '../../componentes/Basicos';
 import { CampoArea, CampoContrasena, CampoSelector, CampoTexto, Casilla } from '../../componentes/Campos';
+import HorarioSemanal from '../../componentes/HorarioSemanal';
 
 const TIPOS_DOCUMENTO = [
   { valor: 'CC', texto: 'Cédula de ciudadanía (CC)' },
@@ -35,6 +36,8 @@ export default function FormularioTecnico() {
     motivo_no_disponible: '',
     no_disponible_hasta: '',
     observaciones: '',
+    // Lunes a viernes de 7:00 a 17:00 por defecto; se ajusta en el calendario semanal.
+    horario: Object.fromEntries([1, 2, 3, 4, 5].map((d) => [d, { inicio: '07:00', fin: '17:00' }])),
   });
 
   useEffect(() => {
@@ -58,6 +61,7 @@ export default function FormularioTecnico() {
         motivo_no_disponible: t.motivo_no_disponible || '',
         no_disponible_hasta: t.no_disponible_hasta || '',
         observaciones: t.observaciones || '',
+        horario: t.horario || {},
       }));
     });
   }, [editando, id, setDatos]);
@@ -80,6 +84,7 @@ export default function FormularioTecnico() {
       motivo_no_disponible: datos.disponibilidad === 'no_disponible' ? datos.motivo_no_disponible : null,
       no_disponible_hasta: datos.disponibilidad === 'no_disponible' && datos.no_disponible_hasta ? datos.no_disponible_hasta : null,
       observaciones: datos.observaciones || null,
+      horario: Object.keys(datos.horario).length ? datos.horario : null,
     };
     const respuesta = await enviar(() =>
       editando
@@ -129,6 +134,14 @@ export default function FormularioTecnico() {
               <Casilla key={e.id} etiqueta={e.nombre} valor={datos.especialidades.includes(e.id)} alCambiar={(marcada) => alternarEspecialidad(e.id, marcada)} />
             ))}
           </div>
+        </Tarjeta>
+
+        <Tarjeta titulo="Días y horas de trabajo">
+          <p className="texto-pequeno texto-suave" style={{ marginTop: 0 }}>
+            Al asignar órdenes, SIGMA solo ofrece al técnico dentro de este horario. Sin días marcados, puede recibir órdenes a cualquier hora.
+          </p>
+          {error('horario') && <Alerta>{error('horario')}</Alerta>}
+          <HorarioSemanal valor={datos.horario} alCambiar={(h) => setDatos((d) => ({ ...d, horario: h }))} errores={errores} />
         </Tarjeta>
 
         <Tarjeta titulo="Disponibilidad">

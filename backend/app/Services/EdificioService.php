@@ -13,7 +13,7 @@ class EdificioService
 {
     public function listar(array $filtros = [], int $porPagina = 15): LengthAwarePaginator
     {
-        $consulta = Edificio::with(['cliente'])->withCount('equipos');
+        $consulta = Edificio::with(['cliente', 'conjunto'])->withCount('equipos');
         $usuarioActual = Auth::user();
 
         if ($usuarioActual instanceof Usuario && $usuarioActual->esCliente()) {
@@ -24,6 +24,10 @@ class EdificioService
 
         if (! empty($filtros['cliente_id'])) {
             $consulta->where('cliente_id', $filtros['cliente_id']);
+        }
+
+        if (! empty($filtros['conjunto_id'])) {
+            $consulta->where('conjunto_id', $filtros['conjunto_id']);
         }
 
         if (! empty($filtros['tipo'])) {
@@ -56,7 +60,7 @@ class EdificioService
             $edificio = Edificio::create($datos);
             RegistroAuditoriaService::registrar('creado', $edificio, $edificio->toArray());
 
-            return $edificio->load('cliente');
+            return $edificio->load(['cliente', 'conjunto']);
         });
     }
 
@@ -72,7 +76,7 @@ class EdificioService
                 $edificio->equipos()->update(['ubicacion' => $edificio->ubicacionEquipos()]);
             }
 
-            return $edificio->fresh(['cliente']);
+            return $edificio->fresh(['cliente', 'conjunto']);
         });
     }
 

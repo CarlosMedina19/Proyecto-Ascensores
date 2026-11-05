@@ -37,6 +37,7 @@ class AvisoMantenimientoNotification extends NotificacionSigma
                 1 => 'Mantenimiento programado para mañana',
                 default => "Mantenimiento en {$this->dias} días",
             },
+            'programado' => 'Visita de mantenimiento agregada',
             'reprogramado' => 'Mantenimiento reprogramado',
             'cancelado' => 'Mantenimiento cancelado',
             'ejecutado' => 'Mantenimiento realizado',
@@ -48,6 +49,7 @@ class AvisoMantenimientoNotification extends NotificacionSigma
     {
         return match ($this->evento) {
             'aviso' => "El mantenimiento preventivo del {$this->equipo()} está programado para el {$this->fecha()}.",
+            'programado' => "Se agregó una visita de mantenimiento al {$this->equipo()} para el {$this->fecha()}.",
             'reprogramado' => "El mantenimiento del {$this->equipo()} se reprogramó para el {$this->fecha()}."
                 .($this->mantenimiento->motivo ? " Motivo: {$this->mantenimiento->motivo}" : ''),
             'cancelado' => "Se canceló el mantenimiento del {$this->equipo()} previsto para el {$this->fecha()}."

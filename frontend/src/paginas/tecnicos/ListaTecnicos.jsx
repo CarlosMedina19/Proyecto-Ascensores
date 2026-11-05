@@ -6,6 +6,7 @@ import { useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
 import AccionesRegistro from '../../componentes/AccionesRegistro';
+import HerramientasExcel from '../../componentes/HerramientasExcel';
 import { iniciales } from '../../utilidades/formato';
 
 /** Disponibilidad del técnico para recibir órdenes (RF-022). */
@@ -36,6 +37,7 @@ export default function ListaTecnicos() {
   return (
     <>
       <EncabezadoPagina titulo="Técnicos" descripcion={['Especialidades', 'Disponibilidad y estado', 'Solo los activos y disponibles reciben órdenes']}>
+        <HerramientasExcel modulo="tecnicos" alImportar={recargar} filtros={filtros} />
         {tienePermiso('tecnicos.crear') && (
           <Link to="/tecnicos/nuevo" className="boton">
             <Plus size={16} /> Registrar técnico

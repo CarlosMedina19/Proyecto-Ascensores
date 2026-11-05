@@ -2,6 +2,8 @@
 
 namespace App\Support\Excel;
 
+use App\Models\Especialidad;
+use App\Models\TipoAscensor;
 use Carbon\CarbonImmutable;
 use PhpOffice\PhpSpreadsheet\Shared\Date as FechaExcel;
 
@@ -106,7 +108,12 @@ class Plantilla
 
     public static function lista(string $nombre): array
     {
-        return self::estructura()['listas'][$nombre] ?? [];
+        // Catálogos que el administrador edita en Configuración: se leen de la base de datos.
+        return match ($nombre) {
+            'tiposAscensor' => array_values(TipoAscensor::opciones(true)),
+            'especialidades' => Especialidad::where('activo', true)->orderBy('nombre')->pluck('nombre')->all(),
+            default => self::estructura()['listas'][$nombre] ?? [],
+        };
     }
 
     /** Letra de la columna de una lista en la hoja Listas (A, B, …) según el orden del JSON. */

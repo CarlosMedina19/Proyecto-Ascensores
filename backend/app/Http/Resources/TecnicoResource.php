@@ -28,6 +28,8 @@ class TecnicoResource extends RecursoApi
             'motivo_no_disponible' => $perfil?->motivo_no_disponible,
             'no_disponible_hasta' => $perfil?->no_disponible_hasta?->format('Y-m-d'),
             'observaciones' => $perfil?->observaciones,
+            'horario' => $perfil?->horario ?: null,
+            'horario_texto' => $perfil?->horarioTexto(),
             'puede_recibir_ordenes' => (bool) ($perfil?->puedeRecibirOrdenes()),
             'especialidades' => $perfil && $perfil->relationLoaded('especialidades')
                 ? $perfil->especialidades->map(fn ($e) => ['id' => $e->id, 'nombre' => $e->nombre])->values()

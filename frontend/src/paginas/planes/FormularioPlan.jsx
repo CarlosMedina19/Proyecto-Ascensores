@@ -88,22 +88,22 @@ export default function FormularioPlan() {
             <CampoArea etiqueta="Descripción" valor={datos.descripcion} alCambiar={cambiar('descripcion')} error={error('descripcion')} rows={2} />
             <CampoArea
               etiqueta="Servicios incluidos"
-              ayuda="Escriba un servicio por línea."
+              ayuda="Escriba un servicio por línea (módulos del software, soporte, capacitación…). El contrato puede quitar o agregar servicios."
               valor={datos.servicios}
               alCambiar={cambiar('servicios')}
               error={error('servicios_incluidos') || errores['servicios_incluidos.0']?.[0]}
               rows={5}
             />
-            <Casilla etiqueta="Plan activo (disponible para asignar)" valor={datos.activo} alCambiar={cambiar('activo')} />
+            <Casilla etiqueta="Plan activo (se ofrece en los contratos nuevos)" valor={datos.activo} alCambiar={cambiar('activo')} />
           </div>
         </Tarjeta>
 
         {editando ? (
           <Alerta tipo="info">Los precios se cambian desde el detalle del plan con «Cambiar precios», indicando el motivo.</Alerta>
         ) : (
-          <Tarjeta titulo="Precio por visita según la periodicidad">
+          <Tarjeta titulo="Precio del alquiler según el periodo">
             <p className="texto-pequeno texto-suave" style={{ marginTop: 0 }}>
-              Deje vacía una periodicidad si el plan no se ofrece con ella. Debe indicar al menos un precio.
+              Precio total de cada periodo (mensual, trimestral, semestral…). Deje vacío un periodo si el plan no se ofrece así. Debe indicar al menos un precio.
             </p>
             {error('precios') && <Alerta>{error('precios')}</Alerta>}
             <div className="formulario__fila formulario__fila--3">

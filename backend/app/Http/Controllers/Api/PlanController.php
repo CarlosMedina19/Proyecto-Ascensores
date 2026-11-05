@@ -48,6 +48,7 @@ class PlanController extends Controller
 
         return new PlanMantenimientoResource($plan->load('precios.periodicidad')->loadCount([
             'asignaciones as asignaciones_activas_count' => fn ($c) => $c->where('estado', 'activa'),
+            'contratos as contratos_vigentes_count' => fn ($c) => $c->where('estado', 'vigente'),
         ]));
     }
 

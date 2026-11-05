@@ -73,7 +73,7 @@ class TecnicoService
             $anterior = $tecnico->exists ? $tecnico->only(['numero_documento', 'telefono', 'disponibilidad']) : [];
 
             $tecnico->fill(collect($datos)->only([
-                'tipo_documento', 'numero_documento', 'telefono', 'disponibilidad',
+                'tipo_documento', 'numero_documento', 'telefono', 'disponibilidad', 'horario',
                 'motivo_no_disponible', 'no_disponible_hasta', 'observaciones',
             ])->all());
 
@@ -139,6 +139,7 @@ class TecnicoService
                 $motivo = match (true) {
                     ! $tecnico->usuario?->activo => 'Técnico inactivo',
                     $tecnico->disponibilidad !== 'disponible' => 'No disponible'.($tecnico->motivo_no_disponible ? ": {$tecnico->motivo_no_disponible}" : ''),
+                    ! $tecnico->trabajaEn($inicio, $fin) => 'Fuera de su horario de trabajo',
                     $conflictos->isNotEmpty() => 'Tiene otra orden en ese horario',
                     default => null,
                 };

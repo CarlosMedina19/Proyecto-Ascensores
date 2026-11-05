@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Landmark, Plus, Search } from 'lucide-react';
 import { cartera, clientes } from '../../api/servicios';
 import { useListado } from '../../hooks/useListado';
 import { useFormulario } from '../../hooks/useFormulario';
@@ -40,6 +40,28 @@ export default function Cartera() {
   const [resumen, setResumen] = useState(null);
   const [facturaPago, setFacturaPago] = useState(null);
   const [nuevaFactura, setNuevaFactura] = useState(false);
+  const [pse, setPse] = useState(null); // { habilitado, pruebas }
+  const [pagando, setPagando] = useState(null);
+  const notificar = useNotificar();
+
+  useEffect(() => {
+    cartera
+      .pseConfiguracion()
+      .then((r) => setPse(r.datos))
+      .catch(() => setPse(null));
+  }, []);
+
+  /** Abre el checkout de Wompi; al terminar, Wompi devuelve a /pagos/resultado. */
+  async function pagarConPse(factura) {
+    setPagando(factura.id);
+    try {
+      const r = await cartera.pagarConPse(factura.id);
+      window.location.assign(r.datos.url);
+    } catch (e) {
+      notificar(e.message, 'error');
+      setPagando(null);
+    }
+  }
   const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina, recargar } = useListado(cartera.facturas, { estado: '' });
 
   const cargarResumen = useCallback(() => {
@@ -72,6 +94,9 @@ export default function Cartera() {
       {resumen ? <ResumenCartera resumen={resumen} /> : <Cargando texto="Cargando saldos…" />}
 
 
+      {pse?.habilitado && pse.pruebas && (
+        <Alerta tipo="info">Pago por PSE en modo de pruebas (Wompi sandbox): no se cobra dinero real. En el banco de pruebas elija «Banco que aprueba» para simular un pago exitoso.</Alerta>
+      )}
       <Tarjeta sinRelleno>
         <div className="filtros">
           <div className="filtros__busqueda">
@@ -146,6 +171,28 @@ export default function Cartera() {
                   return <Insignia tipo={e.tipo}>{e.texto}</Insignia>;
                 },
               },
+              ...(pse?.habilitado
+                ? [
+                    {
+                      clave: 'pse',
+                      titulo: 'Pago en línea',
+                      render: (f) =>
+                        Number(f.saldo) > 0 ? (
+                          <button
+                            type="button"
+                            className="boton boton--secundario boton--pequeno"
+                            disabled={pagando !== null}
+                            onClick={(evento) => {
+                              evento.stopPropagation();
+                              pagarConPse(f);
+                            }}
+                          >
+                            <Landmark size={14} aria-hidden="true" /> {pagando === f.id ? 'Abriendo…' : 'Pagar con PSE'}
+                          </button>
+                        ) : null,
+                    },
+                  ]
+                : []),
             ]}
           />
         )}

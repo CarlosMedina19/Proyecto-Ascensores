@@ -25,6 +25,7 @@ class Edificio extends Model
     protected $fillable = [
         'identificador_uuid',
         'cliente_id',
+        'conjunto_id',
         'tipo',
         'nombre',
         'direccion',
@@ -67,6 +68,11 @@ class Edificio extends Model
     public function cliente(): BelongsTo
     {
         return $this->belongsTo(Cliente::class, 'cliente_id');
+    }
+
+    public function conjunto(): BelongsTo
+    {
+        return $this->belongsTo(Conjunto::class, 'conjunto_id')->withTrashed();
     }
 
     public function equipos(): HasMany

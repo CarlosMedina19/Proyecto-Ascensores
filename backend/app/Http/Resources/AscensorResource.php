@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\TipoAscensor;
 use Illuminate\Http\Request;
 
 class AscensorResource extends RecursoApi
@@ -18,6 +19,7 @@ class AscensorResource extends RecursoApi
             'paradas' => $this->paradas,
             'velocidad_mpm' => $this->velocidad_mpm,
             'tipo_ascensor' => $this->tipo_ascensor,
+            'tipo_ascensor_texto' => TipoAscensor::nombre($this->tipo_ascensor),
             'tipo_traccion' => $this->tipo_traccion,
             'motor' => $this->motor,
             'controlador' => $this->controlador,

@@ -17,6 +17,10 @@ import DetalleRepuesto from './paginas/inventario/DetalleRepuesto';
 import FormularioCliente from './paginas/clientes/FormularioCliente';
 import DetalleCliente from './paginas/clientes/DetalleCliente';
 import ListaEdificios from './paginas/edificios/ListaEdificios';
+import ListaConjuntos from './paginas/conjuntos/ListaConjuntos';
+import FormularioConjunto from './paginas/conjuntos/FormularioConjunto';
+import DetalleConjunto from './paginas/conjuntos/DetalleConjunto';
+import ResultadoPago from './paginas/pagos/ResultadoPago';
 import FormularioEdificio from './paginas/edificios/FormularioEdificio';
 import DetalleEdificio from './paginas/edificios/DetalleEdificio';
 import ListaEquipos from './paginas/equipos/ListaEquipos';
@@ -73,15 +77,18 @@ export default function App() {
               <Route path="/clientes" element={conPermiso('clientes.ver', <ListaClientes />)} />
               <Route path="/clientes/nuevo" element={conPermiso('clientes.crear', <FormularioCliente />)} />
               {/* Edificios de cada tipo, desplegados desde Clientes en el menú. */}
-              <Route path="/clientes/conjuntos" element={conPermiso('edificios.ver', <ListaEdificios key="conjunto" tipo="conjunto" />)} />
-              <Route path="/clientes/institucionales" element={conPermiso('edificios.ver', <ListaEdificios key="institucional" tipo="institucional" />)} />
-              <Route path="/clientes/residenciales" element={conPermiso('edificios.ver', <ListaEdificios key="residencial" tipo="residencial" />)} />
+              <Route path="/clientes/conjuntos" element={conPermiso('edificios.ver', <ListaConjuntos key="conjunto" tipo="conjunto" />)} />
+              <Route path="/clientes/institucionales" element={conPermiso('edificios.ver', <ListaConjuntos key="institucional" tipo="institucional" />)} />
+              <Route path="/clientes/residenciales" element={conPermiso('edificios.ver', <ListaConjuntos key="residencial" tipo="residencial" />)} />
               <Route path="/clientes/conjuntos/ascensores" element={conPermiso('equipos.ver', <ListaEquipos key="conjunto" tipo="conjunto" />)} />
               <Route path="/clientes/institucionales/ascensores" element={conPermiso('equipos.ver', <ListaEquipos key="institucional" tipo="institucional" />)} />
               <Route path="/clientes/residenciales/ascensores" element={conPermiso('equipos.ver', <ListaEquipos key="residencial" tipo="residencial" />)} />
               <Route path="/clientes/:id" element={conPermiso('clientes.ver', <DetalleCliente />)} />
               <Route path="/clientes/:id/editar" element={conPermiso('clientes.editar', <FormularioCliente />)} />
 
+              <Route path="/conjuntos/nuevo" element={conPermiso('edificios.crear', <FormularioConjunto />)} />
+              <Route path="/conjuntos/:id" element={conPermiso('edificios.ver', <DetalleConjunto />)} />
+              <Route path="/conjuntos/:id/editar" element={conPermiso('edificios.editar', <FormularioConjunto />)} />
               <Route path="/edificios" element={conPermiso('edificios.ver', <ListaEdificios />)} />
               <Route path="/edificios/nuevo" element={conPermiso('edificios.crear', <FormularioEdificio />)} />
               <Route path="/edificios/:id" element={conPermiso('edificios.ver', <DetalleEdificio />)} />
@@ -93,6 +100,7 @@ export default function App() {
               <Route path="/equipos/:id/editar" element={conPermiso('equipos.editar', <FormularioEquipo />)} />
 
               <Route path="/cartera" element={conPermiso('cartera.ver', <Cartera />)} />
+              <Route path="/pagos/resultado" element={conPermiso('cartera.ver', <ResultadoPago />)} />
               <Route path="/inventario" element={conPermiso('inventario.ver', <Inventario />)} />
               <Route path="/inventario/:id" element={conPermiso('inventario.ver', <DetalleRepuesto />)} />
 

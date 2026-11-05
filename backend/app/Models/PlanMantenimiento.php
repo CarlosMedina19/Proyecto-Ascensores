@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * RF-010: plan del catálogo, con un precio por periodicidad (RF-012).
+ * RF-010: plan de alquiler del software, con un precio por periodo (RF-012: mensual, trimestral, semestral…).
+ * El contrato lo pacta y puede ajustar su precio, su periodicidad y sus servicios.
  */
 class PlanMantenimiento extends Model
 {
@@ -31,6 +32,12 @@ class PlanMantenimiento extends Model
     public function asignaciones(): HasMany
     {
         return $this->hasMany(AsignacionPlan::class, 'plan_id');
+    }
+
+    /** Contratos que pactaron este plan de alquiler. */
+    public function contratos(): HasMany
+    {
+        return $this->hasMany(Contrato::class, 'plan_id');
     }
 
     public function historialPrecios(): HasMany

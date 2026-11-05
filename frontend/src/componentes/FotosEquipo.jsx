@@ -1,9 +1,11 @@
 // Fotos del ascensor: selección con vista previa, imágenes protegidas y galería.
 import { useEffect, useId, useRef, useState } from 'react';
-import { ImagePlus, Trash2, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { ChevronLeft, ChevronRight, Expand, ImagePlus, Trash2, X } from 'lucide-react';
 import { urlArchivo } from '../api/cliente';
 import { fotosEquipo } from '../api/servicios';
-import { Confirmacion, Modal } from './Basicos';
+import { fecha } from '../utilidades/formato';
+import { Confirmacion } from './Basicos';
 
 export const MAXIMO_FOTOS = 3;
 const TIPOS = ['image/jpeg', 'image/png', 'image/webp'];
@@ -108,13 +110,13 @@ export function ImagenProtegida({ ruta, alt, ...resto }) {
   }, [ruta]);
 
   if (fallo) return <span className="fotos__error">No se pudo cargar</span>;
-  if (!url) return <span className="fotos__cargando" aria-label="Cargando foto" />;
+  if (!url) return <span className="fotos__cargando" role="img" aria-label="Cargando foto" />;
   return <img src={url} alt={alt} {...resto} />;
 }
 
 /** Galería de las fotos guardadas, con agregar y eliminar si el usuario puede gestionarlas. */
 export function GaleriaFotos({ equipoId, fotos, editable, alCambiar, notificar }) {
-  const [ampliada, setAmpliada] = useState(null);
+  const [ampliada, setAmpliada] = useState(null); // índice de la foto en el visor
   const [nuevas, setNuevas] = useState([]);
   const [porEliminar, setPorEliminar] = useState(null);
   const [procesando, setProcesando] = useState(false);
@@ -153,15 +155,25 @@ export function GaleriaFotos({ equipoId, fotos, editable, alCambiar, notificar }
   return (
     <>
       {fotos.length > 0 ? (
-        <div className="fotos">
+        // La primera foto va destacada; las demás, como miniaturas a su lado.
+        <div className={`galeria galeria--${Math.min(fotos.length, 3)}`}>
           {fotos.map((foto, indice) => (
-            <figure key={foto.id} className="fotos__item">
-              <button type="button" className="fotos__ver" onClick={() => setAmpliada(foto)} aria-label={`Ampliar foto ${indice + 1}`}>
+            <figure key={foto.id} className={`galeria__item${indice === 0 ? ' galeria__item--principal' : ''}`}>
+              <button type="button" className="galeria__ver" onClick={() => setAmpliada(indice)} aria-label={`Ver foto ${indice + 1} de ${fotos.length} en grande`}>
                 <ImagenProtegida ruta={foto.ruta_archivo} alt={`Foto ${indice + 1} del ascensor`} />
+                <span className="galeria__velo" aria-hidden="true">
+                  <Expand size={16} />
+                </span>
               </button>
+              <figcaption className="galeria__pie">
+                <span>
+                  {indice + 1}/{fotos.length}
+                </span>
+                {foto.created_at && <span>{fecha(foto.created_at)}</span>}
+              </figcaption>
               {editable && (
-                <button type="button" className="fotos__quitar" onClick={() => setPorEliminar(foto)} aria-label={`Eliminar foto ${indice + 1}`}>
-                  <Trash2 size={13} />
+                <button type="button" className="galeria__quitar" onClick={() => setPorEliminar(foto)} aria-label={`Eliminar foto ${indice + 1}`} title="Eliminar foto">
+                  <Trash2 size={14} />
                 </button>
               )}
             </figure>
@@ -182,9 +194,7 @@ export function GaleriaFotos({ equipoId, fotos, editable, alCambiar, notificar }
         </div>
       )}
 
-      <Modal abierto={Boolean(ampliada)} titulo={ampliada?.nombre || 'Foto'} alCerrar={() => setAmpliada(null)} ancho>
-        {ampliada && <ImagenProtegida ruta={ampliada.ruta_archivo} alt={ampliada.nombre} className="fotos__ampliada" />}
-      </Modal>
+      {ampliada !== null && fotos[ampliada] && <VisorFotos fotos={fotos} indice={ampliada} alCambiar={setAmpliada} alCerrar={() => setAmpliada(null)} />}
       <Confirmacion
         abierto={Boolean(porEliminar)}
         titulo="Eliminar foto"
@@ -196,5 +206,66 @@ export function GaleriaFotos({ equipoId, fotos, editable, alCambiar, notificar }
         alCerrar={() => setPorEliminar(null)}
       />
     </>
+  );
+}
+
+/** Visor a pantalla completa: flechas (o ← →) para pasar de foto y Esc para cerrar. */
+function VisorFotos({ fotos, indice, alCambiar, alCerrar }) {
+  const foto = fotos[indice];
+  const total = fotos.length;
+  const cerrar = useRef(null);
+  const pasar = (paso) => alCambiar((indice + paso + total) % total);
+
+  useEffect(() => {
+    const anterior = document.activeElement;
+    cerrar.current?.focus();
+    const original = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = original;
+      anterior?.focus?.();
+    };
+  }, []);
+
+  function alTeclear(evento) {
+    if (evento.key === 'Escape') alCerrar();
+    if (evento.key === 'ArrowRight' && total > 1) pasar(1);
+    if (evento.key === 'ArrowLeft' && total > 1) pasar(-1);
+  }
+
+  return createPortal(
+    <div className="visor" role="dialog" aria-modal="true" aria-label={`Foto ${indice + 1} de ${total}`} onKeyDown={alTeclear} onClick={alCerrar}>
+      <div className="visor__barra" onClick={(e) => e.stopPropagation()}>
+        <span className="visor__titulo">
+          <strong>{foto.nombre || `Foto ${indice + 1}`}</strong>
+          <small>
+            {indice + 1} de {total}
+            {foto.created_at ? ` · ${fecha(foto.created_at)}` : ''}
+          </small>
+        </span>
+        <button ref={cerrar} type="button" className="visor__boton" onClick={alCerrar} aria-label="Cerrar">
+          <X size={20} />
+        </button>
+      </div>
+      <div className="visor__escenario">
+        <ImagenProtegida key={foto.id} ruta={foto.ruta_archivo} alt={foto.nombre || `Foto ${indice + 1}`} className="visor__imagen" onClick={(e) => e.stopPropagation()} />
+      </div>
+      {total > 1 && (
+        <>
+          <button type="button" className="visor__boton visor__flecha visor__flecha--anterior" onClick={(e) => (e.stopPropagation(), pasar(-1))} aria-label="Foto anterior">
+            <ChevronLeft size={26} />
+          </button>
+          <button type="button" className="visor__boton visor__flecha visor__flecha--siguiente" onClick={(e) => (e.stopPropagation(), pasar(1))} aria-label="Foto siguiente">
+            <ChevronRight size={26} />
+          </button>
+          <div className="visor__puntos" onClick={(e) => e.stopPropagation()}>
+            {fotos.map((f, k) => (
+              <button key={f.id} type="button" className="visor__punto" aria-label={`Ir a la foto ${k + 1}`} aria-current={k === indice} onClick={() => alCambiar(k)} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>,
+    document.body,
   );
 }

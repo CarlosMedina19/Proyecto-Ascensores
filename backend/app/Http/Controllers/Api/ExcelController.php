@@ -28,9 +28,12 @@ class ExcelController extends Controller
         private readonly ExportacionService $exportacion,
     ) {}
 
-    public function plantilla(): BinaryFileResponse
+    /** Plantilla vacía; con ?modulo=ascensores (o tecnicos, inventario…) solo trae las hojas de ese módulo. */
+    public function plantilla(Request $solicitud): BinaryFileResponse
     {
-        return response()->download(Plantilla::rutaArchivo(), Plantilla::estructura()['nombre']);
+        [$ruta, $nombre] = $this->exportacion->plantilla($solicitud->query('modulo'));
+
+        return response()->download($ruta, $nombre)->deleteFileAfterSend();
     }
 
     public function exportar(Request $solicitud, string $modulo): BinaryFileResponse
@@ -166,6 +169,7 @@ class ExcelController extends Controller
             'certificaciones' => ['certificación', 'certificaciones'], 'emergencias' => ['emergencia', 'emergencias'],
             'cotizaciones' => ['cotización', 'cotizaciones'],
             'pagos' => ['pago', 'pagos'], 'usuarios' => ['usuario', 'usuarios'], 'repuestos' => ['repuesto', 'repuestos'],
+            'conjuntos' => ['conjunto', 'conjuntos'], 'tecnicos' => ['técnico', 'técnicos'],
         ];
         $partes = [];
         $actualizados = 0;
