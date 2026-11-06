@@ -142,7 +142,9 @@ export default function Estructura() {
   const actual =
     (hijoActual && ruta.endsWith('/ascensores') && { texto: `Ascensores · ${hijoActual.texto}` }) ||
     hijoActual ||
+    (ruta.startsWith('/conjuntos') && { texto: 'Conjuntos' }) ||
     (ruta.startsWith('/edificios') && { texto: 'Edificios' }) ||
+    (ruta.startsWith('/pagos') && { texto: 'Cartera' }) ||
     (ruta.startsWith('/equipos') && { texto: 'Ascensores' }) ||
     menu.find((o) => o.ruta && ruta.startsWith(o.ruta));
   const dentroDe = (o) => ruta.startsWith(o.ruta) || (o.relacionadas || []).some((r) => ruta.startsWith(r));

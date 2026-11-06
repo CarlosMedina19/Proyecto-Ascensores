@@ -174,7 +174,7 @@ export default function DetallePlan() {
 
         <Tarjeta sinRelleno>
           <div className="tarjeta__cuerpo" style={{ paddingBottom: 0 }}>
-            <h2 className="tarjeta__titulo">Precio por visita</h2>
+            <h2 className="tarjeta__titulo">Precio por periodo</h2>
           </div>
           <Tabla
             filas={precios}

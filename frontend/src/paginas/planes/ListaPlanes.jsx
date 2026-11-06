@@ -86,7 +86,7 @@ export default function ListaPlanes() {
                 ),
               },
               { clave: 'precios', titulo: 'Precio según el periodo', render: (p) => <PreciosPlan precios={p.precios} /> },
-              { clave: 'asignaciones', titulo: 'Ascensores', clase: 'tabular', render: (p) => p.asignaciones_activas_count ?? 0 },
+              { clave: 'contratos', titulo: 'Contratos vigentes', clase: 'tabular', render: (p) => p.contratos_vigentes_count ?? 0 },
               {
                 clave: 'activo',
                 titulo: 'Estado',
