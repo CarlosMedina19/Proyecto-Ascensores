@@ -1,112 +1,39 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, Navigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import { planes } from '../../api/servicios';
-import { useListado } from '../../hooks/useListado';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
-import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
-import AccionesRegistro from '../../componentes/AccionesRegistro';
-import { dinero } from '../../utilidades/formato';
+import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Tarjeta } from '../../componentes/Basicos';
 
-/** Precios del plan como "1 m · $ 380.000". */
-export function PreciosPlan({ precios = [] }) {
-  if (!precios.length) return <span className="texto-suave">Sin precios</span>;
-  return (
-    <div className="precios">
-      {precios
-        .slice()
-        .sort((a, b) => (a.periodicidad?.meses ?? 0) - (b.periodicidad?.meses ?? 0))
-        .map((precio) => (
-          <span key={precio.periodicidad_id} className="precios__item">
-            <b>{precio.periodicidad?.nombre ?? `${precio.periodicidad?.meses} m`}</b> {dinero(precio.precio)}
-          </span>
-        ))}
-    </div>
-  );
-}
-
+/** SIGMA tiene un solo plan de alquiler: abre su detalle o invita a crearlo. */
 export default function ListaPlanes() {
   const { tienePermiso } = useAutenticacion();
-  const navegar = useNavigate();
-  const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina, recargar } = useListado(planes.listar, { activo: '' });
+  const [plan, setPlan] = useState(undefined);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    planes
+      .listar({ por_pagina: 1 })
+      .then((r) => setPlan(r.datos[0] ?? null))
+      .catch((e) => setError(e.message));
+  }, []);
+
+  if (error) return <Alerta>{error}</Alerta>;
+  if (plan === undefined) return <Cargando />;
+  // SIGMA tiene un solo plan de alquiler: se abre directamente.
+  if (plan) return <Navigate to={`/planes/${plan.id}`} replace />;
 
   return (
     <>
-      <EncabezadoPagina
-        titulo="Planes de alquiler del software"
-        descripcion={['Servicios incluidos', 'Un precio por cada periodo', 'Cada contrato puede ajustar su plan']}
-      >
-        {tienePermiso('planes.crear') && (
-          <Link to="/planes/nuevo" className="boton">
-            <Plus size={16} /> Crear plan
-          </Link>
-        )}
-      </EncabezadoPagina>
-
-      <Tarjeta sinRelleno>
-        <div className="filtros">
-          <div className="filtros__busqueda">
-            <Search size={16} aria-hidden="true" />
-            <input
-              className="campo__control"
-              placeholder="Buscar plan por nombre"
-              value={filtros.busqueda}
-              onChange={(e) => cambiarFiltro('busqueda', e.target.value)}
-              aria-label="Buscar planes"
-            />
-          </div>
-          <select className="campo__control" value={filtros.activo} onChange={(e) => cambiarFiltro('activo', e.target.value)} aria-label="Estado">
-            <option value="">Todos</option>
-            <option value="1">Activos</option>
-            <option value="0">Inactivos</option>
-          </select>
-        </div>
-
-        {error && (
-          <div style={{ padding: 16 }}>
-            <Alerta>{error}</Alerta>
-          </div>
-        )}
-
-        {cargando && !filas.length ? (
-          <Cargando />
-        ) : (
-          <Tabla
-            filas={filas}
-            alSeleccionar={(plan) => navegar(`/planes/${plan.id}`)}
-            vacio={<EstadoVacio titulo="No hay planes registrados" />}
-            columnas={[
-              {
-                clave: 'nombre',
-                titulo: 'Plan',
-                render: (p) => (
-                  <>
-                    <strong>{p.nombre}</strong>
-                    <div className="tabla__secundario">{p.servicios_incluidos.length} servicios incluidos</div>
-                  </>
-                ),
-              },
-              { clave: 'precios', titulo: 'Precio según el periodo', render: (p) => <PreciosPlan precios={p.precios} /> },
-              { clave: 'contratos', titulo: 'Contratos vigentes', clase: 'tabular', render: (p) => p.contratos_vigentes_count ?? 0 },
-              {
-                clave: 'activo',
-                titulo: 'Estado',
-                render: (p) => (
-                  <AccionesRegistro
-                    nombre={`el plan ${p.nombre}`}
-                    activo={p.activo}
-                    rutaEditar={tienePermiso('planes.editar') ? `/planes/${p.id}/editar` : null}
-                    alAlternar={tienePermiso('planes.editar') ? () => planes.alternarEstado(p.id) : null}
-                    alEliminar={tienePermiso('planes.eliminar') ? () => planes.eliminar(p.id) : null}
-                    mensajeDesactivar="Un plan inactivo no se puede asignar a ascensores nuevos. Las asignaciones vigentes siguen igual."
-                    mensajeEliminar="Solo se puede eliminar un plan sin ascensores asignados."
-                    alCambiar={recargar}
-                  />
-                ),
-              },
-            ]}
-          />
-        )}
-        <Paginacion metadatos={metadatos} alCambiar={setPagina} />
+      <EncabezadoPagina titulo="Plan de alquiler del software" descripcion={['Un solo plan', 'El precio sube según el tiempo de alquiler', 'Cada contrato puede ajustarlo']} />
+      <Tarjeta>
+        <EstadoVacio titulo="Aún no se ha creado el plan" descripcion="Indique sus servicios y el precio por 1 mes, 3 meses, 6 meses…">
+          {tienePermiso('planes.crear') && (
+            <Link to="/planes/nuevo" className="boton">
+              <Plus size={16} /> Crear plan
+            </Link>
+          )}
+        </EstadoVacio>
       </Tarjeta>
     </>
   );

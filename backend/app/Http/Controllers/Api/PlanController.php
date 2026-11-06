@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\ReglaNegocioException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Plan\ActualizarPlanRequest;
 use App\Http\Requests\Plan\ActualizarPreciosPlanRequest;
@@ -35,6 +36,9 @@ class PlanController extends Controller
     public function store(GuardarPlanRequest $solicitud): JsonResponse
     {
         $this->authorize('create', PlanMantenimiento::class);
+        if (PlanMantenimiento::exists()) {
+            throw new ReglaNegocioException('SIGMA tiene un solo plan de alquiler. Edite sus servicios o cambie sus precios.');
+        }
         $plan = $this->servicioPlan->crear($solicitud->validated());
 
         return (new PlanMantenimientoResource($plan->load('precios.periodicidad')))

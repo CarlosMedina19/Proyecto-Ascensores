@@ -573,14 +573,6 @@
           "ayuda": "Cada cuántos meses se hace el mantenimiento preventivo (1 a 6). Si la llena, también llene la fecha del primer mantenimiento."
         },
         {
-          "clave": "plan",
-          "titulo": "Plan",
-          "tipo": "lista",
-          "lista": "planes",
-          "ancho": 24,
-          "ayuda": "Plan de mantenimiento. Si lo deja vacío, se usa el primer plan activo con esa periodicidad."
-        },
-        {
           "clave": "fecha_primer_mantenimiento",
           "titulo": "Fecha del primer mantenimiento",
           "tipo": "fecha",
@@ -601,7 +593,7 @@
           "tipo": "moneda",
           "min": 1,
           "ancho": 18,
-          "ayuda": "Precio pactado por visita. Si lo deja vacío, se usa el precio del plan."
+          "ayuda": "Valor por visita, si se cobra aparte. Vacío: las visitas van incluidas en el contrato."
         },
         {
           "clave": "estado",

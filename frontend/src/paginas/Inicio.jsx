@@ -69,7 +69,7 @@ function ProximosMantenimientos() {
                   <span>
                     <b>{m.equipo?.codigo}</b> <span className="texto-suave">· {m.equipo?.edificio?.nombre}</span>
                     <span className="tabla__secundario">
-                      {fecha(m.fecha_programada)} · {m.plan?.nombre}
+                      {fecha(m.fecha_programada)}
                     </span>
                   </span>
                   <Insignia tipo={estado.tipo}>{dias < 0 ? estado.texto : dias === 0 ? 'Hoy' : `En ${dias} días`}</Insignia>

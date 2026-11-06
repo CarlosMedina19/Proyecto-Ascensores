@@ -6,7 +6,7 @@ import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { useFormulario } from '../../hooks/useFormulario';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Tarjeta } from '../../componentes/Basicos';
 import { CampoArea, CampoBuscador, CampoSelector, CampoTexto, Casilla } from '../../componentes/Campos';
-import { ESTADOS_EQUIPO, dinero, periodicidad } from '../../utilidades/formato';
+import { ESTADOS_EQUIPO, dinero } from '../../utilidades/formato';
 
 /** Periodos de la vigencia (un periodo empezado cuenta completo), igual que el servidor. */
 function periodosEntre(inicio, fin, meses) {
@@ -55,7 +55,11 @@ export default function FormularioContrato() {
       .catch(() => setListaClientes([]));
     planes
       .listar({ por_pagina: 100, activo: 1 })
-      .then((r) => setListaPlanes(r.datos))
+      .then((r) => {
+        setListaPlanes(r.datos);
+        // SIGMA tiene un solo plan: en un contrato nuevo ya queda elegido.
+        if (!editando && r.datos.length === 1) elegirPlan(String(r.datos[0].id), r.datos);
+      })
       .catch(() => setListaPlanes([]));
   }, []);
 
@@ -106,8 +110,8 @@ export default function FormularioContrato() {
 
   const serviciosPlan = useMemo(() => plan?.servicios_incluidos ?? [], [plan]);
 
-  function elegirPlan(valor) {
-    const elegido = listaPlanes.find((p) => String(p.id) === String(valor));
+  function elegirPlan(valor, lista = listaPlanes) {
+    const elegido = lista.find((p) => String(p.id) === String(valor));
     setDatos((d) => {
       if (!elegido) return { ...d, plan_id: '', periodicidad_id: '', precio_periodo: '', servicios_pactados: [] };
       const primero = (elegido.precios || []).slice().sort((a, b) => a.periodicidad.meses - b.periodicidad.meses)[0];
@@ -200,7 +204,7 @@ export default function FormularioContrato() {
         <Tarjeta titulo="Plan de alquiler del software">
           <div className="formulario">
             <p className="texto-pequeno texto-suave" style={{ margin: 0 }}>
-              Elija el plan y ajústelo para este cliente: el precio por periodo, la periodicidad y los servicios incluidos. La vigencia es la del contrato.
+              Elija el tiempo de alquiler y ajústelo para este cliente: el precio pactado y los servicios incluidos. La vigencia es la del contrato.
             </p>
             <div className="formulario__fila formulario__fila--3">
               <CampoSelector
@@ -212,13 +216,13 @@ export default function FormularioContrato() {
                 opciones={listaPlanes.map((p) => ({ valor: String(p.id), texto: p.nombre }))}
               />
               <CampoSelector
-                etiqueta="Periodicidad"
+                etiqueta="Tiempo de alquiler"
                 obligatorio={Boolean(plan)}
                 valor={datos.periodicidad_id}
                 alCambiar={elegirPeriodicidad}
                 error={error('periodicidad_id')}
                 disabled={!plan}
-                opciones={precios.map((p) => ({ valor: String(p.periodicidad_id ?? p.periodicidad.id), texto: `${periodicidad(p.periodicidad.meses)} · ${dinero(p.precio)}` }))}
+                opciones={precios.map((p) => ({ valor: String(p.periodicidad_id ?? p.periodicidad.id), texto: `${p.periodicidad.meses} ${p.periodicidad.meses === 1 ? 'mes' : 'meses'} · ${dinero(p.precio)}` }))}
               />
               <CampoTexto
                 etiqueta="Precio pactado por periodo"

@@ -34,8 +34,8 @@ RUN (docker-php-ext-enable opcache || docker-php-ext-install opcache) \
 
 # Fotos de los ascensores: hasta 3 imágenes de 5 MB por solicitud.
 RUN printf '%s\n' \
-       'upload_max_filesize=6M' \
-       'post_max_size=20M' \
+       'upload_max_filesize=25M' \
+       'post_max_size=80M' \
        'max_file_uploads=10' \
        > /usr/local/etc/php/conf.d/zz-sigma-subidas.ini
 

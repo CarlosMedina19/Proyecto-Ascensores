@@ -9,7 +9,7 @@ import { Confirmacion } from './Basicos';
 
 export const MAXIMO_FOTOS = 3;
 const TIPOS = ['image/jpeg', 'image/png', 'image/webp'];
-const PESO_MAXIMO = 5 * 1024 * 1024;
+const PESO_MAXIMO = 20 * 1024 * 1024;
 
 /** Revisa tipo y peso antes de enviar; el servidor vuelve a validar. */
 export function validarFotos(archivos, disponibles) {
@@ -19,7 +19,7 @@ export function validarFotos(archivos, disponibles) {
   const invalido = archivos.find((a) => !TIPOS.includes(a.type));
   if (invalido) return `«${invalido.name}» no es una imagen JPG, PNG o WEBP.`;
   const pesado = archivos.find((a) => a.size > PESO_MAXIMO);
-  if (pesado) return `«${pesado.name}» pesa más de 5 MB.`;
+  if (pesado) return `«${pesado.name}» pesa más de 20 MB.`;
   return '';
 }
 
@@ -69,7 +69,7 @@ export function SelectorFotos({ archivos, alCambiar, disponibles = MAXIMO_FOTOS,
           <button type="button" className="fotos__agregar" onClick={() => entrada.current?.click()}>
             <ImagePlus size={22} aria-hidden="true" />
             <span>Agregar foto</span>
-            <small>JPG, PNG o WEBP · máx. 5 MB</small>
+            <small>JPG, PNG o WEBP · máx. 20 MB</small>
           </button>
         )}
       </div>

@@ -232,7 +232,7 @@ export default function DetalleContrato() {
               ...(contrato.plan
                 ? [
                     ['Plan de alquiler', contrato.plan.nombre],
-                    ['Periodicidad', contrato.periodicidad ? periodicidad(contrato.periodicidad.meses) : null],
+                    ['Tiempo de alquiler', contrato.periodicidad ? `${contrato.periodicidad.meses} ${contrato.periodicidad.meses === 1 ? 'mes' : 'meses'}` : null],
                     [
                       'Precio pactado',
                       <>

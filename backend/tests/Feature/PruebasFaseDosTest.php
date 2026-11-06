@@ -115,6 +115,22 @@ class PruebasFaseDosTest extends TestCase
 
         $this->getJson('/api/v1/periodicidades')->assertOk()->assertJsonCount(6, 'datos');
 
+        // SIGMA tiene un solo plan: mientras exista, no se crea otro.
+        $this->postJson('/api/v1/planes', [
+            'nombre' => 'Otro plan',
+            'precios' => [['periodicidad_id' => $this->periodicidad(1), 'precio' => 350000]],
+        ])->assertStatus(422);
+        $this->plan->delete();
+
+        // Entre más tiempo se alquila, mayor es el precio.
+        $this->postJson('/api/v1/planes', [
+            'nombre' => 'Plan Básico',
+            'precios' => [
+                ['periodicidad_id' => $this->periodicidad(1), 'precio' => 500000],
+                ['periodicidad_id' => $this->periodicidad(3), 'precio' => 420000],
+            ],
+        ])->assertStatus(422);
+
         $respuesta = $this->postJson('/api/v1/planes', [
             'nombre' => 'Plan Básico',
             'servicios_incluidos' => ['Inspección general'],

@@ -7,6 +7,7 @@ import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
 import { CampoBuscador } from '../../componentes/Campos';
 import AccionesRegistro from '../../componentes/AccionesRegistro';
+import { EdificiosDelConjunto } from '../../componentes/Despliegues';
 import { TIPOS_EDIFICIO } from '../../utilidades/formato';
 
 /** Conjuntos, instituciones o residencias (según el submenú de Clientes) con sus edificios y ascensores. */
@@ -29,7 +30,7 @@ export default function ListaConjuntos({ tipo }) {
     <>
       <EncabezadoPagina
         titulo={grupo.plural}
-        descripcion={[`Cada ${grupo.texto.toLowerCase()} agrupa edificios de un cliente`, 'Sus edificios heredan la dirección y el contacto', 'Abra uno para ver sus edificios y ascensores']}
+        descripcion={[`Todos los de tipo ${grupo.texto.toLowerCase()}, con su cliente`, 'Despliegue uno para ver sus edificios', 'Despliegue un edificio para ver sus ascensores']}
         migas={<Link to="/clientes">Clientes</Link>}
       >
         <Link to={`${grupo.ruta}/ascensores`} className="boton boton--secundario">
@@ -78,18 +79,16 @@ export default function ListaConjuntos({ tipo }) {
           <Tabla
             filas={filas}
             alSeleccionar={(c) => navegar(`/conjuntos/${c.id}`)}
+            expandir={(c) => <EdificiosDelConjunto conjuntoId={c.id} />}
+            etiquetaExpandir="Ver edificios de"
             vacio={<EstadoVacio titulo={`No hay ${grupo.plural.toLowerCase()} registrados`} descripcion="Registre uno y luego agregue sus edificios." />}
             columnas={[
               {
                 clave: 'nombre',
                 titulo: grupo.texto,
-                render: (c) => (
-                  <>
-                    <strong>{c.nombre}</strong>
-                    <div className="tabla__secundario">{c.cliente?.nombre}</div>
-                  </>
-                ),
+                render: (c) => <strong>{c.nombre}</strong>,
               },
+              { clave: 'cliente', titulo: 'Cliente', render: (c) => c.cliente?.nombre ?? '—' },
               {
                 clave: 'direccion',
                 titulo: 'Dirección',

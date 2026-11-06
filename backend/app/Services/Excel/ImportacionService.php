@@ -38,7 +38,6 @@ use App\Models\Factura;
 use App\Models\OrdenTrabajo;
 use App\Models\Pago;
 use App\Models\Periodicidad;
-use App\Models\PlanMantenimiento;
 use App\Models\Rol;
 use App\Models\Tecnico;
 use App\Models\Usuario;
@@ -109,7 +108,7 @@ class ImportacionService
             'edificio_id' => 'edificio', 'fecha_instalacion' => 'anio_instalacion', 'tecnico_id' => 'tecnico',
             'ascensor.capacidad_kg' => 'capacidad_kg', 'ascensor.capacidad_personas' => 'personas', 'ascensor.velocidad_mpm' => 'velocidad_ms',
             'ascensor.paradas' => 'paradas', 'ascensor.tipo_traccion' => 'accionamiento', 'ascensor.tipo_ascensor' => 'tipo_ascensor', 'ascensor.controlador' => 'controlador',
-            'ascensor.tipo_puerta' => 'tipo_puerta', 'plan_id' => 'plan', 'periodicidad_id' => 'periodicidad',
+            'ascensor.tipo_puerta' => 'tipo_puerta', 'periodicidad_id' => 'periodicidad',
             'fecha_inicio' => 'fecha_primer_mantenimiento', 'precio' => 'valor_visita',
         ],
         'ordenes' => ['equipo_id' => 'ascensor', 'servicio' => 'tipo', 'hora' => 'hora_inicio', 'duracion_estimada' => 'hora_fin', 'tecnicos' => 'tecnico', 'tecnicos.0' => 'tecnico'],
@@ -605,9 +604,8 @@ class ImportacionService
     private function asignarPlan(Equipo $equipo, array $v): void
     {
         $meses = Plantilla::numero($v['periodicidad'] ?? null);
-        $nombrePlan = Plantilla::texto($v['plan'] ?? null);
         $fecha = Plantilla::fecha($v['fecha_primer_mantenimiento'] ?? null);
-        if ($meses === null && $nombrePlan === null && $fecha === null) {
+        if ($meses === null && $fecha === null) {
             return;
         }
         if ($equipo->asignacionActiva()->exists()) {
@@ -623,15 +621,8 @@ class ImportacionService
         if (! $periodicidad) {
             throw new FilaInvalida([['columna' => 'periodicidad', 'motivo' => 'La periodicidad debe estar entre 1 y 6 meses y estar activa en la configuración.']]);
         }
-        $plan = $nombrePlan
-            ? PlanMantenimiento::whereRaw('lower(nombre) = ?', [Str::lower($nombrePlan)])->first()
-            : PlanMantenimiento::where('activo', true)->orderBy('id')->get()->first(fn ($p) => $p->precioPara($periodicidad->id) !== null);
-        if (! $plan) {
-            throw new FilaInvalida([['columna' => 'plan', 'motivo' => $nombrePlan ? "No existe el plan «{$nombrePlan}»." : 'No hay un plan activo con precio para esa periodicidad. Indique el plan o el valor por visita.']]);
-        }
         $datos = array_filter([
             'equipo_id' => $equipo->id,
-            'plan_id' => $plan->id,
             'periodicidad_id' => $periodicidad->id,
             'fecha_inicio' => $fecha,
             'precio' => Plantilla::numero($v['valor_visita'] ?? null),

@@ -79,7 +79,7 @@ export default function FormularioPlan() {
 
   return (
     <>
-      <EncabezadoPagina titulo={editando ? 'Editar plan' : 'Nuevo plan'} migas={<Link to="/planes">Planes</Link>} />
+      <EncabezadoPagina titulo={editando ? 'Editar plan' : 'Nuevo plan'} migas={<Link to="/planes">Plan de alquiler</Link>} />
       <form className="formulario" onSubmit={guardar} noValidate>
         <Alerta>{mensajeError}</Alerta>
         <Tarjeta titulo="Datos del plan">
@@ -101,16 +101,16 @@ export default function FormularioPlan() {
         {editando ? (
           <Alerta tipo="info">Los precios se cambian desde el detalle del plan con «Cambiar precios», indicando el motivo.</Alerta>
         ) : (
-          <Tarjeta titulo="Precio del alquiler según el periodo">
+          <Tarjeta titulo="Precio según el tiempo de alquiler">
             <p className="texto-pequeno texto-suave" style={{ marginTop: 0 }}>
-              Precio total de cada periodo (mensual, trimestral, semestral…). Deje vacío un periodo si el plan no se ofrece así. Debe indicar al menos un precio.
+              Precio total por alquilar ese tiempo; entre más tiempo, mayor el precio. Deje vacío un tiempo que no se ofrezca. Debe indicar al menos un precio.
             </p>
             {error('precios') && <Alerta>{error('precios')}</Alerta>}
             <div className="formulario__fila formulario__fila--3">
               {periodicidades.map((p) => (
                 <CampoTexto
                   key={p.id}
-                  etiqueta={periodicidad(p.meses)}
+                  etiqueta={`${p.meses} ${p.meses === 1 ? 'mes' : 'meses'}`}
                   tipo="number"
                   min="1"
                   step="1000"

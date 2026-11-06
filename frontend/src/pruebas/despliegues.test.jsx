@@ -33,7 +33,7 @@ describe('clientes desplegables', () => {
   it('despliega el cliente en sus tipos, edificios y ascensores sin salir de la lista', async () => {
     guardarToken('token');
     simularApi({
-      '/perfil': { datos: { id: 1, nombre: 'Coordinador', rol: { nombre: 'coordinador', permisos: ['clientes.ver', 'edificios.ver', 'equipos.ver'] } } },
+      '/perfil': { datos: { id: 1, nombre: 'Coordinador', rol: { nombre: 'coordinador', permisos: ['clientes.ver', 'edificios.ver', 'edificios.crear', 'equipos.ver'] } } },
       '/clientes': {
         datos: [{ id: 3, nombre: 'Administraciones Sur', tipo: 'juridica', nit: '900111222-1', estado: true, edificios_count: 2 }],
         metadatos: { pagina_actual: 1, ultima_pagina: 1, total: 1, desde: 1, hasta: 1 },
@@ -43,18 +43,27 @@ describe('clientes desplegables', () => {
           {
             tipo: 'conjunto',
             nombre: 'Conjunto',
-            edificios: [
+            conjuntos: [
               {
-                id: 8,
-                nombre: 'Torre 1',
+                id: 5,
+                nombre: 'Los Pinos',
                 direccion: 'Calle 1',
                 ciudad: 'Bogotá',
                 activo: true,
-                equipos: [{ id: 21, codigo: 'ASC-T1', marca: 'Otis', modelo: 'Gen2', estado: 'activo' }],
+                edificios: [
+                  {
+                    id: 8,
+                    nombre: 'Torre 1',
+                    direccion: 'Calle 1',
+                    ciudad: 'Bogotá',
+                    activo: true,
+                    equipos: [{ id: 21, codigo: 'ASC-T1', marca: 'Otis', modelo: 'Gen2', estado: 'activo' }],
+                  },
+                ],
               },
             ],
+            sin_conjunto: [],
           },
-          { tipo: 'institucional', nombre: 'Institucional', edificios: [{ id: 9, nombre: 'Colegio Sur', direccion: 'Calle 2', ciudad: 'Bogotá', activo: true, equipos: [] }] },
         ],
       },
     });
@@ -69,19 +78,26 @@ describe('clientes desplegables', () => {
       </MemoryRouter>,
     );
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Ver edificios de Administraciones Sur' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Ver conjuntos de Administraciones Sur' }));
 
-    // Solo aparecen los tipos que tiene el cliente.
+    // Solo aparecen los tipos que tiene el cliente; los que no tiene se ofrecen para crearlos.
     expect(await screen.findByRole('region', { name: 'Conjuntos' })).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Institucionales' })).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Residenciales' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Institucionales' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Crear institucional' })).toHaveAttribute('href', '/conjuntos/nuevo?cliente_id=3&tipo=institucional');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Desplegar Conjuntos' }));
+    expect(screen.getByRole('link', { name: 'Los Pinos' })).toHaveAttribute('href', '/conjuntos/5');
+    expect(screen.getByRole('link', { name: 'Crear conjunto' })).toHaveAttribute('href', '/conjuntos/nuevo?cliente_id=3&tipo=conjunto');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Desplegar Los Pinos' }));
     expect(screen.getByRole('link', { name: 'Torre 1' })).toHaveAttribute('href', '/edificios/8');
+    expect(screen.getByRole('link', { name: 'Crear edificio' })).toHaveAttribute('href', '/edificios/nuevo?conjunto_id=5');
 
     await userEvent.click(screen.getByRole('button', { name: 'Desplegar Torre 1' }));
     expect(screen.getByRole('link', { name: /ASC-T1/ })).toHaveAttribute('href', '/equipos/21');
   });
 
-  it('en el menú cada tipo se despliega en Edificios y Edificios en Ascensores', async () => {
+  it('en el menú cada tipo lleva a su página', async () => {
     guardarToken('token');
     simularApi({
       '/perfil': { datos: { id: 1, nombre: 'Coordinador', rol: { nombre: 'coordinador', permisos: ['clientes.ver', 'edificios.ver', 'equipos.ver'] } } },
@@ -102,13 +118,7 @@ describe('clientes desplegables', () => {
     );
 
     await userEvent.click(await screen.findByRole('button', { name: 'Desplegar Clientes' }));
-    expect(screen.queryByRole('link', { name: 'Edificios de conjuntos' })).not.toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Desplegar Conjuntos' }));
-    expect(screen.getByRole('link', { name: 'Edificios de conjuntos' })).toHaveAttribute('href', '/clientes/conjuntos');
-    expect(screen.queryByRole('link', { name: 'Ascensores de conjuntos' })).not.toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Desplegar edificios de conjuntos' }));
-    expect(screen.getByRole('link', { name: 'Ascensores de conjuntos' })).toHaveAttribute('href', '/clientes/conjuntos/ascensores');
+    expect(screen.getByRole('link', { name: 'Conjuntos' })).toHaveAttribute('href', '/clientes/conjuntos');
+    expect(screen.getByRole('link', { name: 'Institucionales' })).toHaveAttribute('href', '/clientes/institucionales');
   });
 });

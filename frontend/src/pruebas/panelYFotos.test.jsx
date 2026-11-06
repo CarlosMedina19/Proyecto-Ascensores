@@ -42,11 +42,11 @@ function montar(elemento, ruta = '/') {
 const archivo = (nombre, tipo, tamano = 1000) => ({ name: nombre, type: tipo, size: tamano });
 
 describe('fotos del ascensor', () => {
-  it('acepta hasta 3 imágenes JPG, PNG o WEBP de máximo 5 MB', () => {
+  it('acepta hasta 3 imágenes JPG, PNG o WEBP de máximo 20 MB', () => {
     expect(validarFotos([archivo('a.jpg', 'image/jpeg'), archivo('b.png', 'image/png')], 3)).toBe('');
     expect(validarFotos([archivo('a.jpg', 'image/jpeg'), archivo('b.jpg', 'image/jpeg')], 1)).toMatch(/máximo 1 foto/);
     expect(validarFotos([archivo('manual.pdf', 'application/pdf')], 3)).toMatch(/no es una imagen/);
-    expect(validarFotos([archivo('grande.jpg', 'image/jpeg', 6 * 1024 * 1024)], 3)).toMatch(/más de 5 MB/);
+    expect(validarFotos([archivo('grande.jpg', 'image/jpeg', 21 * 1024 * 1024)], 3)).toMatch(/más de 20 MB/);
   });
 });
 

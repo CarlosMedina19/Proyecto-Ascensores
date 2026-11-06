@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\ReglaNegocioException;
 use App\Models\HistorialPrecio;
+use App\Models\Periodicidad;
 use App\Models\PlanMantenimiento;
 use App\Models\PrecioPlan;
 use App\Support\Montos;
@@ -40,6 +41,8 @@ class PlanService
      */
     public function crear(array $datos): PlanMantenimiento
     {
+        $this->exigirPrecioCreciente(collect($datos['precios'] ?? [])->pluck('precio', 'periodicidad_id')->all());
+
         return DB::transaction(function () use ($datos) {
             $plan = PlanMantenimiento::create(collect($datos)->except('precios')->all());
 
@@ -81,6 +84,8 @@ class PlanService
      */
     public function actualizarPrecios(PlanMantenimiento $plan, array $precios, string $motivo): int
     {
+        $this->exigirPrecioCreciente(collect($precios)->pluck('precio', 'periodicidad_id')->all() + $plan->precios()->pluck('precio', 'periodicidad_id')->all());
+
         return DB::transaction(function () use ($plan, $precios, $motivo) {
             $cambios = 0;
 
@@ -117,6 +122,24 @@ class PlanService
 
             return $cambios;
         });
+    }
+
+    /**
+     * Entre más tiempo se alquila, mayor es el precio total.
+     *
+     * @param  array<int, numeric>  $precios  periodicidad_id => precio
+     */
+    private function exigirPrecioCreciente(array $precios): void
+    {
+        $periodos = Periodicidad::whereIn('id', array_keys($precios))->orderBy('meses')->get();
+        $anterior = null;
+        foreach ($periodos as $periodo) {
+            $precio = (float) $precios[$periodo->id];
+            if ($anterior !== null && $precio <= $anterior['precio']) {
+                throw new ReglaNegocioException("El precio de {$periodo->nombre} debe ser mayor que el de {$anterior['nombre']}: entre más tiempo se alquila, mayor es el precio.");
+            }
+            $anterior = ['precio' => $precio, 'nombre' => $periodo->nombre];
+        }
     }
 
     /** Un plan con asignaciones activas no se elimina; se desactiva. */

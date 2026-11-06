@@ -6,7 +6,7 @@ use App\Models\FotoEquipo;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Fotos del ascensor: JPG, PNG o WEBP de máximo 5 MB, hasta 3 por ascensor.
+ * Fotos del ascensor: JPG, PNG o WEBP de máximo 20 MB, hasta 3 por ascensor.
  */
 class SubirFotosEquipoRequest extends FormRequest
 {
@@ -19,7 +19,7 @@ class SubirFotosEquipoRequest extends FormRequest
     {
         return [
             'fotos' => ['required', 'array', 'min:1', 'max:'.FotoEquipo::MAXIMO_POR_EQUIPO],
-            'fotos.*' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'mimetypes:image/jpeg,image/png,image/webp', 'max:5120'],
+            'fotos.*' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'mimetypes:image/jpeg,image/png,image/webp', 'max:20480'],
         ];
     }
 
@@ -34,8 +34,8 @@ class SubirFotosEquipoRequest extends FormRequest
             'fotos.max' => 'Puede subir máximo '.FotoEquipo::MAXIMO_POR_EQUIPO.' fotos por ascensor.',
             'fotos.*.mimes' => 'Cada foto debe ser una imagen JPG, PNG o WEBP.',
             'fotos.*.mimetypes' => 'Cada foto debe ser una imagen JPG, PNG o WEBP.',
-            'fotos.*.max' => 'Cada foto puede pesar máximo 5 MB.',
-            'fotos.*.uploaded' => 'La foto no se pudo subir. Verifique que pese menos de 5 MB.',
+            'fotos.*.max' => 'Cada foto puede pesar máximo 20 MB.',
+            'fotos.*.uploaded' => 'La foto no se pudo subir. Verifique que pese menos de 20 MB.',
         ];
     }
 }

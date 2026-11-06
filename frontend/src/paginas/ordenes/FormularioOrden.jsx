@@ -59,7 +59,7 @@ export default function FormularioOrden() {
         servicio: 'preventivo',
         fecha: m.fecha_programada,
         hora: m.hora || '08:00',
-        descripcion: actual.descripcion || `Mantenimiento preventivo · ${m.plan?.nombre ?? ''}`.trim(),
+        descripcion: actual.descripcion || 'Mantenimiento preventivo',
       }));
     });
   }, [mantenimientoId, setDatos]);
@@ -142,7 +142,7 @@ export default function FormularioOrden() {
                   ['Ascensor', visita.equipo?.codigo],
                   ['Edificio', visita.equipo?.edificio?.nombre],
                   ['Cliente', visita.equipo?.edificio?.cliente?.nombre],
-                  ['Plan', `${visita.plan?.nombre ?? ''} · ${periodicidad(visita.periodicidad?.meses)}`],
+                  ['Frecuencia', periodicidad(visita.periodicidad?.meses)],
                   ['Visita programada', `${fecha(visita.fecha_programada)} · ${visita.hora ?? ''}`],
                 ]}
               />

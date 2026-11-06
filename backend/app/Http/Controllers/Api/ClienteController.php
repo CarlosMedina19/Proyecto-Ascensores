@@ -61,27 +61,39 @@ class ClienteController extends Controller
             ->with(['equipos' => fn ($consulta) => $consulta->orderBy('codigo')])
             ->orderBy('nombre')
             ->get();
+        $conjuntos = $cliente->conjuntos()->orderBy('nombre')->get();
 
+        $edificio = fn (Edificio $edificio) => [
+            'id' => $edificio->id,
+            'nombre' => $edificio->nombre,
+            'direccion' => $edificio->direccion,
+            'ciudad' => $edificio->ciudad,
+            'activo' => (bool) $edificio->activo,
+            'equipos' => $edificio->equipos->map(fn ($equipo) => [
+                'id' => $equipo->id,
+                'codigo' => $equipo->codigo,
+                'marca' => $equipo->marca,
+                'modelo' => $equipo->modelo,
+                'estado' => $equipo->estado,
+            ])->values(),
+        ];
+
+        // Solo los tipos que tiene el cliente, aunque el conjunto aún no tenga edificios.
         $grupos = collect(Edificio::TIPOS)
             ->map(fn ($nombre, $tipo) => [
                 'tipo' => $tipo,
                 'nombre' => $nombre,
-                'edificios' => $edificios->where('tipo', $tipo)->values()->map(fn (Edificio $edificio) => [
-                    'id' => $edificio->id,
-                    'nombre' => $edificio->nombre,
-                    'direccion' => $edificio->direccion,
-                    'ciudad' => $edificio->ciudad,
-                    'activo' => (bool) $edificio->activo,
-                    'equipos' => $edificio->equipos->map(fn ($equipo) => [
-                        'id' => $equipo->id,
-                        'codigo' => $equipo->codigo,
-                        'marca' => $equipo->marca,
-                        'modelo' => $equipo->modelo,
-                        'estado' => $equipo->estado,
-                    ])->values(),
+                'conjuntos' => $conjuntos->where('tipo', $tipo)->values()->map(fn ($conjunto) => [
+                    'id' => $conjunto->id,
+                    'nombre' => $conjunto->nombre,
+                    'direccion' => $conjunto->direccion,
+                    'ciudad' => $conjunto->ciudad,
+                    'activo' => (bool) $conjunto->activo,
+                    'edificios' => $edificios->where('conjunto_id', $conjunto->id)->values()->map($edificio),
                 ]),
+                'sin_conjunto' => $edificios->where('tipo', $tipo)->whereNull('conjunto_id')->values()->map($edificio),
             ])
-            ->filter(fn ($grupo) => $grupo['edificios']->isNotEmpty())
+            ->filter(fn ($grupo) => $grupo['conjuntos']->isNotEmpty() || $grupo['sin_conjunto']->isNotEmpty())
             ->values();
 
         return response()->json(['datos' => $grupos]);

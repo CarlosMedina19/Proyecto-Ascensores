@@ -106,7 +106,7 @@ export default function ModalMantenimiento({ mantenimiento, alCerrar, alGuardar 
               ['Ascensor', mantenimiento.equipo ? <Link to={`/equipos/${mantenimiento.equipo.id}`}>{mantenimiento.equipo.codigo}</Link> : null],
               ['Edificio', mantenimiento.equipo?.edificio?.nombre],
               ['Cliente', mantenimiento.equipo?.edificio?.cliente?.nombre],
-              ['Plan', mantenimiento.plan?.nombre],
+              ...(mantenimiento.plan ? [['Plan', mantenimiento.plan.nombre]] : []),
               ['Periodicidad', periodicidad(mantenimiento.periodicidad?.meses)],
               ['Precio de la visita', dinero(mantenimiento.precio)],
               ['Fecha programada', `${fecha(mantenimiento.fecha_programada)}${mantenimiento.hora ? ` · ${mantenimiento.hora}` : ''}`],

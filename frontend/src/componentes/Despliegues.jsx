@@ -2,8 +2,8 @@
 // un conjunto, edificio o ascensor sin saltar de sección.
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpDown, Building2, ChevronRight, Plus } from 'lucide-react';
-import { clientes, edificios } from '../api/servicios';
+import { ArrowUpDown, Building, Building2, ChevronRight, Plus } from 'lucide-react';
+import { clientes, conjuntos, edificios } from '../api/servicios';
 import { useAutenticacion } from '../contexto/AutenticacionContexto';
 import { ESTADOS_EQUIPO, TIPOS_EDIFICIO, numero } from '../utilidades/formato';
 import { Alerta, Cargando, Insignia } from './Basicos';
@@ -59,9 +59,95 @@ function EdificioDesplegable({ edificio }) {
   );
 }
 
+/** Edificios de un conjunto, cada uno desplegable, y el botón para crear otro en ese conjunto. */
+function ListaEdificios({ lista, conjuntoId, clienteId, activo = true }) {
+  const { tienePermiso } = useAutenticacion();
+  const destino = conjuntoId ? `/edificios/nuevo?conjunto_id=${conjuntoId}` : `/edificios/nuevo?cliente_id=${clienteId}`;
+  return (
+    <ul className="despliegue__edificios">
+      {lista.map((edificio) => (
+        <EdificioDesplegable key={edificio.id} edificio={edificio} />
+      ))}
+      {!lista.length && <li className="texto-suave texto-pequeno">Sin edificios registrados.</li>}
+      {activo && tienePermiso('edificios.crear') && (
+        <li>
+          <Link to={destino} className="despliegue__agregar">
+            <Plus size={14} aria-hidden="true" /> Crear edificio
+          </Link>
+        </li>
+      )}
+    </ul>
+  );
+}
+
+/** Conjunto, institución o residencia que se abre para mostrar sus edificios. */
+function ConjuntoDesplegable({ conjunto }) {
+  const [abierto, setAbierto] = useState(false);
+  return (
+    <li className="despliegue__conjunto">
+      <div className="despliegue__cabecera">
+        <button type="button" className="boton-desplegar" aria-expanded={abierto} aria-label={`Desplegar ${conjunto.nombre}`} onClick={() => setAbierto((v) => !v)}>
+          <ChevronRight size={16} aria-hidden="true" />
+        </button>
+        <Building2 size={15} aria-hidden="true" className="texto-suave" />
+        <Link to={`/conjuntos/${conjunto.id}`} className="despliegue__nombre">
+          {conjunto.nombre}
+        </Link>
+        <span className="texto-suave texto-pequeno">{[conjunto.direccion, conjunto.ciudad].filter(Boolean).join(', ')}</span>
+        <span className="despliegue__conteo tabular">
+          {conjunto.edificios.length} {conjunto.edificios.length === 1 ? 'edificio' : 'edificios'}
+        </span>
+        {!conjunto.activo && <Insignia>Inactivo</Insignia>}
+      </div>
+      {abierto && <ListaEdificios lista={conjunto.edificios} conjuntoId={conjunto.id} activo={conjunto.activo} />}
+    </li>
+  );
+}
+
+/** Tipo que tiene el cliente (Conjuntos, Institucionales o Residenciales) con el botón para crear otro. */
+function GrupoTipo({ grupo, clienteId }) {
+  const { tienePermiso } = useAutenticacion();
+  const [abierto, setAbierto] = useState(false);
+  const datos = TIPOS_EDIFICIO[grupo.tipo];
+  const plural = datos?.plural ?? grupo.nombre;
+  return (
+    <section className="despliegue__grupo" aria-label={plural}>
+      <div className="despliegue__titulo">
+        <button type="button" className="boton-desplegar" aria-expanded={abierto} aria-label={`Desplegar ${plural}`} onClick={() => setAbierto((v) => !v)}>
+          <ChevronRight size={16} aria-hidden="true" />
+        </button>
+        {plural}
+        <span className="tabular">{grupo.conjuntos.length}</span>
+      </div>
+      {abierto && (
+        <ul className="despliegue__conjuntos">
+          {grupo.conjuntos.map((conjunto) => (
+            <ConjuntoDesplegable key={conjunto.id} conjunto={conjunto} />
+          ))}
+          {grupo.sin_conjunto.length > 0 && (
+            <li className="despliegue__conjunto">
+              <p className="texto-suave texto-pequeno" style={{ margin: '4px 0' }}>
+                Edificios sin conjunto
+              </p>
+              <ListaEdificios lista={grupo.sin_conjunto} clienteId={clienteId} />
+            </li>
+          )}
+          {tienePermiso('edificios.crear') && (
+            <li>
+              <Link to={`/conjuntos/nuevo?cliente_id=${clienteId}&tipo=${grupo.tipo}`} className="despliegue__agregar">
+                <Plus size={14} aria-hidden="true" /> Crear {(datos?.texto ?? grupo.nombre).toLowerCase()}
+              </Link>
+            </li>
+          )}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 /**
- * Árbol del cliente: los tipos que tiene (conjunto, institucional, residencial), sus edificios y
- * los ascensores de cada edificio.
+ * Árbol del cliente: solo los tipos que tiene, sus conjuntos, los edificios de cada conjunto y los
+ * ascensores de cada edificio. Cada nivel se despliega y tiene su botón para crear.
  */
 export function ArbolCliente({ clienteId }) {
   const { tienePermiso } = useAutenticacion();
@@ -76,29 +162,46 @@ export function ArbolCliente({ clienteId }) {
   }, [clienteId]);
 
   if (error) return <Alerta>{error}</Alerta>;
-  if (!grupos) return <Cargando texto="Cargando edificios…" />;
+  if (!grupos) return <Cargando texto="Cargando conjuntos…" />;
+
+  const faltantes = Object.entries(TIPOS_EDIFICIO).filter(([tipo]) => !grupos.some((g) => g.tipo === tipo));
 
   return (
     <div className="despliegue">
       {grupos.map((grupo) => (
-        <section key={grupo.tipo} className="despliegue__grupo" aria-label={TIPOS_EDIFICIO[grupo.tipo]?.plural}>
-          <h3 className="despliegue__titulo">
-            {TIPOS_EDIFICIO[grupo.tipo]?.plural ?? grupo.nombre}
-            <span className="tabular">{grupo.edificios.length}</span>
-          </h3>
-          <ul className="despliegue__edificios">
-            {grupo.edificios.map((edificio) => (
-              <EdificioDesplegable key={edificio.id} edificio={edificio} />
-            ))}
-          </ul>
-        </section>
+        <GrupoTipo key={grupo.tipo} grupo={grupo} clienteId={clienteId} />
       ))}
-      {!grupos.length && <p className="texto-suave texto-pequeno">Este cliente aún no tiene edificios.</p>}
-      {tienePermiso('edificios.crear') && (
-        <Link to={`/edificios/nuevo?cliente_id=${clienteId}`} className="despliegue__agregar">
-          <Plus size={14} aria-hidden="true" /> Agregar edificio
-        </Link>
+      {!grupos.length && <p className="texto-suave texto-pequeno">Este cliente aún no tiene conjuntos, instituciones ni residencias.</p>}
+      {tienePermiso('edificios.crear') && faltantes.length > 0 && (
+        <div className="despliegue__crear">
+          {faltantes.map(([tipo, { texto }]) => (
+            <Link key={tipo} to={`/conjuntos/nuevo?cliente_id=${clienteId}&tipo=${tipo}`} className="despliegue__agregar">
+              <Plus size={14} aria-hidden="true" /> Crear {texto.toLowerCase()}
+            </Link>
+          ))}
+        </div>
       )}
+    </div>
+  );
+}
+
+/** Edificios de un conjunto con sus ascensores (se cargan al desplegar la fila). */
+export function EdificiosDelConjunto({ conjuntoId }) {
+  const [conjunto, setConjunto] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    conjuntos
+      .obtener(conjuntoId)
+      .then((r) => setConjunto(r.datos))
+      .catch((e) => setError(e.message));
+  }, [conjuntoId]);
+
+  if (error) return <Alerta>{error}</Alerta>;
+  if (!conjunto) return <Cargando texto="Cargando edificios…" />;
+  return (
+    <div className="despliegue">
+      <ListaEdificios lista={(conjunto.edificios || []).map((e) => ({ ...e, equipos: e.equipos || [] }))} conjuntoId={conjunto.id} activo={conjunto.activo} />
     </div>
   );
 }

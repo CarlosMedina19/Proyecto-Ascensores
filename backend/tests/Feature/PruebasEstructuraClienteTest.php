@@ -70,10 +70,30 @@ class PruebasEstructuraClienteTest extends TestCase
             ->assertJsonCount(2, 'datos')
             ->assertJsonPath('datos.0.tipo', 'conjunto')
             ->assertJsonPath('datos.0.nombre', 'Conjunto')
-            ->assertJsonCount(2, 'datos.0.edificios')
-            ->assertJsonPath('datos.0.edificios.0.nombre', 'Torre 1')
-            ->assertJsonPath('datos.0.edificios.0.equipos.0.codigo', 'ASC-T1')
+            ->assertJsonCount(2, 'datos.0.sin_conjunto')
+            ->assertJsonPath('datos.0.sin_conjunto.0.nombre', 'Torre 1')
+            ->assertJsonPath('datos.0.sin_conjunto.0.equipos.0.codigo', 'ASC-T1')
             ->assertJsonPath('datos.1.tipo', 'institucional');
+    }
+
+    public function test_el_arbol_muestra_cada_conjunto_con_sus_edificios_aunque_este_vacio(): void
+    {
+        $cliente = $this->crearCliente('Administraciones Sur', '900111222-1');
+        $conLleno = ['tipo' => 'conjunto', 'direccion' => 'Calle 1', 'ciudad' => 'Ibagué', 'departamento' => 'Tolima'];
+        $lleno = $cliente->conjuntos()->create($conLleno + ['nombre' => 'Los Pinos']);
+        $cliente->conjuntos()->create($conLleno + ['nombre' => 'Atolsure']);
+        $this->crearEdificio($cliente, 'Torre 1', 'conjunto')->update(['conjunto_id' => $lleno->id]);
+
+        $this->actingAs($this->administrador, 'sanctum')
+            ->getJson("/api/v1/clientes/{$cliente->id}/estructura")
+            ->assertOk()
+            ->assertJsonCount(1, 'datos')
+            ->assertJsonPath('datos.0.tipo', 'conjunto')
+            ->assertJsonPath('datos.0.conjuntos.0.nombre', 'Atolsure')
+            ->assertJsonCount(0, 'datos.0.conjuntos.0.edificios')
+            ->assertJsonPath('datos.0.conjuntos.1.nombre', 'Los Pinos')
+            ->assertJsonPath('datos.0.conjuntos.1.edificios.0.nombre', 'Torre 1')
+            ->assertJsonCount(0, 'datos.0.sin_conjunto');
     }
 
     public function test_el_cliente_solo_ve_su_propio_arbol(): void

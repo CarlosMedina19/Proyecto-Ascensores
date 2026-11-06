@@ -36,7 +36,7 @@ class ConjuntoController extends Controller
 
         return new ConjuntoResource($conjunto->load([
             'cliente',
-            'edificios' => fn ($c) => $c->withCount('equipos')->orderBy('nombre'),
+            'edificios' => fn ($c) => $c->withCount('equipos')->with(['equipos' => fn ($e) => $e->orderBy('codigo')])->orderBy('nombre'),
         ])->loadCount(['edificios', 'equipos']));
     }
 

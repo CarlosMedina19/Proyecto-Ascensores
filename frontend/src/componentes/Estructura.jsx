@@ -62,7 +62,7 @@ function opcionesMenu(esCliente, esTecnico) {
     { ruta: '/calendario', texto: 'Calendario', icono: CalendarDays, permiso: 'mantenimientos.ver' },
     { ruta: '/tecnicos', texto: 'Técnicos', icono: HardHat, permiso: 'tecnicos.ver' },
     { ruta: '/contratos', texto: esCliente ? 'Mis contratos' : 'Contratos', icono: FileText, permiso: 'contratos.ver' },
-    { ruta: '/planes', texto: 'Planes de alquiler', icono: ClipboardList, permiso: 'planes.ver' },
+    { ruta: '/planes', texto: 'Plan de alquiler', icono: ClipboardList, permiso: 'planes.ver' },
     { ruta: '/inventario', texto: 'Inventario', icono: Package, permiso: 'inventario.ver' },
     { ruta: '/cartera', texto: esCliente ? 'Mi estado de cuenta' : 'Cartera', icono: Wallet, permiso: 'cartera.ver' },
     { grupo: 'Servicio' },

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { BadgeDollarSign, Check, Pencil, Trash2 } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { BadgeDollarSign, Check, Pencil } from 'lucide-react';
 import { configuracion, planes } from '../../api/servicios';
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { useFormulario } from '../../hooks/useFormulario';
-import { Alerta, Cargando, Confirmacion, EncabezadoPagina, EstadoVacio, Insignia, Modal, Tabla, Tarjeta } from '../../componentes/Basicos';
+import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Modal, Tabla, Tarjeta } from '../../componentes/Basicos';
 import { CampoArea, CampoTexto } from '../../componentes/Campos';
 import { dinero, fechaHora, periodicidad } from '../../utilidades/formato';
 
@@ -78,7 +78,6 @@ function ModalPrecios({ plan, periodicidades, abierto, alCerrar, alGuardar }) {
 
 export default function DetallePlan() {
   const { id } = useParams();
-  const navegar = useNavigate();
   const notificar = useNotificar();
   const { tienePermiso } = useAutenticacion();
   const [plan, setPlan] = useState(null);
@@ -86,8 +85,6 @@ export default function DetallePlan() {
   const [historial, setHistorial] = useState(null);
   const [error, setError] = useState('');
   const [modalPrecios, setModalPrecios] = useState(false);
-  const [confirmarEliminar, setConfirmarEliminar] = useState(false);
-  const [procesando, setProcesando] = useState(false);
 
   const cargar = useCallback(() => {
     planes
@@ -108,20 +105,6 @@ export default function DetallePlan() {
       .catch(() => {});
   }, []);
 
-  async function eliminar() {
-    setProcesando(true);
-    try {
-      await planes.eliminar(id);
-      notificar('Plan eliminado.');
-      navegar('/planes', { replace: true });
-    } catch (e) {
-      notificar(e.message, 'error');
-    } finally {
-      setProcesando(false);
-      setConfirmarEliminar(false);
-    }
-  }
-
   if (error) return <Alerta>{error}</Alerta>;
   if (!plan) return <Cargando />;
 
@@ -131,7 +114,6 @@ export default function DetallePlan() {
     <>
       <EncabezadoPagina
         titulo={plan.nombre}
-        migas={<Link to="/planes">Planes</Link>}
         descripcion={
           <>
             <Insignia tipo={plan.activo ? 'exito' : 'neutro'}>{plan.activo ? 'Activo' : 'Inactivo'}</Insignia> ·{' '}
@@ -139,11 +121,6 @@ export default function DetallePlan() {
           </>
         }
       >
-        {tienePermiso('planes.eliminar') && (
-          <button type="button" className="boton boton--secundario" onClick={() => setConfirmarEliminar(true)}>
-            <Trash2 size={16} /> Eliminar
-          </button>
-        )}
         {tienePermiso('precios.editar') && (
           <button type="button" className="boton boton--secundario" onClick={() => setModalPrecios(true)} disabled={!periodicidades.length}>
             <BadgeDollarSign size={16} /> Cambiar precios
@@ -174,14 +151,15 @@ export default function DetallePlan() {
 
         <Tarjeta sinRelleno>
           <div className="tarjeta__cuerpo" style={{ paddingBottom: 0 }}>
-            <h2 className="tarjeta__titulo">Precio por periodo</h2>
+            <h2 className="tarjeta__titulo">Precio según el tiempo de alquiler</h2>
           </div>
           <Tabla
             filas={precios}
             claveFila="periodicidad_id"
             columnas={[
-              { clave: 'periodicidad', titulo: 'Periodicidad', render: (p) => periodicidad(p.periodicidad.meses) },
-              { clave: 'precio', titulo: 'Precio', clase: 'tabular', render: (p) => <strong>{dinero(p.precio)}</strong> },
+              { clave: 'periodicidad', titulo: 'Tiempo de alquiler', render: (p) => `${p.periodicidad.meses} ${p.periodicidad.meses === 1 ? 'mes' : 'meses'}` },
+              { clave: 'precio', titulo: 'Precio total', clase: 'tabular', render: (p) => <strong>{dinero(p.precio)}</strong> },
+              { clave: 'mes', titulo: 'Equivale por mes', clase: 'tabular', render: (p) => dinero(Math.round(Number(p.precio) / p.periodicidad.meses)) },
               { clave: 'actualizado', titulo: 'Última actualización', render: (p) => fechaHora(p.updated_at) },
             ]}
             vacio={<EstadoVacio titulo="El plan no tiene precios" />}
@@ -237,16 +215,6 @@ export default function DetallePlan() {
           }}
         />
       )}
-      <Confirmacion
-        abierto={confirmarEliminar}
-        titulo="Eliminar plan"
-        mensaje="El plan deja de estar disponible. No se puede eliminar si algún ascensor lo tiene activo."
-        textoConfirmar="Eliminar"
-        peligro
-        procesando={procesando}
-        alConfirmar={eliminar}
-        alCerrar={() => setConfirmarEliminar(false)}
-      />
     </>
   );
 }

@@ -21,7 +21,7 @@ export default function ListaClientes() {
     <>
       <EncabezadoPagina
         titulo={esCliente ? 'Mi empresa' : 'Clientes'}
-        descripcion={['Personas naturales y jurídicas', 'Conjuntos, institucionales y residenciales', 'Despliegue un cliente para ver sus ascensores']}
+        descripcion={['Personas naturales y jurídicas', 'Conjuntos, institucionales y residenciales', 'Despliegue un cliente: tipo, conjunto, edificio y ascensor']}
       >
         <HerramientasExcel modulo="clientes" alImportar={recargar} filtros={filtros} />
         {tienePermiso('clientes.crear') && (
@@ -71,7 +71,7 @@ export default function ListaClientes() {
             filas={filas}
             alSeleccionar={(cliente) => navegar(`/clientes/${cliente.id}`)}
             expandir={(cliente) => <ArbolCliente clienteId={cliente.id} />}
-            etiquetaExpandir="Ver edificios de"
+            etiquetaExpandir="Ver conjuntos de"
             vacio={<EstadoVacio titulo="No se encontraron clientes" descripcion="Ajuste los filtros, registre un cliente o impórtelos desde Excel con la plantilla de SIGMA." />}
             columnas={[
               {

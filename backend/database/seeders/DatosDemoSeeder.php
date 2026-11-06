@@ -174,28 +174,17 @@ class DatosDemoSeeder extends Seeder
         $periodicidades = Periodicidad::orderBy('meses')->pluck('id', 'meses');
         $planes = app(PlanService::class);
 
-        $catalogo = [
-            ['nombre' => 'Plan Básico', 'descripcion' => 'Revisión preventiva y lubricación.', 'servicios_incluidos' => ['Inspección general', 'Lubricación de guías', 'Prueba de puertas de cabina y de piso'], 'base' => 380000],
-            ['nombre' => 'Plan Integral', 'descripcion' => 'Preventivo completo con ajustes y repuestos menores.', 'servicios_incluidos' => ['Inspección general', 'Lubricación de guías', 'Ajuste de frenos', 'Prueba de seguridades', 'Repuestos menores'], 'base' => 620000],
-            ['nombre' => 'Plan Premium', 'descripcion' => 'Cobertura total con atención prioritaria.', 'servicios_incluidos' => ['Todo el Plan Integral', 'Atención prioritaria 24/7', 'Informe técnico mensual'], 'base' => 950000],
-        ];
-
-        $creados = [];
-        foreach ($catalogo as $definicion) {
-            // Entre más meses entre visitas, mayor el valor de cada visita.
-            $precios = $periodicidades->map(fn ($id, $meses) => [
+        // Un solo plan de alquiler: el precio total sube con los meses, con algo de descuento por mes.
+        $planes->crear([
+            'nombre' => 'Plan SIGMA',
+            'descripcion' => 'Alquiler del software SIGMA.',
+            'servicios_incluidos' => ['Panel web y app para técnicos', 'Inventario, cotizaciones y cartera', 'Soporte por correo'],
+            'activo' => true,
+            'precios' => $periodicidades->map(fn ($id, $meses) => [
                 'periodicidad_id' => $id,
-                'precio' => $definicion['base'] + ($meses - 1) * 40000,
-            ])->values()->all();
-
-            $creados[] = $planes->crear([
-                'nombre' => $definicion['nombre'],
-                'descripcion' => $definicion['descripcion'],
-                'servicios_incluidos' => $definicion['servicios_incluidos'],
-                'activo' => true,
-                'precios' => $precios,
-            ]);
-        }
+                'precio' => round(450000 * $meses * (1 - 0.03 * ($meses - 1)), -3),
+            ])->values()->all(),
+        ]);
 
         $equipos = Equipo::whereHas('edificio', fn ($c) => $c->where('cliente_id', $cliente->id))
             ->where('estado', '!=', 'inactivo')
@@ -221,7 +210,7 @@ class DatosDemoSeeder extends Seeder
         foreach ($equipos as $indice => $equipo) {
             $asignaciones->asignar([
                 'equipo_id' => $equipo->id,
-                'plan_id' => $creados[$indice % count($creados)]->id,
+                'precio' => 380000,
                 'periodicidad_id' => $periodicidades[[1, 2, 3][$indice % 3]],
                 'contrato_id' => $contrato->id,
                 'aplica_iva' => true,

@@ -244,7 +244,6 @@ class ExportacionService
                 'controlador' => $ficha?->controlador,
                 'tipo_puerta' => $ficha?->tipo_puerta,
                 'periodicidad' => $asignacion?->periodicidad?->meses,
-                'plan' => $asignacion?->plan?->nombre,
                 'fecha_primer_mantenimiento' => $asignacion?->fecha_inicio?->toDateString(),
                 'tecnico' => $equipo->tecnico?->usuario?->nombre,
                 'valor_visita' => $asignacion ? (float) $asignacion->precio : null,
