@@ -107,7 +107,6 @@ void main() {
       ),
     );
 
-    expect(find.text('Plan Premium'), findsOneWidget);
     expect(find.text('Mensual (1 mes)'), findsOneWidget);
     expect(find.text('En 10 días'), findsOneWidget);
     expect(find.text('PRÓXIMAS VISITAS'), findsOneWidget);
@@ -115,6 +114,6 @@ void main() {
 
   testWidgets('sin plan asignado se indica en la sección', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: Scaffold(body: SeccionPlan(asignacion: null))));
-    expect(find.textContaining('no tiene un plan'), findsOneWidget);
+    expect(find.textContaining('mantenimientos preventivos programados'), findsOneWidget);
   });
 }

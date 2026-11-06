@@ -492,7 +492,7 @@ class _FormularioEventoState extends State<_FormularioEvento> {
   }
 }
 
-/// Fase 2 (RF-013 a RF-018): plan de mantenimiento vigente y próximas visitas del ascensor.
+/// Fase 2 (RF-013 a RF-018): programa de mantenimiento vigente y próximas visitas del ascensor.
 class SeccionPlan extends StatelessWidget {
   const SeccionPlan({super.key, required this.asignacion, this.visitas = const []});
 
@@ -504,8 +504,8 @@ class SeccionPlan extends StatelessWidget {
     final plan = asignacion;
     if (plan == null) {
       return const Seccion(
-        titulo: 'Plan de mantenimiento',
-        hijos: [Text('El ascensor no tiene un plan de mantenimiento preventivo asignado.')],
+        titulo: 'Programa de mantenimiento',
+        hijos: [Text('El ascensor no tiene mantenimientos preventivos programados.')],
       );
     }
 
@@ -513,7 +513,7 @@ class SeccionPlan extends StatelessWidget {
     final dias = proximo == null ? null : MantenimientoProgramado(id: 0, estado: 'programado', fechaProgramada: proximo).diasRestantes();
 
     return Seccion(
-      titulo: 'Plan de mantenimiento',
+      titulo: 'Programa de mantenimiento',
       hijos: [
         Container(
           padding: const EdgeInsets.all(14),
@@ -542,8 +542,7 @@ class SeccionPlan extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Datos([
-          ('Plan', plan.planNombre),
-          ('Periodicidad', plan.periodicidad),
+          ('Frecuencia', plan.periodicidad),
           ('Hora de las visitas', plan.horaPreferida),
           ('Precio por visita', dinero(plan.precio)),
           ('Con IVA', plan.aplicaIva ? dinero(plan.precioConIva) : 'No aplica'),

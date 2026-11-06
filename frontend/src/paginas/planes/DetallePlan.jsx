@@ -160,7 +160,6 @@ export default function DetallePlan() {
               { clave: 'periodicidad', titulo: 'Tiempo de alquiler', render: (p) => `${p.periodicidad.meses} ${p.periodicidad.meses === 1 ? 'mes' : 'meses'}` },
               { clave: 'precio', titulo: 'Precio total', clase: 'tabular', render: (p) => <strong>{dinero(p.precio)}</strong> },
               { clave: 'mes', titulo: 'Equivale por mes', clase: 'tabular', render: (p) => dinero(Math.round(Number(p.precio) / p.periodicidad.meses)) },
-              { clave: 'actualizado', titulo: 'Última actualización', render: (p) => fechaHora(p.updated_at) },
             ]}
             vacio={<EstadoVacio titulo="El plan no tiene precios" />}
           />
