@@ -66,6 +66,8 @@ class PruebasConjuntosCatalogosTest extends TestCase
             'cliente_id' => $this->cliente->id, 'tipo' => 'institucional', 'nombre' => 'Sede Norte', 'direccion' => 'Calle 100', 'ciudad' => 'bogota',
         ])->assertCreated()->assertJsonPath('datos.ciudad', 'Bogotá')->assertJsonPath('datos.departamento', 'Bogotá D.C.');
 
+        $this->assertSame(['Cartagena de Indias', 'Bolívar'], \App\Support\Colombia::ubicacion('Cartagena', 'Bolivar'));
+
         $this->getJson('/api/v1/ubicaciones')->assertOk()->assertJsonPath('datos.Tolima.0', 'Alpujarra');
     }
 

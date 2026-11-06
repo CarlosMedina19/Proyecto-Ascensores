@@ -58,6 +58,10 @@ class Colombia
         if (self::clave($ciudad) === 'bogota' || self::clave($ciudad) === 'bogota d c') {
             return ['Bogotá', 'Bogotá D.C.'];
         }
+        // Nombre corto de uso común.
+        if (self::clave($ciudad) === 'cartagena' && in_array(self::clave($departamento), ['', 'bolivar'], true)) {
+            return ['Cartagena de Indias', 'Bolívar'];
+        }
         $departamento = blank($departamento) ? self::departamentoDe($ciudad) : self::departamento($departamento);
         $oficial = $departamento ? self::ciudad($ciudad, $departamento) : null;
 
