@@ -7,14 +7,15 @@ use App\Http\Requests\Planilla\CorrectivoDerivadoRequest;
 use App\Http\Requests\Servicio\GuardarCertificacionRequest;
 use App\Http\Requests\Servicio\GuardarCotizacionRequest;
 use App\Http\Requests\Servicio\ReportarEmergenciaRequest;
+use App\Http\Resources\OrdenTrabajoResource;
 use App\Models\Certificacion;
 use App\Models\Cotizacion;
 use App\Models\Emergencia;
 use App\Models\Equipo;
 use App\Models\InformeOrden;
 use App\Models\OrdenTrabajo;
+use App\Models\TipoAscensor;
 use App\Models\Usuario;
-use App\Http\Resources\OrdenTrabajoResource;
 use App\Services\CalendarioHabilService;
 use App\Services\CarteraService;
 use App\Services\CertificacionService;
@@ -285,15 +286,57 @@ class ServicioController extends Controller
 
     public function ascensorPublico(string $codigo): JsonResponse
     {
-        $equipo = Equipo::with('edificio')->where('codigo_qr', $codigo)->firstOrFail();
+        $equipo = Equipo::with(['edificio', 'ascensor', 'asignacionActiva'])->where('codigo_qr', $codigo)->firstOrFail();
+        $certificacion = $equipo->certificaciones()->orderByDesc('fecha_vencimiento')->first();
+        $falla = Emergencia::where('equipo_id', $equipo->id)->whereNotIn('estado', ['resuelta', 'cancelada'])->exists();
 
+        // Solo el estado del ascensor: lo que puede ver cualquier persona que escanee el QR.
         return response()->json(['datos' => [
             'codigo' => $equipo->codigo,
             'nombre' => $equipo->nombre,
             'edificio' => $equipo->edificio?->nombre,
             'direccion' => $equipo->edificio?->direccion,
+            'estado' => $falla ? 'falla' : $equipo->estado,
+            'tipo' => $equipo->ascensor?->tipo_ascensor ? TipoAscensor::nombre($equipo->ascensor->tipo_ascensor) : null,
+            'capacidad_kg' => $equipo->ascensor?->capacidad_kg,
+            'capacidad_personas' => $equipo->ascensor?->capacidad_personas,
+            'paradas' => $equipo->ascensor?->paradas,
+            'ultimo_mantenimiento' => $equipo->asignacionActiva?->ultimo_mantenimiento?->toDateString()
+                ?? OrdenTrabajo::where('equipo_id', $equipo->id)->where('estado', 'finalizada')->max('fecha'),
+            'proximo_mantenimiento' => $equipo->asignacionActiva?->proximo_mantenimiento?->toDateString(),
+            'certificacion' => $certificacion ? [
+                'vigente' => $certificacion->fecha_vencimiento?->isFuture() ?? false,
+                'vence' => $certificacion->fecha_vencimiento?->toDateString(),
+            ] : null,
             'tipos' => Emergencia::TIPOS,
         ]]);
+    }
+
+    /** Técnico con sesión que escanea el QR: el ascensor (para reportar una anomalía) y su orden abierta. */
+    public function qrTecnico(Request $solicitud, string $codigo): JsonResponse
+    {
+        $usuario = $solicitud->user();
+        $equipo = Equipo::with('edificio')->where('codigo_qr', $codigo)->firstOrFail();
+        abort_unless($usuario->esTecnico(), 403, 'Esta opción es para los técnicos.');
+        $orden = $usuario->tecnico?->ordenes()->where('equipo_id', $equipo->id)->whereNotIn('estado', OrdenTrabajo::FINALES)->orderBy('fecha')->first();
+
+        return response()->json(['datos' => [
+            'equipo_id' => $equipo->id,
+            'codigo' => $equipo->codigo,
+            'orden' => $orden ? ['id' => $orden->id, 'numero' => $orden->numero, 'estado' => $orden->estado] : null,
+        ]]);
+    }
+
+    /** «Realizar mantenimiento» desde el QR: deja la orden en proceso y avisa al administrador. */
+    public function mantenimientoDesdeQr(Request $solicitud, string $codigo, OrdenTrabajoService $ordenes): JsonResponse
+    {
+        $equipo = Equipo::with('edificio')->where('codigo_qr', $codigo)->firstOrFail();
+        $orden = $ordenes->iniciarDesdeQr($equipo, $solicitud->user());
+
+        return response()->json([
+            'datos' => ['id' => $orden->id, 'numero' => $orden->numero, 'estado' => $orden->estado],
+            'mensaje' => "Mantenimiento iniciado con la orden {$orden->numero}. El administrador recibió el aviso.",
+        ], 201);
     }
 
     public function reportarPorQr(ReportarEmergenciaRequest $solicitud, string $codigo): JsonResponse

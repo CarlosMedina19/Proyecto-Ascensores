@@ -98,6 +98,25 @@ class NotificacionService
             ->get();
     }
 
+    /** Administradores activos (avisos de mantenimientos iniciados y finalizados). */
+    public function administradores(): Collection
+    {
+        return Usuario::query()
+            ->where('activo', true)
+            ->whereHas('rol', fn ($rol) => $rol->where('nombre', 'administrador'))
+            ->get();
+    }
+
+    /** Usuarios con rol Cliente de la empresa dueña del ascensor. */
+    public function usuariosCliente(?int $clienteId): Collection
+    {
+        return Usuario::query()
+            ->where('activo', true)
+            ->where('cliente_id', $clienteId)
+            ->whereHas('rol', fn ($rol) => $rol->where('nombre', 'cliente'))
+            ->get();
+    }
+
     /** RF-027: coordinadores activos (reciben las órdenes con prioridad crítica). */
     public function coordinadores(): Collection
     {
@@ -112,13 +131,13 @@ class NotificacionService
      *
      * @param  iterable<Usuario>  $usuarios
      */
-    public function eventoOrden(OrdenTrabajo $orden, string $evento, iterable $usuarios): int
+    public function eventoOrden(OrdenTrabajo $orden, string $evento, iterable $usuarios, ?string $detalle = null): int
     {
         $orden->loadMissing(['equipo', 'edificio']);
 
         return $this->enviar(
             $usuarios,
-            new OrdenTrabajoNotification($orden, $evento),
+            new OrdenTrabajoNotification($orden, $evento, $detalle),
             "orden_{$evento}_".now()->format('YmdHisv'),
             'orden',
             $orden->id,

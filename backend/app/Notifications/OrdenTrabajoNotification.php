@@ -15,6 +15,7 @@ class OrdenTrabajoNotification extends NotificacionSigma
     public function __construct(
         public OrdenTrabajo $orden,
         public string $evento,
+        public ?string $detalle = null,
     ) {}
 
     private function descripcion(): string
@@ -35,6 +36,8 @@ class OrdenTrabajoNotification extends NotificacionSigma
             'critica' => "Orden con prioridad crítica · {$this->orden->numero}",
             'reprogramada' => "Orden reprogramada · {$this->orden->numero}",
             'cancelada' => "Orden cancelada · {$this->orden->numero}",
+            'iniciada' => "Mantenimiento iniciado · {$this->orden->equipo?->codigo}",
+            'finalizada' => "Mantenimiento finalizado · {$this->orden->equipo?->codigo}",
             default => "Orden {$this->orden->numero}",
         };
     }
@@ -45,6 +48,10 @@ class OrdenTrabajoNotification extends NotificacionSigma
             'asignada' => 'Se le asignó la '.lcfirst($this->descripcion()),
             'critica' => 'Requiere atención inmediata: '.lcfirst($this->descripcion()),
             'cancelada' => 'Se canceló la '.lcfirst($this->descripcion()).' Motivo: '.$this->orden->motivo_cancelacion,
+            'iniciada' => "{$this->detalle} inició el mantenimiento del ascensor {$this->orden->equipo?->codigo} en {$this->orden->edificio?->nombre} (orden {$this->orden->numero}).",
+            'finalizada' => "Se finalizó la orden {$this->orden->numero} del ascensor {$this->orden->equipo?->codigo} en {$this->orden->edificio?->nombre}"
+                ." ({$this->orden->duracion_minutos} min). El informe técnico en PDF está en la orden."
+                .($this->orden->informe ? " Trabajo realizado: {$this->orden->informe}" : ''),
             default => $this->descripcion(),
         };
     }

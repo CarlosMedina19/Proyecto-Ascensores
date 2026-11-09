@@ -51,32 +51,40 @@ afterEach(() => {
   guardarToken(null);
 });
 
-describe('reporte de fallas por QR', () => {
-  it('pide los datos de contacto y muestra el número de seguimiento sin iniciar sesión', async () => {
+describe('QR del ascensor', () => {
+  const ASCENSOR = { codigo: 'ASC-002', nombre: 'Ascensor 2', edificio: 'Torre A', estado: 'activo', tipo: 'Pasajeros', paradas: 18, proximo_mantenimiento: '2026-11-20' };
+
+  it('un visitante solo ve el estado del ascensor', async () => {
+    simularApi({ 'GET /publico/ascensores/abc123': { datos: ASCENSOR } });
+    montar(<ReportarFalla />, '/reportar/abc123', '/reportar/:codigo');
+
+    expect(await screen.findByText('Ascensor ASC-002')).toBeInTheDocument();
+    expect(screen.getByText('En servicio')).toBeInTheDocument();
+    expect(screen.getByText('Pasajeros')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Realizar mantenimiento/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Reportar anomalía/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Es técnico de SIGMA/ })).toHaveAttribute('href', '/iniciar-sesion');
+  });
+
+  it('el técnico con sesión inicia el mantenimiento o reporta una anomalía', async () => {
+    guardarToken('token');
     const llamadas = simularApi({
-      'GET /publico/ascensores/abc123': { datos: { codigo: 'ASC-002', nombre: 'Torre A', edificio: 'Mirador del Parque' } },
-      'POST /publico/ascensores/abc123/reportes': [
-        { datos: { numero: 'EM-2026-00004', minutos_objetivo: 30 }, mensaje: 'Recibimos su reporte EM-2026-00004. Un técnico va en camino.' },
-        201,
-      ],
+      'GET /perfil': { datos: { id: 5, nombre: 'Andrés Rojas', rol: { nombre: 'tecnico', permisos: ['emergencias.reportar', 'ordenes.ver'] } } },
+      'GET /publico/ascensores/abc123': { datos: ASCENSOR },
+      'GET /qr/abc123': { datos: { equipo_id: 28, codigo: 'ASC-002', orden: null } },
+      'POST /emergencias': [{ datos: { id: 9, numero: 'EM-2026-00009' }, mensaje: 'Emergencia EM-2026-00009 reportada.' }, 201],
     });
     montar(<ReportarFalla />, '/reportar/abc123', '/reportar/:codigo');
     const usuario = userEvent.setup();
 
-    expect(await screen.findByText(/ASC-002/)).toBeInTheDocument();
-    const enviarBoton = screen.getByRole('button', { name: 'Enviar reporte' });
-    expect(enviarBoton).toBeDisabled();
-
+    expect(await screen.findByRole('button', { name: /Realizar mantenimiento/ })).toBeInTheDocument();
+    await usuario.click(screen.getByRole('button', { name: /Reportar anomalía/ }));
     await usuario.click(screen.getByLabelText('Personas atrapadas'));
-    expect(screen.getByText(/no intente abrir las puertas/)).toBeInTheDocument();
-    await usuario.type(screen.getByLabelText(/Su nombre/), 'Portería');
-    await usuario.type(screen.getByLabelText(/Teléfono de contacto/), '6015551234');
-    await usuario.click(enviarBoton);
+    await usuario.click(screen.getByRole('button', { name: 'Enviar reporte' }));
 
-    expect(await screen.findByText('Recibimos su reporte')).toBeInTheDocument();
-    expect(screen.getByText('EM-2026-00004')).toBeInTheDocument();
-    const envio = llamadas.find((l) => l.clave === 'POST /publico/ascensores/abc123/reportes');
-    expect(envio.cuerpo).toMatchObject({ tipo: 'atrapamiento', reportante_nombre: 'Portería' });
+    expect(await screen.findByText('Anomalía reportada')).toBeInTheDocument();
+    const envio = llamadas.find((l) => l.clave === 'POST /emergencias');
+    expect(envio.cuerpo).toMatchObject({ equipo_id: 28, tipo: 'atrapamiento', personas_atrapadas: true });
   });
 
   it('avisa cuando el código del QR no existe', async () => {

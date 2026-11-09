@@ -313,4 +313,7 @@ export const servicio = {
 export const publico = {
   ascensor: (codigo) => api.obtener(`/publico/ascensores/${codigo}`),
   reportar: (codigo, datos) => api.crear(`/publico/ascensores/${codigo}/reportes`, datos),
+  // Técnico con sesión que escanea el QR.
+  tecnico: (codigo) => api.obtener(`/qr/${codigo}`),
+  iniciarMantenimiento: (codigo) => api.crear(`/qr/${codigo}/mantenimiento`),
 };

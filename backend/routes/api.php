@@ -176,6 +176,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/certificaciones/{certificacion}/archivo', [ServicioController::class, 'adjuntarCertificado']);
     Route::get('/certificaciones/{certificacion}/archivo', [ServicioController::class, 'archivoCertificado']);
     Route::get('/equipos/{equipo}/qr', [ServicioController::class, 'codigoQr']);
+    Route::get('/qr/{codigo}', [ServicioController::class, 'qrTecnico']);
+    Route::post('/qr/{codigo}/mantenimiento', [ServicioController::class, 'mantenimientoDesdeQr'])->middleware('throttle:20,1');
     Route::get('/equipos/{equipo}/documentos', [ServicioController::class, 'documentosEquipo']);
     Route::get('/emergencias', [ServicioController::class, 'emergencias']);
     Route::post('/emergencias', [ServicioController::class, 'reportarEmergencia']);

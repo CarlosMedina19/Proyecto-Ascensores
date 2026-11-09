@@ -346,6 +346,57 @@ class OrdenTrabajoService
         });
     }
 
+    /**
+     * El técnico escanea el QR del ascensor y toca «Realizar mantenimiento»: usa su orden abierta de
+     * ese ascensor o crea una preventiva (de la visita programada más próxima, si la hay), la deja en
+     * proceso y avisa al administrador.
+     */
+    public function iniciarDesdeQr(Equipo $equipo, Usuario $usuario): OrdenTrabajo
+    {
+        $tecnico = $usuario->tecnico;
+        if (! $usuario->esTecnico() || ! $tecnico) {
+            throw new ReglaNegocioException('Solo un técnico con su perfil completo puede iniciar un mantenimiento desde el QR.');
+        }
+        if ($equipo->estado === 'inactivo') {
+            throw new ReglaNegocioException("El ascensor {$equipo->codigo} está inactivo.");
+        }
+
+        return DB::transaction(function () use ($equipo, $usuario, $tecnico) {
+            $orden = $tecnico->ordenes()
+                ->where('equipo_id', $equipo->id)
+                ->whereIn('estado', ['asignada', 'en_camino', 'en_proceso', 'pendiente'])
+                ->orderByRaw("case estado when 'en_proceso' then 0 when 'en_camino' then 1 when 'pendiente' then 2 else 3 end")
+                ->orderBy('fecha')
+                ->first();
+
+            if (! $orden) {
+                $visita = MantenimientoProgramado::where('equipo_id', $equipo->id)->pendientes()
+                    ->whereDoesntHave('ordenActiva')->orderBy('fecha_programada')->first();
+                $ahora = now();
+                $orden = $this->crear(array_filter([
+                    'mantenimiento_id' => $visita?->id,
+                    'servicio' => 'preventivo',
+                    'equipo_id' => $equipo->id,
+                    'fecha' => $ahora->toDateString(),
+                    'hora' => $ahora->format('H:i'),
+                    'descripcion' => 'Mantenimiento iniciado en el sitio desde el código QR del ascensor.',
+                    'tecnicos' => [$tecnico->id],
+                ]));
+            }
+
+            foreach (['asignada' => 'en_camino', 'en_camino' => 'en_proceso', 'pendiente' => 'en_proceso'] as $desde => $hacia) {
+                if ($orden->fresh()->estado === $desde) {
+                    $this->avanzar($orden->fresh(), $hacia);
+                }
+            }
+            $orden = $orden->fresh();
+            $this->trazar($orden, 'inicio_qr', null, null, null, "{$usuario->nombre} inició el mantenimiento escaneando el QR del ascensor.");
+            $this->notificaciones->eventoOrden($orden, 'iniciada', $this->notificaciones->administradores(), $usuario->nombre);
+
+            return $this->detalle($orden);
+        });
+    }
+
     /** RF-026: solo en programada, asignada o pendiente, con motivo. */
     public function cancelar(OrdenTrabajo $orden, string $motivo): OrdenTrabajo
     {
@@ -457,6 +508,10 @@ class OrdenTrabajoService
         $this->planillas->completar($orden->fresh('planilla'));
         $informe = $this->informes->generar($orden->fresh());
         $this->trazar($orden, 'informe_generado', null, null, "v{$informe->version}", 'Informe técnico en PDF emitido.');
+
+        // Reporte de finalización al administrador y a los usuarios del cliente.
+        $this->notificaciones->eventoOrden($orden->fresh(), 'finalizada', $this->notificaciones->administradores()
+            ->merge($this->notificaciones->usuariosCliente($orden->cliente_id))->unique('id'));
     }
 
     private function validarTecnicoParaOrden(Tecnico $tecnico, OrdenTrabajo $orden): void
