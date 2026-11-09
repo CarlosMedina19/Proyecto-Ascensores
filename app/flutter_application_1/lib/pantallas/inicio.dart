@@ -8,6 +8,7 @@ import '../tema.dart';
 import '../widgets/comunes.dart';
 import 'emergencias.dart';
 import 'equipos.dart';
+import 'escaner_qr.dart';
 import 'ordenes.dart';
 
 /// Inicio según el rol: resumen general para el personal administrativo,
@@ -78,6 +79,14 @@ class _PantallaInicioState extends State<PantallaInicio> {
 
     return Scaffold(
       appBar: AppBar(titleSpacing: 16, title: const MarcaSigma(tamanoLogo: 30)),
+      // Solo el técnico escanea el QR del ascensor para iniciar el mantenimiento o reportar una anomalía.
+      floatingActionButton: usuario.esTecnico
+          ? FloatingActionButton.extended(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PantallaEscanerQr())),
+              icon: const Icon(Icons.qr_code_scanner),
+              label: const Text('Escanear QR'),
+            )
+          : null,
       body: RefreshIndicator(
         onRefresh: () async => _cargar(),
         child: ListView(

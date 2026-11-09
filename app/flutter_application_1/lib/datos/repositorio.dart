@@ -171,6 +171,17 @@ class Repositorio {
     return (emergencia: Emergencia.desdeJson(respuesta['datos'] as Map<String, dynamic>), mensaje: respuesta['mensaje'] as String? ?? '');
   }
 
+  // QR del ascensor: estado (lo ve cualquiera) y, para el técnico, el ascensor y su orden abierta.
+  Future<Map<String, dynamic>> estadoQr(String codigo) async => (await api.obtener('/publico/ascensores/$codigo'))['datos'] as Map<String, dynamic>;
+
+  Future<Map<String, dynamic>> ascensorQr(String codigo) async => (await api.obtener('/qr/$codigo'))['datos'] as Map<String, dynamic>;
+
+  /// Inicia (o continúa) el mantenimiento del ascensor escaneado; devuelve la orden en proceso.
+  Future<({int ordenId, String mensaje})> iniciarMantenimientoQr(String codigo) async {
+    final respuesta = await api.crear('/qr/$codigo/mantenimiento');
+    return (ordenId: (respuesta['datos'] as Map<String, dynamic>)['id'] as int, mensaje: respuesta['mensaje'] as String? ?? '');
+  }
+
   // RF-040 y RF-042: inventario y repuestos usados en la orden.
   Future<List<RepuestoInventario>> repuestosActivos() async => (((await api.obtener('/repuestos', consulta: {'estado': 'activos', 'por_pagina': 100}))['datos'] as List?) ?? const [])
       .map((r) => RepuestoInventario.desdeJson(r as Map<String, dynamic>))
