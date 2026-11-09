@@ -232,7 +232,7 @@ export function CodigoQrAscensor({ equipo }) {
           {/* El SVG lo genera la librería qrcode a partir de la URL del propio sistema. */}
           <div className="qr-ascensor__codigo" dangerouslySetInnerHTML={{ __html: svg }} role="img" aria-label={`Código QR para reportar fallas del ascensor ${equipo.codigo}`} />
           <div>
-            <p style={{ marginTop: 0 }}>Péguelo dentro de la cabina. Quien lo escanee puede reportar una falla o un atrapamiento sin iniciar sesión.</p>
+            <p style={{ marginTop: 0 }}>Péguelo dentro de la cabina. Quien lo escanee ve el estado del ascensor; un técnico con sesión puede iniciar el mantenimiento o reportar una anomalía.</p>
             <a href={qr.url} target="_blank" rel="noreferrer" className="texto-pequeno">
               {qr.url}
             </a>
