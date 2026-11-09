@@ -333,7 +333,7 @@ export default function FormularioEquipo() {
               error={errorFicha('operador_puertas')}
             />
           </div>
-          <div className="formulario__fila formulario__fila--3">
+          <div className="formulario__fila">
             <CampoArea
               etiqueta="Especificaciones técnicas adicionales"
               rows={2}
@@ -342,21 +342,22 @@ export default function FormularioEquipo() {
               error={errorFicha('especificaciones_tecnicas')}
             />
             <CampoArea etiqueta="Observaciones" rows={2} valor={datos.observaciones} alCambiar={cambiar('observaciones')} error={error('observaciones')} />
+          </div>
+          {/* Fotos debajo, a todo el ancho: cada foto nueva se agrega a la derecha de la anterior. */}
+          {editando ? (
             <div className="campo">
               <span className="campo__etiqueta">Fotos del ascensor</span>
-              {editando ? (
-                <GaleriaFotos
-                  equipoId={id}
-                  fotos={fotosGuardadas}
-                  editable
-                  notificar={notificar}
-                  alCambiar={() => equipos.obtener(id).then(({ datos: equipo }) => setFotosGuardadas(equipo.fotos || []))}
-                />
-              ) : (
-                <SelectorFotos archivos={fotosNuevas} alCambiar={setFotosNuevas} />
-              )}
+              <GaleriaFotos
+                equipoId={id}
+                fotos={fotosGuardadas}
+                editable
+                notificar={notificar}
+                alCambiar={() => equipos.obtener(id).then(({ datos: equipo }) => setFotosGuardadas(equipo.fotos || []))}
+              />
             </div>
-          </div>
+          ) : (
+            <SelectorFotos archivos={fotosNuevas} alCambiar={setFotosNuevas} />
+          )}
 
           <div className="formulario__acciones">
             <button type="button" className="boton boton--secundario" onClick={() => navegar(-1)}>

@@ -122,3 +122,29 @@ export const PREGUNTAS = [
   { pregunta: '¿Cómo funciona el código QR?', respuesta: 'Cada ascensor tiene un QR único. Cualquier persona ve su estado; un técnico con sesión inicia el mantenimiento o reporta una anomalía.' },
   { pregunta: '¿La información está segura?', respuesta: 'Cada rol ve solo lo que le corresponde, todo cambio queda en la auditoría y la base de datos se respalda todos los días.' },
 ];
+
+// Recorrido por el producto: cada pestaña muestra una pantalla real del panel.
+export const RECORRIDO = [
+  { id: 'panel', titulo: 'Panel de operación', texto: 'Indicadores del día, emergencias abiertas, órdenes críticas y la cola de trabajo en una sola vista.', imagen: '/landing/panel.webp' },
+  { id: 'clientes', titulo: 'Clientes', texto: 'Conjuntos, instituciones y residencias con sus edificios y ascensores en un árbol que se despliega.', imagen: '/landing/clientes-arbol.webp' },
+  { id: 'calendario', titulo: 'Calendario', texto: 'Visitas por día, semana o mes; arrastre una visita para reagendarla y SIGMA avisa al cliente.', imagen: '/landing/calendario.webp' },
+  { id: 'ascensor', titulo: 'Hoja de vida', texto: 'Ficha técnica, programa de mantenimiento, certificación anual, órdenes, historial y QR de cada ascensor.', imagen: '/landing/ascensor.webp' },
+];
+
+export const PASOS = [
+  { titulo: 'Cargue su información', texto: 'Importe clientes, edificios, ascensores y técnicos desde Excel o regístrelos en el panel.' },
+  { titulo: 'Programe y asigne', texto: 'SIGMA calcula las visitas en días hábiles y las asigna a técnicos según su horario y especialidad.' },
+  { titulo: 'Ejecute y reporte', texto: 'El técnico escanea el QR, llena la planilla en la app y el cliente recibe el informe en PDF.' },
+];
+
+export const CTA = {
+  titulo: '¿Listo para tener cada ascensor bajo control?',
+  texto: 'Le mostramos SIGMA en una llamada de 30 minutos con sus propios datos.',
+  boton: 'Solicitar demo',
+};
+
+// Insignias que flotan sobre la imagen principal.
+export const INSIGNIAS_HERO = [
+  { texto: 'Mantenimiento programado', detalle: 'ASC-101 · lunes 08:00' },
+  { texto: 'Informe PDF enviado', detalle: 'OT-2026-00007 · firmado' },
+];

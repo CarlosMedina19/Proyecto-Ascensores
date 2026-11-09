@@ -6884,3 +6884,41 @@ textarea.campo__control[rows='2'] {
     white-space: nowrap;
   }
 }
+
+/* Detalle del ascensor: las tarjetas fluyen en dos columnas balanceadas, sin huecos. */
+.columnas-equipo {
+  column-count: 2;
+  column-gap: 16px;
+}
+
+.columnas-equipo > * {
+  break-inside: avoid;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .columnas-equipo {
+    column-count: 1;
+  }
+}
+
+/* Selector de fotos del formulario: cada foto se agrega a la derecha de la anterior. */
+.fotos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fotos__item,
+.fotos__agregar {
+  width: 200px;
+  flex: none;
+}
+
+@media (max-width: 480px) {
+  .fotos__item,
+  .fotos__agregar {
+    width: calc(50% - 6px);
+  }
+}

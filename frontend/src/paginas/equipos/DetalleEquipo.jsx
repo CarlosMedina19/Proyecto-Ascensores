@@ -168,75 +168,72 @@ export default function DetalleEquipo() {
         )}
       </EncabezadoPagina>
 
-      <div className="rejilla rejilla--2" style={{ alignItems: 'start' }}>
-        <div className="rejilla">
-          <Tarjeta titulo="Datos del ascensor">
-            <Datos
-              elementos={[
-                ['Nombre', equipo.nombre],
-                ['Marca', equipo.marca],
-                ['Modelo', equipo.modelo],
-                ['Técnico asignado', equipo.tecnico?.nombre],
-                ['Número de serie', equipo.numero_serie],
-                ['Ubicación', equipo.ubicacion],
-                ['Fecha de instalación', fecha(equipo.fecha_instalacion)],
-                ['Registrado', fechaHora(equipo.created_at)],
-              ]}
-            />
-          </Tarjeta>
-          <Tarjeta titulo="Fotos">
-            <GaleriaFotos
-              equipoId={equipo.id}
-              fotos={equipo.fotos || []}
-              editable={tienePermiso('equipos.editar') || tienePermiso('equipos.crear')}
-              notificar={notificar}
-              alCambiar={cargar}
-            />
-          </Tarjeta>
-          {tienePermiso('certificaciones.ver') && <CertificacionAscensor equipo={equipo} />}
-          <Tarjeta titulo="Ficha técnica">
-            <Datos
-              elementos={[
-                ['Tipo de ascensor', ficha.tipo_ascensor_texto || ficha.tipo_ascensor],
-                ['Capacidad', [numero(ficha.capacidad_kg, ' kg'), ficha.capacidad_personas ? `${ficha.capacidad_personas} personas` : null].filter(Boolean).join(' · ')],
-                ['Velocidad', velocidad(ficha.velocidad_mpm)],
-                ['Paradas', ficha.paradas],
-                ['Accionamiento', ficha.tipo_traccion],
-                ['Motor', ficha.motor],
-                ['Controlador', ficha.controlador],
-                ['Tipo de puerta', ficha.tipo_puerta],
-                ['Operador de puertas', ficha.operador_puertas],
-                ['Puertas de cabina', ficha.puertas_cabina],
-                ['Puertas de piso', ficha.puertas_piso],
-              ]}
-            />
-            {totalPuertasPiso > 0 && (
-              <>
-                <p className="etiqueta-superior" style={{ marginTop: 16 }}>
-                  Puertas de piso del ascensor
-                </p>
-                <div className="puertas">
-                  {equipo.puertas_piso?.length
-                    ? equipo.puertas_piso.map((p) => (
-                        <span key={p.id} className={`estado-${p.estado}`} title={`Piso ${p.piso} · ${p.tipo === 'manual' ? 'manual' : 'automática'} · ${{ B: 'Bueno', R: 'Regular', M: 'Malo', P: 'Pendiente' }[p.estado]}${p.observacion ? ` · ${p.observacion}` : ''}`}>
-                          P{p.piso}
-                        </span>
-                      ))
-                    : Array.from({ length: Math.min(totalPuertasPiso, 60) }, (_, i) => <span key={i}>P{i + 1}</span>)}
-                </div>
-              </>
-            )}
-            {ficha.especificaciones_tecnicas && (
-              <>
-                <div className="separador" />
-                <div className="texto-pequeno texto-suave">Especificaciones adicionales</div>
-                <p style={{ margin: '4px 0 0', whiteSpace: 'pre-line' }}>{ficha.especificaciones_tecnicas}</p>
-              </>
-            )}
-          </Tarjeta>
-        </div>
-
-        <div className="rejilla">
+      {/* Las tarjetas fluyen en dos columnas balanceadas (sin huecos); una sola en pantallas pequeñas. */}
+      <div className="columnas-equipo">
+        <Tarjeta titulo="Datos del ascensor">
+          <Datos
+            elementos={[
+              ['Nombre', equipo.nombre],
+              ['Marca', equipo.marca],
+              ['Modelo', equipo.modelo],
+              ['Técnico asignado', equipo.tecnico?.nombre],
+              ['Número de serie', equipo.numero_serie],
+              ['Ubicación', equipo.ubicacion],
+              ['Fecha de instalación', fecha(equipo.fecha_instalacion)],
+              ['Registrado', fechaHora(equipo.created_at)],
+            ]}
+          />
+        </Tarjeta>
+        <Tarjeta titulo="Fotos">
+          <GaleriaFotos
+            equipoId={equipo.id}
+            fotos={equipo.fotos || []}
+            editable={tienePermiso('equipos.editar') || tienePermiso('equipos.crear')}
+            notificar={notificar}
+            alCambiar={cargar}
+          />
+        </Tarjeta>
+        {tienePermiso('certificaciones.ver') && <CertificacionAscensor equipo={equipo} />}
+        <Tarjeta titulo="Ficha técnica">
+          <Datos
+            elementos={[
+              ['Tipo de ascensor', ficha.tipo_ascensor_texto || ficha.tipo_ascensor],
+              ['Capacidad', [numero(ficha.capacidad_kg, ' kg'), ficha.capacidad_personas ? `${ficha.capacidad_personas} personas` : null].filter(Boolean).join(' · ')],
+              ['Velocidad', velocidad(ficha.velocidad_mpm)],
+              ['Paradas', ficha.paradas],
+              ['Accionamiento', ficha.tipo_traccion],
+              ['Motor', ficha.motor],
+              ['Controlador', ficha.controlador],
+              ['Tipo de puerta', ficha.tipo_puerta],
+              ['Operador de puertas', ficha.operador_puertas],
+              ['Puertas de cabina', ficha.puertas_cabina],
+              ['Puertas de piso', ficha.puertas_piso],
+            ]}
+          />
+          {totalPuertasPiso > 0 && (
+            <>
+              <p className="etiqueta-superior" style={{ marginTop: 16 }}>
+                Puertas de piso del ascensor
+              </p>
+              <div className="puertas">
+                {equipo.puertas_piso?.length
+                  ? equipo.puertas_piso.map((p) => (
+                      <span key={p.id} className={`estado-${p.estado}`} title={`Piso ${p.piso} · ${p.tipo === 'manual' ? 'manual' : 'automática'} · ${{ B: 'Bueno', R: 'Regular', M: 'Malo', P: 'Pendiente' }[p.estado]}${p.observacion ? ` · ${p.observacion}` : ''}`}>
+                        P{p.piso}
+                      </span>
+                    ))
+                  : Array.from({ length: Math.min(totalPuertasPiso, 60) }, (_, i) => <span key={i}>P{i + 1}</span>)}
+              </div>
+            </>
+          )}
+          {ficha.especificaciones_tecnicas && (
+            <>
+              <div className="separador" />
+              <div className="texto-pequeno texto-suave">Especificaciones adicionales</div>
+              <p style={{ margin: '4px 0 0', whiteSpace: 'pre-line' }}>{ficha.especificaciones_tecnicas}</p>
+            </>
+          )}
+        </Tarjeta>
         <PlanDelEquipo equipo={equipo} alCambiar={cargar} />
         {tienePermiso('ordenes.ver') && <OrdenesDelEquipo equipoId={equipo.id} />}
         <EmergenciasAscensor equipo={equipo} />
@@ -261,11 +258,6 @@ export default function DetalleEquipo() {
             </p>
           )}
         </Tarjeta>
-        </div>
-      </div>
-
-      {/* Historial, documentos y QR en dos columnas iguales debajo de todo (una sola en pantallas pequeñas). */}
-      <div className="rejilla rejilla--2 detalle-equipo__final">
         {puedeVerHistorial && (
           <Tarjeta
             titulo="Historial del ascensor"
@@ -286,10 +278,8 @@ export default function DetalleEquipo() {
             )}
           </Tarjeta>
         )}
-        <div className="rejilla">
-          {puedeVerHistorial && <DocumentosAscensor equipo={equipo} />}
-          <CodigoQrAscensor equipo={equipo} />
-        </div>
+        {puedeVerHistorial && <DocumentosAscensor equipo={equipo} />}
+        <CodigoQrAscensor equipo={equipo} />
       </div>
 
       <ModalEvento

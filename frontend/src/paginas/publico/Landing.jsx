@@ -20,7 +20,7 @@ import {
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { useTema } from '../../hooks/useTema';
 import { Logo } from '../../componentes/Marca';
-import { APP_MOVIL, AUDIENCIAS, BENEFICIOS, CONTACTO, FUNCIONES, HERO, NAVEGACION, PLANES, PREGUNTAS, PROBLEMAS, SEO } from './contenidoLanding';
+import { APP_MOVIL, AUDIENCIAS, BENEFICIOS, CONTACTO, CTA, FUNCIONES, HERO, INSIGNIAS_HERO, NAVEGACION, PASOS, PLANES, PREGUNTAS, PROBLEMAS, RECORRIDO, SEO } from './contenidoLanding';
 import './landing.css';
 
 const ICONOS = { clientes: Users, edificios: Building2, historial: ClipboardCheck, documentos: FileText, qr: QrCode, alertas: Bell };
@@ -128,8 +128,19 @@ function Hero() {
               <i />
               <span>sigma.proyectoscampus.top</span>
             </div>
-            <img src="/landing/panel.webp" alt="Panel de operación de SIGMA con indicadores y la agenda del día" width="1200" height="750" />
+            <img src="/landing/panel.webp" alt="Panel de operación de SIGMA con indicadores y la agenda del día" width="2000" height="1250" fetchpriority="high" />
           </div>
+          {INSIGNIAS_HERO.map((i, k) => (
+            <div key={i.texto} className={`landing-insignia landing-insignia--${k + 1}`} aria-hidden="true">
+              <span className="landing-insignia__punto">
+                <Check size={14} />
+              </span>
+              <span>
+                <b>{i.texto}</b>
+                {i.detalle}
+              </span>
+            </div>
+          ))}
           <img className="landing-hero__telefono" src="/landing/app-inicio.webp" alt="Inicio de la app de SIGMA para técnicos" width="390" height="844" loading="lazy" />
         </div>
       </div>
@@ -149,6 +160,50 @@ function Seccion({ id, etiqueta, titulo, texto, children, alterna }) {
         {children}
       </div>
     </section>
+  );
+}
+
+/** Recorrido por el producto: pestañas que cambian la pantalla mostrada. */
+function Recorrido() {
+  const [activa, setActiva] = useState(RECORRIDO[0].id);
+  const actual = RECORRIDO.find((r) => r.id === activa) ?? RECORRIDO[0];
+
+  function alTeclear(evento) {
+    const k = RECORRIDO.findIndex((r) => r.id === activa);
+    if (evento.key === 'ArrowRight') setActiva(RECORRIDO[(k + 1) % RECORRIDO.length].id);
+    if (evento.key === 'ArrowLeft') setActiva(RECORRIDO[(k - 1 + RECORRIDO.length) % RECORRIDO.length].id);
+  }
+
+  return (
+    <div className="landing-recorrido aparece">
+      <div className="landing-recorrido__pestanas" role="tablist" aria-label="Pantallas de SIGMA" onKeyDown={alTeclear}>
+        {RECORRIDO.map((r) => (
+          <button
+            key={r.id}
+            type="button"
+            role="tab"
+            id={`pestana-${r.id}`}
+            aria-selected={r.id === activa}
+            aria-controls="recorrido-panel"
+            tabIndex={r.id === activa ? 0 : -1}
+            className="landing-recorrido__pestana"
+            onClick={() => setActiva(r.id)}
+          >
+            <b>{r.titulo}</b>
+            <span>{r.texto}</span>
+          </button>
+        ))}
+      </div>
+      <div className="landing-navegador landing-recorrido__pantalla" role="tabpanel" id="recorrido-panel" aria-labelledby={`pestana-${actual.id}`}>
+        <div className="landing-navegador__barra">
+          <i />
+          <i />
+          <i />
+          <span>sigma.proyectoscampus.top</span>
+        </div>
+        <img key={actual.id} src={actual.imagen} alt={`${actual.titulo} de SIGMA`} width="2000" height="1250" loading="lazy" />
+      </div>
+    </div>
   );
 }
 
@@ -246,6 +301,22 @@ export default function Landing() {
           </div>
         </Seccion>
 
+        <Seccion id="como-funciona" etiqueta="Cómo funciona" titulo="De la hoja de cálculo al control total en tres pasos">
+          <ol className="landing-pasos">
+            {PASOS.map((p, k) => (
+              <li key={p.titulo} className="landing-tarjeta landing-paso aparece">
+                <span className="landing-paso__numero">{k + 1}</span>
+                <h3>{p.titulo}</h3>
+                <p>{p.texto}</p>
+              </li>
+            ))}
+          </ol>
+        </Seccion>
+
+        <Seccion id="recorrido" etiqueta="Conózcalo por dentro" titulo="Así se ve SIGMA" alterna>
+          <Recorrido />
+        </Seccion>
+
         <Seccion id="funciones" etiqueta="Funcionalidades" titulo="Todo el mantenimiento de ascensores en un solo sistema">
           <div className="landing-rejilla landing-rejilla--3">
             {FUNCIONES.map((f) => {
@@ -260,16 +331,6 @@ export default function Landing() {
                 </article>
               );
             })}
-          </div>
-          <div className="landing-capturas aparece">
-            <figure>
-              <img src="/landing/clientes-arbol.webp" alt="Clientes por conjuntos con sus edificios y ascensores desplegados" width="1200" height="750" loading="lazy" />
-              <figcaption>Clientes → edificios → ascensores</figcaption>
-            </figure>
-            <figure>
-              <img src="/landing/calendario.webp" alt="Calendario de mantenimientos de SIGMA" width="1200" height="750" loading="lazy" />
-              <figcaption>Calendario de mantenimientos</figcaption>
-            </figure>
           </div>
         </Seccion>
 
@@ -363,6 +424,18 @@ export default function Landing() {
             ))}
           </div>
         </Seccion>
+
+        <section className="landing-cta">
+          <div className="landing-contenedor landing-cta__caja aparece">
+            <div>
+              <h2>{CTA.titulo}</h2>
+              <p>{CTA.texto}</p>
+            </div>
+            <a href="#contacto" className="landing-boton landing-boton--claro">
+              {CTA.boton} <ArrowRight size={18} aria-hidden="true" />
+            </a>
+          </div>
+        </section>
 
         <Seccion id="contacto" etiqueta="Contacto" titulo="Pida una demostración" texto="Le mostramos SIGMA con sus propios datos y le ayudamos a cargar su información.">
           <Contacto />
