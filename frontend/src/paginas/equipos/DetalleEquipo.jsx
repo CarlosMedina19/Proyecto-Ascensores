@@ -261,6 +261,11 @@ export default function DetalleEquipo() {
             </p>
           )}
         </Tarjeta>
+        </div>
+      </div>
+
+      {/* Historial, documentos y QR en dos columnas iguales debajo de todo (una sola en pantallas pequeñas). */}
+      <div className="rejilla rejilla--2 detalle-equipo__final">
         {puedeVerHistorial && (
           <Tarjeta
             titulo="Historial del ascensor"
@@ -281,8 +286,9 @@ export default function DetalleEquipo() {
             )}
           </Tarjeta>
         )}
-        {puedeVerHistorial && <DocumentosAscensor equipo={equipo} />}
-        <CodigoQrAscensor equipo={equipo} />
+        <div className="rejilla">
+          {puedeVerHistorial && <DocumentosAscensor equipo={equipo} />}
+          <CodigoQrAscensor equipo={equipo} />
         </div>
       </div>
 

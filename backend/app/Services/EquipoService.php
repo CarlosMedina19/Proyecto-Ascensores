@@ -30,7 +30,7 @@ class EquipoService
     /** Consulta con los filtros del listado (también la usa la exportación a Excel). */
     public function consulta(array $filtros = []): Builder
     {
-        $consulta = Equipo::with(['edificio.cliente', 'ascensor']);
+        $consulta = Equipo::with(['edificio.cliente', 'ascensor', 'asignacionActiva']);
         $usuarioActual = Auth::user();
 
         if ($usuarioActual instanceof Usuario && $usuarioActual->esCliente()) {

@@ -117,8 +117,8 @@ export const ESTADOS_EQUIPO = {
 /** Agrupación de los edificios de cada cliente (y su ruta en el menú). */
 export const TIPOS_EDIFICIO = {
   conjunto: { texto: 'Conjunto', plural: 'Conjuntos', ruta: '/clientes/conjuntos' },
-  institucional: { texto: 'Institucional', plural: 'Institucionales', ruta: '/clientes/institucionales' },
-  residencial: { texto: 'Residencial', plural: 'Residenciales', ruta: '/clientes/residenciales' },
+  institucional: { texto: 'Institución', plural: 'Instituciones', ruta: '/clientes/institucionales' },
+  residencial: { texto: 'Residencia', plural: 'Residencias', ruta: '/clientes/residenciales' },
 };
 
 export const TIPOS_CLIENTE = {

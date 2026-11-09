@@ -94,8 +94,8 @@ describe('menú según permisos del rol', () => {
     expect(screen.queryByRole('link', { name: 'Conjuntos' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /desplegar mi empresa/i }));
     expect(screen.getByRole('link', { name: 'Conjuntos' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Institucionales' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Residenciales' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Instituciones' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Residencias' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /usuarios/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /auditoría/i })).not.toBeInTheDocument();
     expect(screen.queryByText('Administración')).not.toBeInTheDocument();

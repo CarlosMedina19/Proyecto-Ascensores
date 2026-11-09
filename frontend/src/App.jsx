@@ -1,4 +1,4 @@
-import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
 import TransicionPuertas from './componentes/TransicionPuertas';
 import { ProveedorAutenticacion } from './contexto/AutenticacionContexto';
 import { ProveedorNotificaciones } from './contexto/NotificacionesContexto';
@@ -17,10 +17,10 @@ import DetalleRepuesto from './paginas/inventario/DetalleRepuesto';
 import FormularioCliente from './paginas/clientes/FormularioCliente';
 import DetalleCliente from './paginas/clientes/DetalleCliente';
 import ListaEdificios from './paginas/edificios/ListaEdificios';
-import ListaConjuntos from './paginas/conjuntos/ListaConjuntos';
 import FormularioConjunto from './paginas/conjuntos/FormularioConjunto';
 import DetalleConjunto from './paginas/conjuntos/DetalleConjunto';
 import ResultadoPago from './paginas/pagos/ResultadoPago';
+import Landing from './paginas/publico/Landing';
 import FormularioEdificio from './paginas/edificios/FormularioEdificio';
 import DetalleEdificio from './paginas/edificios/DetalleEdificio';
 import ListaEquipos from './paginas/equipos/ListaEquipos';
@@ -66,20 +66,23 @@ export default function App() {
             <Route path="/recuperar-contrasena" element={<RutaPublica><RecuperarContrasena /></RutaPublica>} />
             <Route path="/restablecer-contrasena" element={<RutaPublica><RestablecerContrasena /></RutaPublica>} />
 
+            {/* Página comercial pública: es lo primero que se ve al entrar al dominio. */}
+            <Route path="/" element={<Landing />} />
+
             {/* Reporte de fallas desde el QR de la cabina: no pide sesión. */}
             <Route path="/reportar/:codigo" element={<ReportarFalla />} />
 
             <Route element={<RutaPrivada><Estructura /></RutaPrivada>}>
-              <Route index element={<Navigate to="/inicio" replace />} />
               <Route path="/inicio" element={<Inicio />} />
               <Route path="/perfil" element={<Perfil />} />
 
-              <Route path="/clientes" element={conPermiso('clientes.ver', <ListaClientes />)} />
+              <Route path="/clientes" element={conPermiso('clientes.ver', <ListaClientes key="inicio" vista="conjunto" />)} />
+              <Route path="/clientes/todos" element={conPermiso('clientes.ver', <ListaClientes key="clientes" vista="clientes" />)} />
               <Route path="/clientes/nuevo" element={conPermiso('clientes.crear', <FormularioCliente />)} />
               {/* Edificios de cada tipo, desplegados desde Clientes en el menú. */}
-              <Route path="/clientes/conjuntos" element={conPermiso('edificios.ver', <ListaConjuntos key="conjunto" tipo="conjunto" />)} />
-              <Route path="/clientes/institucionales" element={conPermiso('edificios.ver', <ListaConjuntos key="institucional" tipo="institucional" />)} />
-              <Route path="/clientes/residenciales" element={conPermiso('edificios.ver', <ListaConjuntos key="residencial" tipo="residencial" />)} />
+              <Route path="/clientes/conjuntos" element={conPermiso('clientes.ver', <ListaClientes key="conjunto" vista="conjunto" />)} />
+              <Route path="/clientes/institucionales" element={conPermiso('clientes.ver', <ListaClientes key="institucional" vista="institucional" />)} />
+              <Route path="/clientes/residenciales" element={conPermiso('clientes.ver', <ListaClientes key="residencial" vista="residencial" />)} />
               <Route path="/clientes/conjuntos/ascensores" element={conPermiso('equipos.ver', <ListaEquipos key="conjunto" tipo="conjunto" />)} />
               <Route path="/clientes/institucionales/ascensores" element={conPermiso('equipos.ver', <ListaEquipos key="institucional" tipo="institucional" />)} />
               <Route path="/clientes/residenciales/ascensores" element={conPermiso('equipos.ver', <ListaEquipos key="residencial" tipo="residencial" />)} />

@@ -6752,3 +6752,135 @@ textarea.campo__control[rows='2'] {
   gap: 6px;
   font-size: 13px;
 }
+
+/* Detalle del ascensor: historial, documentos y QR en dos columnas iguales. */
+.detalle-equipo__final {
+  margin-top: 16px;
+  align-items: start;
+}
+
+/* Clientes: pestañas Conjuntos · Instituciones · Residencias · Todos los clientes. */
+.pestanas-modulo {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 14px;
+  padding: 4px;
+  overflow-x: auto;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  background: var(--color-superficie);
+  scrollbar-width: thin;
+}
+
+.pestanas-modulo__enlace {
+  flex: none;
+  padding: 8px 16px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-texto-suave);
+  text-decoration: none;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.pestanas-modulo__enlace:hover {
+  color: var(--color-texto);
+  background: var(--color-superficie-suave);
+}
+
+.pestanas-modulo__enlace[aria-current='page'] {
+  color: var(--color-sobre-primario);
+  background: var(--color-primario);
+}
+
+.pestanas-modulo__enlace:focus-visible {
+  outline: none;
+  box-shadow: var(--anillo);
+}
+
+/* Árbol Entidad → Edificios → Ascensores (cada nivel con sangría). */
+.arbol__nivel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.arbol__nivel--2 {
+  padding-left: 18px;
+  border-left: 2px solid var(--color-primario-suave);
+}
+
+.arbol__nivel--3 {
+  margin: 4px 0 6px 34px;
+  padding-left: 14px;
+  border-left: 2px solid var(--color-borde);
+}
+
+.arbol__tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.arbol__tabla th {
+  padding: 6px 10px;
+  text-align: left;
+  font: 500 11px var(--fuente-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-texto-suave);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.arbol__tabla td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-borde);
+  vertical-align: middle;
+}
+
+.arbol__tabla .numero {
+  text-align: right;
+}
+
+.arbol__expandir {
+  width: 36px;
+  padding-right: 0 !important;
+}
+
+.arbol__fila--abierta td {
+  background: var(--color-superficie-suave);
+}
+
+.arbol__detalle > td {
+  padding: 0;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.arbol__enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--color-texto);
+}
+
+.arbol__enlace svg {
+  color: var(--color-texto-suave);
+}
+
+@media (max-width: 720px) {
+  .arbol__nivel--2 {
+    padding-left: 8px;
+  }
+
+  .arbol__nivel--3 {
+    margin-left: 8px;
+    padding-left: 8px;
+  }
+
+  .arbol__tabla {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
