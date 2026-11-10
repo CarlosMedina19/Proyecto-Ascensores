@@ -5,6 +5,7 @@ import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { Alerta, Cargando, EncabezadoPagina, Tarjeta } from '../../componentes/Basicos';
 import { fecha, numero } from '../../utilidades/formato';
 import { duracion } from '../../utilidades/servicio';
+import AnaliticaAvanzada from './AnaliticaAvanzada';
 
 const PERIODOS = [
   { dias: 30, texto: 'Últimos 30 días' },
@@ -124,6 +125,9 @@ export default function Indicadores() {
           </div>
         </>
       )}
+      <div style={{ marginTop: 16 }}>
+        <AnaliticaAvanzada />
+      </div>
     </>
   );
 }

@@ -23,6 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    // Canales privados de tiempo real (Reverb): se autorizan con el mismo token de la API.
+    ->withBroadcasting(__DIR__.'/../routes/channels.php', ['prefix' => 'api', 'middleware' => ['api', 'auth:sanctum']])
     ->withMiddleware(function (Middleware $middleware): void {
         // En producción Caddy termina HTTPS y reenvía la solicitud: se confía en sus encabezados
         // X-Forwarded-* para generar enlaces https (QR, correos, archivos).

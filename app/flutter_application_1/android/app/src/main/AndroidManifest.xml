@@ -3,6 +3,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Escanear el QR del ascensor (solo técnicos). -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Ubicación del técnico mientras una orden está en proceso (mapa de Auditoría). -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- usesCleartextTraffic permite HTTP al servidor local de desarrollo.
          En producción la API debe usar HTTPS (RNF-01) y este atributo debe quitarse. -->
     <application

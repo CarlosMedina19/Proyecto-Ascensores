@@ -46,7 +46,7 @@ class RegistroAuditoriaService
         OrdenTrabajo::class => 'ordenes',
     ];
 
-    private const CAMPOS_OCULTOS = ['password', 'remember_token'];
+    private const CAMPOS_OCULTOS = ['password', 'remember_token', 'contrasena_cifrada'];
 
     public static function registrar(
         string $accion,

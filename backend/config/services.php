@@ -28,6 +28,13 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Microservicio de analítica en Python (backend/analitica). Solo en la red interna de Docker.
+    'analitica' => [
+        'url' => env('ANALITICA_URL', 'http://sigma_analitica:8001'),
+        'clave' => env('ANALITICA_CLAVE'),
+        'tiempo' => env('ANALITICA_TIEMPO', 20),
+    ],
+
     // Pasarela de pagos Wompi (PSE). Proyecto formativo: llaves de pruebas (pub_test_… / test_integrity_…).
     'wompi' => [
         'llave_publica' => env('WOMPI_LLAVE_PUBLICA'),

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, CalendarClock, FileWarning } from 'lucide-react';
 import { notificaciones } from '../api/servicios';
+import { escuchar, tiempoRealDisponible } from '../api/tiempoReal';
+import { useAutenticacion } from '../contexto/AutenticacionContexto';
 import { fechaHora } from '../utilidades/formato';
 
 const INTERVALO_MS = 60 * 1000;
@@ -12,6 +14,7 @@ const INTERVALO_MS = 60 * 1000;
  */
 export default function CampanaNotificaciones() {
   const navegar = useNavigate();
+  const { usuario } = useAutenticacion();
   const [abierta, setAbierta] = useState(false);
   const [lista, setLista] = useState([]);
   const [noLeidas, setNoLeidas] = useState(0);
@@ -28,11 +31,17 @@ export default function CampanaNotificaciones() {
       .catch(() => {});
   }, []);
 
+  // Con WebSocket los avisos llegan al instante y la consulta periódica queda solo de respaldo.
   useEffect(() => {
     cargar();
-    const temporizador = setInterval(cargar, INTERVALO_MS);
+    const temporizador = setInterval(cargar, tiempoRealDisponible() ? INTERVALO_MS * 5 : INTERVALO_MS);
     return () => clearInterval(temporizador);
   }, [cargar]);
+
+  useEffect(() => {
+    if (!usuario?.id || !tiempoRealDisponible()) return undefined;
+    return escuchar(`usuarios.${usuario.id}`, { 'notificacion.recibida': () => cargar() });
+  }, [usuario?.id, cargar]);
 
   useEffect(() => {
     if (!abierta) return undefined;

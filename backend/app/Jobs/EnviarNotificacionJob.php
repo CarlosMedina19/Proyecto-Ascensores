@@ -2,10 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Events\NotificacionRecibida;
 use App\Models\EnvioNotificacion;
 use App\Notifications\NotificacionSigma;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -34,6 +36,15 @@ class EnviarNotificacionJob implements ShouldQueue
 
         $envio->usuario?->notifyNow($this->notificacion->porCanal($envio->canal));
         $envio->update(['estado' => 'enviado', 'enviado_en' => now(), 'error' => null]);
+
+        // La campana del panel se actualiza en vivo cuando llega un aviso al buzón interno.
+        if ($envio->canal === 'database') {
+            try {
+                NotificacionRecibida::dispatch($envio->usuario_id, $this->notificacion->titulo(), $this->notificacion->mensaje());
+            } catch (Throwable $e) {
+                Log::warning('Tiempo real: no se pudo anunciar la notificación', ['error' => $e->getMessage()]);
+            }
+        }
     }
 
     public function failed(Throwable $error): void

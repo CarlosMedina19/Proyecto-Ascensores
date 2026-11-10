@@ -63,11 +63,40 @@ services:
     networks:
       - sigma_interna
 
+  # WebSocket (Laravel Reverb) para Auditoría en vivo y la campana de notificaciones. El panel lo publica
+  # en /app/ (nginx de sigma_frontend); Laravel le envía los eventos por la red interna.
+  sigma_reverb:
+    <<: *backend
+    container_name: sigma_reverb
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: sigma_db
+      DB_PORT: 5432
+      SIGMA_ROL: tiempo_real
+    command: ["su", "-s", "/bin/sh", "www-data", "-c", "php artisan reverb:start --host=0.0.0.0 --port=8080"]
+    networks:
+      - sigma_interna
+
+  # Microservicio de analítica en Python (FastAPI + Pandas + scikit-learn). Solo red interna, sin puertos:
+  # Laravel lo llama con la clave ANALITICA_CLAVE.
+  sigma_analitica:
+    build:
+      context: ./analitica
+    image: sigma-analitica:latest
+    container_name: sigma_analitica
+    restart: unless-stopped
+    environment:
+      ANALITICA_CLAVE: ${ANALITICA_CLAVE}
+    mem_limit: 512m
+    networks:
+      - sigma_interna
+
   sigma_frontend:
     build:
       context: ../frontend
       args:
         VITE_API_URL: /api/v1
+        VITE_REVERB_KEY: ${REVERB_APP_KEY:-}
     image: sigma-frontend:latest
     container_name: sigma_frontend
     restart: unless-stopped
@@ -76,6 +105,8 @@ services:
       - ./descargas:/usr/share/nginx/html/descargas:ro
     networks:
       - proxy
+      # Para llegar a sigma_reverb (WebSocket en /app/).
+      - sigma_interna
 
   sigma_db:
     image: postgres:16-alpine
@@ -129,6 +160,6 @@ networks:
   # Red compartida con Caddy (ya existe en la VPS).
   proxy:
     external: true
-  # Red privada de SIGMA: base de datos, cola y programador.
+  # Red privada de SIGMA: base de datos, cola, programador, tiempo real y analítica.
   sigma_interna:
     name: sigma_interna

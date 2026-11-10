@@ -89,11 +89,41 @@ Emergencias, Cotizaciones, Facturas, Pagos y Usuarios) con listas desplegables, 
 - **Indicadores**: disponibilidad, MTBF, tiempo medio de respuesta y cumplimiento del plan.
 - Historial del ascensor con línea de tiempo y documentos; **recorrido guiado** de 5 pasos.
 
+## Analítica en Python
+
+`analitica/` es un microservicio **FastAPI** (Pandas, NumPy y scikit-learn) que calcula la analítica avanzada de
+Indicadores. Laravel sigue siendo el núcleo: autentica, revisa permisos y solo envía los registros que el usuario
+puede ver (un cliente, solo los suyos), sin datos personales. La llamada va por la red interna de Docker con la
+cabecera `X-Api-Key` (`ANALITICA_CLAVE`); el servicio no publica puertos ni toca la base de datos.
+
+| Ruta en Laravel | Ruta en Python | Qué calcula |
+|---|---|---|
+| `GET /api/v1/analitica/resumen` | `POST /api/v1/indicadores/resumen` | Series mensuales (preventivos, correctivos, emergencias, cumplimiento, respuesta) y promedio móvil |
+| `GET /api/v1/analitica/predicciones` | `POST /api/v1/predicciones` | Pronóstico de emergencias (regresión lineal con rango) y riesgo de falla por ascensor (regresión logística o puntaje explicable) |
+
+```sh
+cd analitica && pip install -r requirements-pruebas.txt && python -m pytest -q pruebas   # pruebas del servicio
+```
+
+## Tiempo real y ubicación de técnicos
+
+- **WebSocket con Laravel Reverb** (contenedor `sigma_reverb`), solo para **Auditoría** (canal privado
+  `auditoria`, permiso `registros_auditoria.ver`) y la **campana de notificaciones** (canal `usuarios.{id}`).
+  Los canales se autorizan en `/api/broadcasting/auth` con el mismo token de la API. Sin `VITE_REVERB_KEY`
+  el panel funciona igual, con consultas periódicas.
+- Mientras una orden está **en proceso**, la app (y el navegador del técnico) envía su posición cada 30 s a
+  `POST /api/v1/ordenes/{id}/ubicacion`. Auditoría muestra el mapa (OpenStreetMap) con
+  `GET /api/v1/auditoria/en-vivo`, los movimientos de las últimas 24 horas y el historial con filtros.
+- **Credenciales por rol**: solo el administrador ve en *Roles y permisos* el correo y la contraseña de la
+  cuenta principal de cada rol. La contraseña se guarda además cifrada con `APP_KEY` (el inicio de sesión
+  sigue usando el hash), se pide al tocar el ojo y cada consulta queda en auditoría.
+
 ## Producción (VPS)
 
 `docker-compose.prod.yml` levanta `sigma_backend` (Apache + PHP), `sigma_queue`, `sigma_scheduler`,
-`sigma_frontend` (nginx con el panel compilado) y `sigma_db` (PostgreSQL privada, sin puertos
-publicados). Caddy, en la red externa `proxy`, envía `/api/*` y `/up` al backend y el resto al panel.
+`sigma_reverb` (WebSocket), `sigma_analitica` (Python), `sigma_frontend` (nginx con el panel compilado; también
+publica el WebSocket en `/app/`) y `sigma_db` (PostgreSQL privada, sin puertos publicados). Caddy, en la red
+externa `proxy`, envía `/api/*` y `/up` al backend y el resto al panel.
 
 ```sh
 cd /opt/apps/sigma/backend
@@ -145,9 +175,10 @@ docker exec ascensores_app php artisan scramble:export --path=openapi.json   # r
 ## Pruebas
 
 ```sh
-docker exec ascensores_app php artisan test     # backend: 113 pruebas (base ascensores_test)
-cd frontend && npm test                          # 39 pruebas
-cd app/flutter_application_1 && flutter test     # 28 pruebas
+docker exec ascensores_app php artisan test     # backend: 153 pruebas (base ascensores_test)
+cd frontend && npm test                          # 48 pruebas
+cd app/flutter_application_1 && flutter test     # 30 pruebas
+cd backend/analitica && python -m pytest pruebas # 4 pruebas del microservicio de analítica
 ```
 
 ## Detalles del backend

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Notifications\RestablecerContrasenaNotification;
 use App\Notifications\VerificarCorreoNotification;
 use Illuminate\Contracts\Auth\CanResetPassword;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -33,7 +36,34 @@ class Usuario extends Authenticatable implements CanResetPassword
     protected $hidden = [
         'password',
         'remember_token',
+        'contrasena_cifrada',
     ];
+
+    /**
+     * Cada vez que se asigna una contraseña en texto plano (crear, editar, cambiar o restablecer) se guarda
+     * además una copia cifrada con APP_KEY para la consulta del administrador en «Roles y permisos».
+     */
+    public function setAttribute($key, $value)
+    {
+        if ($key === 'password' && is_string($value) && $value !== '' && ! Hash::isHashed($value)) {
+            parent::setAttribute('contrasena_cifrada', Crypt::encryptString($value));
+        }
+
+        return parent::setAttribute($key, $value);
+    }
+
+    /** La contraseña vigente, si se guardó su copia cifrada. */
+    public function contrasenaVisible(): ?string
+    {
+        if (blank($this->contrasena_cifrada)) {
+            return null;
+        }
+        try {
+            return Crypt::decryptString($this->contrasena_cifrada);
+        } catch (DecryptException) {
+            return null;
+        }
+    }
 
     protected function casts(): array
     {

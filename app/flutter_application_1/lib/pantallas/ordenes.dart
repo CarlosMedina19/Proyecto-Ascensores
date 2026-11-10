@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../datos/modelos.dart';
 import '../estado/sesion.dart';
+import '../estado/ubicacion.dart';
 import '../tema.dart';
 import '../widgets/comunes.dart';
 import 'equipos.dart';
@@ -196,11 +197,35 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
   OrdenTrabajo? _orden;
   String? _error;
   bool _guardando = false;
+  late final SeguimientoUbicacion _ubicacion;
+  EstadoUbicacion _estadoUbicacion = EstadoUbicacion.inactivo;
 
   @override
   void initState() {
     super.initState();
+    _ubicacion = SeguimientoUbicacion(
+      context.read<Sesion>().repositorio,
+      alCambiar: (estado) {
+        if (mounted && estado != _estadoUbicacion) setState(() => _estadoUbicacion = estado);
+      },
+    );
     _cargar();
+  }
+
+  @override
+  void dispose() {
+    _ubicacion.detener();
+    super.dispose();
+  }
+
+  /// El técnico asignado comparte su ubicación con Auditoría mientras el trabajo está en proceso.
+  void _seguirUbicacion(OrdenTrabajo orden) {
+    if (orden.puedeEjecutar && orden.estado == 'en_proceso') {
+      _ubicacion.iniciar(orden.id);
+    } else {
+      _ubicacion.detener();
+      _estadoUbicacion = EstadoUbicacion.inactivo;
+    }
   }
 
   Future<void> _cargar() async {
@@ -210,6 +235,7 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
         setState(() {
           _orden = orden;
           _error = null;
+          _seguirUbicacion(orden);
         });
       }
     } catch (e) {
@@ -246,7 +272,12 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
         informe: informe,
         observaciones: observaciones,
       );
-      if (mounted) setState(() => _orden = orden);
+      if (mounted) {
+        setState(() {
+          _orden = orden;
+          _seguirUbicacion(orden);
+        });
+      }
       mensajero.showSnackBar(SnackBar(content: Text('Orden ${nombresEstadoOrden[estado]!.toLowerCase()}.')));
     } catch (e) {
       mensajero.showSnackBar(SnackBar(content: Text(mensajeError(e))));
@@ -325,6 +356,10 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
                 Insignia(texto: orden.nombreEstado, color: colorEstadoOrden(orden.estado)),
               ],
             ),
+            if (_estadoUbicacion != EstadoUbicacion.inactivo) ...[
+              const SizedBox(height: 10),
+              _AvisoUbicacion(estado: _estadoUbicacion),
+            ],
             if (orden.estado != 'cancelada') ...[
               const SizedBox(height: 16),
               AvanceEtapas(
@@ -449,6 +484,29 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
 }
 
 /// Motivo para dejar pendiente, o informe para finalizar (RF-026).
+class _AvisoUbicacion extends StatelessWidget {
+  const _AvisoUbicacion({required this.estado});
+
+  final EstadoUbicacion estado;
+
+  @override
+  Widget build(BuildContext context) {
+    final (icono, texto, color) = switch (estado) {
+      EstadoUbicacion.compartiendo => (Icons.my_location, 'Compartiendo su ubicación con el administrador mientras el trabajo está en proceso.', SigmaColores.primario),
+      EstadoUbicacion.sinPermiso => (Icons.location_disabled, 'Sin permiso de ubicación: el administrador no verá su posición en el mapa.', SigmaColores.regular),
+      EstadoUbicacion.gpsApagado => (Icons.location_off, 'Active la ubicación del teléfono para que el administrador vea su posición.', SigmaColores.regular),
+      _ => (Icons.location_searching, 'No se pudo enviar la ubicación. Se reintentará en unos segundos.', SigmaColores.regular),
+    };
+    return Row(
+      children: [
+        Icon(icono, size: 18, color: color),
+        const SizedBox(width: 8),
+        Expanded(child: Text(texto, style: Theme.of(context).textTheme.bodySmall)),
+      ],
+    );
+  }
+}
+
 class _FormularioEstado extends StatefulWidget {
   const _FormularioEstado({required this.estado});
 

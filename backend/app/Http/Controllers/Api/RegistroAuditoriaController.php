@@ -25,9 +25,18 @@ class RegistroAuditoriaController extends Controller
             'usuario_id' => ['nullable', 'integer'],
             'fecha_desde' => ['nullable', 'date'],
             'fecha_hasta' => ['nullable', 'date', 'after_or_equal:fecha_desde'],
+            'recientes_horas' => ['nullable', 'integer', 'min:1', 'max:720'],
+            'busqueda' => ['nullable', 'string', 'max:100'],
         ]);
+        $busqueda = trim((string) $solicitud->input('busqueda'));
 
         $consulta = RegistroAuditoria::with('usuario')
+            // Vista por defecto: solo los movimientos recientes; el resto se consulta con filtros.
+            ->when($solicitud->filled('recientes_horas'), fn ($c) => $c->where('created_at', '>=', now()->subHours((int) $solicitud->input('recientes_horas'))))
+            ->when($busqueda !== '', fn ($c) => $c->where(fn ($q) => $q
+                ->where('ip', 'ilike', "%{$busqueda}%")
+                ->orWhere('accion', 'ilike', "%{$busqueda}%")
+                ->orWhereHas('usuario', fn ($u) => $u->where('nombre', 'ilike', "%{$busqueda}%")->orWhere('correo', 'ilike', "%{$busqueda}%"))))
             ->when($solicitud->filled('accion'), fn ($c) => $c->where('accion', $solicitud->input('accion')))
             ->when($solicitud->filled('modulo'), fn ($c) => $c->where('modulo', $solicitud->input('modulo')))
             ->when($solicitud->filled('usuario_id'), fn ($c) => $c->where('usuario_id', $solicitud->input('usuario_id')))

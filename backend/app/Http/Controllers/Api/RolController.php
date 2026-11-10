@@ -9,8 +9,10 @@ use App\Http\Requests\Rol\SincronizarPermisosRolRequest;
 use App\Http\Resources\RolResource;
 use App\Models\Permiso;
 use App\Models\Rol;
+use App\Models\Usuario;
 use App\Services\RegistroAuditoriaService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 
@@ -73,5 +75,45 @@ class RolController extends Controller
         });
 
         return new RolResource($rol->fresh()->load('permisos')->loadCount('usuarios'));
+    }
+
+    /** Solo el administrador: el correo de la cuenta principal de cada rol (la activa más antigua). */
+    public function credenciales(Request $solicitud): JsonResponse
+    {
+        $this->exigirAdministrador($solicitud);
+
+        $datos = Rol::orderBy('id')->get()->map(fn (Rol $rol) => [
+            'rol_id' => $rol->id,
+            'correo' => $this->cuentaPrincipal($rol)?->correo,
+            'tiene_contrasena' => filled($this->cuentaPrincipal($rol)?->contrasena_cifrada),
+        ]);
+
+        return response()->json(['datos' => $datos]);
+    }
+
+    /** Solo el administrador: revela la contraseña de la cuenta principal del rol. Queda en auditoría. */
+    public function credencial(Request $solicitud, Rol $rol): JsonResponse
+    {
+        $this->exigirAdministrador($solicitud);
+        $usuario = $this->cuentaPrincipal($rol);
+        if ($usuario) {
+            RegistroAuditoriaService::registrar('credencial_consultada', $usuario, ['rol' => $rol->nombre, 'correo' => $usuario->correo], modulo: 'roles');
+        }
+
+        return response()->json(['datos' => [
+            'rol_id' => $rol->id,
+            'correo' => $usuario?->correo,
+            'contrasena' => $usuario?->contrasenaVisible(),
+        ]]);
+    }
+
+    private function exigirAdministrador(Request $solicitud): void
+    {
+        abort_unless($solicitud->user()?->tieneRol('administrador'), 403, 'Solo el administrador consulta las credenciales.');
+    }
+
+    private function cuentaPrincipal(Rol $rol): ?Usuario
+    {
+        return $rol->usuarios()->where('activo', true)->orderBy('id')->first();
     }
 }

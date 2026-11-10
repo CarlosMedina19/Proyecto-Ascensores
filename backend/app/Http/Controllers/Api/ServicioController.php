@@ -16,6 +16,7 @@ use App\Models\InformeOrden;
 use App\Models\OrdenTrabajo;
 use App\Models\TipoAscensor;
 use App\Models\Usuario;
+use App\Services\AnaliticaService;
 use App\Services\CalendarioHabilService;
 use App\Services\CarteraService;
 use App\Services\CertificacionService;
@@ -477,6 +478,18 @@ class ServicioController extends Controller
     public function indicadores(Request $solicitud): JsonResponse
     {
         return response()->json(['datos' => $this->indicadores->calcular($this->filtrosIndicadores($solicitud))]);
+    }
+
+    /** Analítica avanzada (microservicio en Python): series mensuales y totales. */
+    public function analiticaResumen(Request $solicitud, AnaliticaService $analitica): JsonResponse
+    {
+        return response()->json(['datos' => $analitica->resumen($this->filtrosIndicadores($solicitud))]);
+    }
+
+    /** Analítica predictiva: pronóstico de emergencias y riesgo de falla por ascensor. */
+    public function analiticaPredicciones(Request $solicitud, AnaliticaService $analitica): JsonResponse
+    {
+        return response()->json(['datos' => $analitica->predicciones($this->filtrosIndicadores($solicitud))]);
     }
 
     /** Indicadores en PDF para el comité o la administración del edificio. */

@@ -1,6 +1,6 @@
 # RNF-12 · Integración continua de SIGMA.
 # En cada push y pull request corre las pruebas del servidor (Laravel + PostgreSQL), del panel (React)
-# y de la app (Flutter). Solo verifica: no despliega ni toca el servidor.
+# y de la app (Flutter), además del microservicio de analítica (Python). Solo verifica: no despliega ni toca el servidor.
 name: Pruebas
 
 on:
@@ -53,6 +53,22 @@ jobs:
         run: php artisan test
       - name: Vulnerabilidades conocidas
         run: composer audit
+
+  analitica:
+    name: Analítica (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/analitica
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Dependencias
+        run: pip install -r requirements.txt -r requirements-pruebas.txt
+      - name: Pruebas
+        run: python -m pytest -q pruebas
 
   panel:
     name: Panel (React)

@@ -23,6 +23,9 @@ export const roles = {
   actualizar: (id, datos) => api.actualizar(`/roles/${id}`, datos),
   sincronizarPermisos: (id, permisos) => api.reemplazar(`/roles/${id}/permisos`, { permisos }),
   permisos: () => api.obtener('/permisos'),
+  // Solo el administrador: correo de la cuenta principal de cada rol y, al pedirla, su contraseña.
+  credenciales: () => api.obtener('/roles/credenciales'),
+  credencial: (id) => api.obtener(`/roles/${id}/credencial`),
 };
 
 // RF-003 Usuarios
@@ -39,6 +42,8 @@ export const usuarios = {
 export const auditoria = {
   listar: (filtros) => api.obtener('/registros-auditoria', filtros),
   modulos: () => api.obtener('/registros-auditoria/modulos'),
+  // Mantenimientos en proceso y la última ubicación de cada técnico (mapa).
+  enVivo: () => api.obtener('/auditoria/en-vivo'),
 };
 
 // RF-005 Clientes
@@ -205,6 +210,7 @@ export const ordenes = {
   reprogramar: (id, datos) => api.actualizar(`/ordenes/${id}/reprogramar`, datos),
   cambiarPrioridad: (id, datos) => api.actualizar(`/ordenes/${id}/prioridad`, datos),
   cambiarEstado: (id, datos) => api.actualizar(`/ordenes/${id}/estado`, datos),
+  enviarUbicacion: (id, datos) => api.crear(`/ordenes/${id}/ubicacion`, datos),
   cancelar: (id, motivo) => api.actualizar(`/ordenes/${id}/cancelar`, { motivo }),
 };
 
@@ -303,6 +309,9 @@ export const servicio = {
   ordenDesdeCotizacion: (id, datos = {}) => api.crear(`/cotizaciones/${id}/orden`, datos),
   facturarCotizacion: (id, datos) => api.crear(`/cotizaciones/${id}/factura`, datos),
   indicadores: (filtros) => api.obtener('/indicadores/servicio', filtros),
+  // Analítica avanzada calculada por el microservicio en Python.
+  analiticaResumen: (filtros) => api.obtener('/analitica/resumen', filtros),
+  analiticaPredicciones: (filtros) => api.obtener('/analitica/predicciones', filtros),
   indicadoresPdf: (filtros = {}) => {
     const consulta = new URLSearchParams(Object.entries(filtros).filter(([, v]) => v !== '' && v != null)).toString();
     return descargarArchivo(`/indicadores/servicio/pdf${consulta ? `?${consulta}` : ''}`, 'SIGMA_Indicadores.pdf');

@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Ban, CalendarClock, CheckCircle2, Flag, Navigation, PauseCircle, PlayCircle, Users } from 'lucide-react';
 import { ordenes } from '../../api/servicios';
+import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
+import { TEXTO_UBICACION, useUbicacionTecnico } from '../../hooks/useUbicacionTecnico';
 import { useFormulario } from '../../hooks/useFormulario';
 import { Alerta, Cargando, Datos, EncabezadoPagina, EstadoVacio, Insignia, Modal, Tarjeta } from '../../componentes/Basicos';
 import { CampoArea, CampoSelector, CampoTexto } from '../../componentes/Campos';
@@ -212,6 +214,10 @@ export default function DetalleOrden() {
 
   useEffect(cargar, [cargar]);
 
+  // El técnico asignado comparte su ubicación con Auditoría mientras el trabajo está en proceso.
+  const { esTecnico } = useAutenticacion();
+  const estadoUbicacion = useUbicacionTecnico(orden?.id, Boolean(esTecnico && orden?.permisos?.ejecutar && orden?.estado === 'en_proceso'));
+
   function alGuardar(mensaje) {
     setModal(null);
     notificar(mensaje);
@@ -287,6 +293,11 @@ export default function DetalleOrden() {
           </button>
         ))}
       </EncabezadoPagina>
+      {TEXTO_UBICACION[estadoUbicacion] && (
+        <Alerta tipo={estadoUbicacion === 'compartiendo' || estadoUbicacion === 'buscando' ? 'info' : 'alerta'}>
+          <Navigation size={14} aria-hidden="true" /> {TEXTO_UBICACION[estadoUbicacion]}
+        </Alerta>
+      )}
 
       {orden.estado === 'programada' && <Alerta tipo="alerta">La orden aún no tiene técnicos. Debe tener al menos uno para quedar asignada.</Alerta>}
       {orden.estado === 'cancelada' && <Alerta tipo="info">Orden cancelada. Motivo: {orden.motivo_cancelacion}</Alerta>}

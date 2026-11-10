@@ -85,6 +85,16 @@ class Repositorio {
 
   Future<OrdenTrabajo> orden(int id) async => OrdenTrabajo.desdeJson((await api.obtener('/ordenes/$id'))['datos'] as Map<String, dynamic>);
 
+  /// Posición del técnico durante una orden en proceso (mapa de Auditoría del panel).
+  Future<void> enviarUbicacion(int ordenId, double latitud, double longitud, double? precision) async {
+    await api.crear('/ordenes/$ordenId/ubicacion', {
+      'latitud': latitud,
+      'longitud': longitud,
+      'precision_metros': ?precision,
+      'origen': 'app',
+    });
+  }
+
   /// RF-026 y RF-028: en camino, en proceso, pendiente (con motivo) o finalizada (con informe).
   Future<OrdenTrabajo> cambiarEstadoOrden(int id, String estado, {String? motivo, String? informe, String? observaciones}) async =>
       OrdenTrabajo.desdeJson(

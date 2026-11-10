@@ -4,9 +4,8 @@ use App\Http\Controllers\Api\AsignacionPlanController;
 use App\Http\Controllers\Api\AutenticacionController;
 use App\Http\Controllers\Api\BusquedaController;
 use App\Http\Controllers\Api\CarteraController;
-use App\Http\Controllers\Api\InventarioController;
-use App\Http\Controllers\Api\ClienteController;
 use App\Http\Controllers\Api\CatalogoController;
+use App\Http\Controllers\Api\ClienteController;
 use App\Http\Controllers\Api\ConfiguracionController;
 use App\Http\Controllers\Api\ConjuntoController;
 use App\Http\Controllers\Api\ContratoController;
@@ -15,6 +14,7 @@ use App\Http\Controllers\Api\EquipoController;
 use App\Http\Controllers\Api\EstadoRegistroController;
 use App\Http\Controllers\Api\ExcelController;
 use App\Http\Controllers\Api\FotoEquipoController;
+use App\Http\Controllers\Api\InventarioController;
 use App\Http\Controllers\Api\MantenimientoController;
 use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\OrdenTrabajoController;
@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\ResumenController;
 use App\Http\Controllers\Api\RolController;
 use App\Http\Controllers\Api\ServicioController;
 use App\Http\Controllers\Api\TecnicoController;
+use App\Http\Controllers\Api\UbicacionController;
 use App\Http\Controllers\Api\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
@@ -57,6 +58,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // RF-002: roles y permisos.
     Route::get('/roles', [RolController::class, 'index']);
+    Route::get('/roles/credenciales', [RolController::class, 'credenciales']);
+    Route::get('/roles/{rol}/credencial', [RolController::class, 'credencial'])->middleware('throttle:30,1');
     Route::get('/roles/{rol}', [RolController::class, 'show']);
     Route::post('/roles', [RolController::class, 'store']);
     Route::patch('/roles/{rol}', [RolController::class, 'update']);
@@ -76,6 +79,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // RF-004: auditoría.
     Route::get('/registros-auditoria', [RegistroAuditoriaController::class, 'index']);
     Route::get('/registros-auditoria/modulos', [RegistroAuditoriaController::class, 'modulos']);
+    Route::get('/auditoria/en-vivo', [UbicacionController::class, 'enVivo']);
+    Route::post('/ordenes/{orden}/ubicacion', [UbicacionController::class, 'registrar'])->middleware('throttle:120,1');
 
     // RF-005 y RF-006: clientes, contactos y edificios.
     Route::get('/clientes/{cliente}/estructura', [ClienteController::class, 'estructura']);
@@ -192,6 +197,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/cotizaciones/{cotizacion}/factura', [ServicioController::class, 'facturarCotizacion']);
     Route::get('/indicadores/servicio', [ServicioController::class, 'indicadores']);
     Route::get('/indicadores/servicio/pdf', [ServicioController::class, 'indicadoresPdf']);
+    Route::get('/analitica/resumen', [ServicioController::class, 'analiticaResumen'])->middleware('throttle:30,1');
+    Route::get('/analitica/predicciones', [ServicioController::class, 'analiticaPredicciones'])->middleware('throttle:30,1');
 
     // RF-040 a RF-043: inventario de repuestos y repuestos usados en las órdenes.
     Route::patch('/repuestos/{repuesto}/alternar-estado', [InventarioController::class, 'alternarEstado']);
