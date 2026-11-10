@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     && docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype \
-    && docker-php-ext-install pdo pdo_pgsql zip gd \
+    && docker-php-ext-install pdo pdo_pgsql zip gd pcntl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # OPcache también para el servidor de "php artisan serve": sin él, cada solicitud vuelve a
