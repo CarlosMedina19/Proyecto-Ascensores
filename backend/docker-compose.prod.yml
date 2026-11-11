@@ -81,7 +81,7 @@ services:
   # Laravel lo llama con la clave ANALITICA_CLAVE.
   sigma_analitica:
     build:
-      context: ./analitica
+      context: ../analitica
     image: sigma-analitica:latest
     container_name: sigma_analitica
     restart: unless-stopped

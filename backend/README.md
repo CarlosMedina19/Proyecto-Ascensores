@@ -91,7 +91,7 @@ Emergencias, Cotizaciones, Facturas, Pagos y Usuarios) con listas desplegables, 
 
 ## Analítica en Python
 
-`analitica/` es un microservicio **FastAPI** (Pandas, NumPy y scikit-learn) que calcula la analítica avanzada de
+`../analitica/` (en la raíz del repositorio, aparte de este backend) es un microservicio **FastAPI** (Pandas, NumPy y scikit-learn) que calcula la analítica avanzada de
 Indicadores. Laravel sigue siendo el núcleo: autentica, revisa permisos y solo envía los registros que el usuario
 puede ver (un cliente, solo los suyos), sin datos personales. La llamada va por la red interna de Docker con la
 cabecera `X-Api-Key` (`ANALITICA_CLAVE`); el servicio no publica puertos ni toca la base de datos.
@@ -102,7 +102,7 @@ cabecera `X-Api-Key` (`ANALITICA_CLAVE`); el servicio no publica puertos ni toca
 | `GET /api/v1/analitica/predicciones` | `POST /api/v1/predicciones` | Pronóstico de emergencias (regresión lineal con rango) y riesgo de falla por ascensor (regresión logística o puntaje explicable) |
 
 ```sh
-cd analitica && pip install -r requirements-pruebas.txt && python -m pytest -q pruebas   # pruebas del servicio
+cd ../analitica && pip install -r requirements-pruebas.txt && python -m pytest -q pruebas   # pruebas del servicio
 ```
 
 ## Tiempo real y ubicación de técnicos
@@ -178,7 +178,7 @@ docker exec ascensores_app php artisan scramble:export --path=openapi.json   # r
 docker exec ascensores_app php artisan test     # backend: 153 pruebas (base ascensores_test)
 cd frontend && npm test                          # 48 pruebas
 cd app/flutter_application_1 && flutter test     # 30 pruebas
-cd backend/analitica && python -m pytest pruebas # 4 pruebas del microservicio de analítica
+cd analitica && python -m pytest pruebas         # 4 pruebas del microservicio de analítica
 ```
 
 ## Detalles del backend

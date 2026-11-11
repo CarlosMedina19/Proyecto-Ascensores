@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Integración con el microservicio de analítica en Python (backend/analitica).
+ * Integración con el microservicio de analítica en Python (carpeta analitica/ en la raíz del repositorio).
  *
  * Laravel sigue siendo el núcleo: el controlador ya validó identidad y permisos; aquí se reúnen solo
  * los registros que el usuario puede ver (su cliente o su ascensor), se envían por la red interna de
