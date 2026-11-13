@@ -327,10 +327,12 @@ export default function Landing() {
               const Icono = ICONOS[f.icono] ?? Check;
               return (
                 <article key={f.titulo} className="landing-tarjeta landing-funcion aparece">
-                  <span className="landing-funcion__icono">
-                    <Icono size={22} aria-hidden="true" />
-                  </span>
-                  <h3>{f.titulo}</h3>
+                  <div className="landing-tarjeta__cabecera">
+                    <span className="landing-funcion__icono">
+                      <Icono size={22} aria-hidden="true" />
+                    </span>
+                    <h3>{f.titulo}</h3>
+                  </div>
                   <p>{f.texto}</p>
                 </article>
               );

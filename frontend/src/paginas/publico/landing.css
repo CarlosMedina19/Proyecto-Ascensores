@@ -503,11 +503,11 @@ html:has(.landing) {
 }
 
 .landing-funcion__icono {
+  flex: none;
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
-  margin-bottom: 16px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   background: var(--color-primario-suave);
   color: var(--color-primario);
@@ -784,8 +784,9 @@ html:has(.landing) {
 
 .landing-pie__rejilla {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr) auto;
-  gap: 40px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  column-gap: 72px;
+  row-gap: 28px;
   align-items: start;
 }
 
