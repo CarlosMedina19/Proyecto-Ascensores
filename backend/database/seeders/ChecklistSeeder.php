@@ -75,11 +75,12 @@ class ChecklistSeeder extends Seeder
         ],
     ];
 
+    /** Se ejecuta en cada despliegue: crea los ítems que falten sin cambiar los existentes. */
     public function run(): void
     {
         foreach (self::ITEMS as $seccion => $items) {
             foreach ($items as $indice => [$codigo, $nombre, $critico]) {
-                ChecklistItem::updateOrCreate(
+                ChecklistItem::firstOrCreate(
                     ['codigo' => $codigo],
                     ['seccion' => $seccion, 'nombre' => $nombre, 'orden' => $indice + 1, 'critico' => $critico, 'activo' => true]
                 );

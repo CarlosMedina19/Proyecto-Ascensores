@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
             PeriodicidadSeeder::class,
             ConfiguracionSeeder::class,
             EspecialidadSeeder::class,
+            // Ítems de la planilla de mantenimiento: sin ellos la planilla de la orden queda vacía.
+            ChecklistSeeder::class,
             AdministradorSeeder::class,
         ]);
     }

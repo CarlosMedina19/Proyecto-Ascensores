@@ -36,6 +36,8 @@ class EquipoResource extends RecursoApi
                 'observacion' => $p->observacion,
             ])->values()),
             'ultima_revision' => $this->when(array_key_exists('ultima_revision', $this->resource->getAttributes()), fn () => $this->resource->getAttributes()['ultima_revision']),
+            // Solo en el detalle: si el usuario puede registrar una visita ahora (permitida y motivo).
+            'visita' => $this->when(array_key_exists('visita', $this->resource->getAttributes()), fn () => $this->resource->getAttributes()['visita']),
             // Fase 2: plan vigente y próximo mantenimiento del ascensor.
             'asignacion_activa' => new AsignacionPlanResource($this->whenLoaded('asignacionActiva')),
             'proximo_mantenimiento' => $this->whenLoaded('asignacionActiva', fn () => $this->asignacionActiva?->proximo_mantenimiento?->format('Y-m-d')),

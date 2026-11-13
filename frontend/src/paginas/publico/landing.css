@@ -12,10 +12,31 @@ html:has(.landing) {
 }
 
 .landing {
+  --landing-fondo-alterno: #e9e6f1;
+  --landing-borde-tarjeta: #d3cce4;
+  --landing-sombra-tarjeta: 0 1px 2px rgb(32 20 70 / 0.06), 0 12px 28px -16px rgb(70 40 160 / 0.32);
+  --landing-sombra-tarjeta-hover: 0 2px 4px rgb(32 20 70 / 0.08), 0 18px 36px -16px rgb(70 40 160 / 0.4);
   min-height: 100vh;
   background: var(--color-pagina, var(--color-fondo));
   color: var(--color-texto);
   overflow-x: clip;
+}
+
+/* Tema oscuro: el contraste ya lo da la superficie; sin sombras. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) .landing {
+    --landing-fondo-alterno: var(--color-superficie-suave);
+    --landing-borde-tarjeta: var(--color-borde);
+    --landing-sombra-tarjeta: none;
+    --landing-sombra-tarjeta-hover: none;
+  }
+}
+
+:root[data-tema='oscuro'] .landing {
+  --landing-fondo-alterno: var(--color-superficie-suave);
+  --landing-borde-tarjeta: var(--color-borde);
+  --landing-sombra-tarjeta: none;
+  --landing-sombra-tarjeta-hover: none;
 }
 
 .landing section[id] {
@@ -122,7 +143,7 @@ html:has(.landing) {
     padding: 0 12px;
   }
 
-  .landing-marca span {
+  .landing-nav .landing-marca span {
     display: none;
   }
 }
@@ -234,7 +255,7 @@ html:has(.landing) {
 /* ---------- Hero ---------- */
 .landing-hero {
   position: relative;
-  padding: 56px 0 88px;
+  padding: 40px 0 56px;
 }
 
 .landing-hero::before {
@@ -364,16 +385,16 @@ html:has(.landing) {
 
 /* ---------- Secciones ---------- */
 .landing-seccion {
-  padding: 88px 0;
+  padding: 56px 0;
 }
 
 .landing-seccion--alterna {
-  background: var(--color-superficie-suave);
+  background: var(--landing-fondo-alterno);
 }
 
 .landing-seccion__cabecera {
   max-width: 720px;
-  margin: 0 auto 40px;
+  margin: 0 auto 28px;
   text-align: center;
 }
 
@@ -384,7 +405,7 @@ html:has(.landing) {
 }
 
 .landing-seccion__cabecera p:not(.landing-etiqueta) {
-  margin: 14px 0 0;
+  margin: 10px 0 0;
   font-size: 17px;
   line-height: 1.6;
   color: var(--color-texto-suave);
@@ -416,7 +437,7 @@ html:has(.landing) {
 
 @media (max-width: 640px) {
   .landing-seccion {
-    padding: 64px 0;
+    padding: 40px 0;
   }
 
   .landing-rejilla--2,
@@ -427,10 +448,28 @@ html:has(.landing) {
 }
 
 .landing-tarjeta {
-  padding: 24px;
-  border: 1px solid var(--color-borde);
+  padding: 22px;
+  border: 1px solid var(--landing-borde-tarjeta);
   border-radius: 16px;
   background: var(--color-superficie);
+  box-shadow: var(--landing-sombra-tarjeta);
+  transition: box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.landing-tarjeta:hover {
+  box-shadow: var(--landing-sombra-tarjeta-hover);
+}
+
+/* Número y título en la misma fila (Cómo funciona y Beneficios). */
+.landing-tarjeta__cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.landing-tarjeta__cabecera h3 {
+  margin: 0;
 }
 
 .landing-tarjeta h3 {
@@ -601,9 +640,14 @@ html:has(.landing) {
 
 /* ---------- Beneficios, planes y preguntas ---------- */
 .landing-beneficio__numero {
-  display: block;
-  margin-bottom: 14px;
-  font: 500 13px var(--fuente-mono);
+  flex: none;
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--color-primario-suave);
+  font: 600 13px var(--fuente-mono);
   color: var(--color-primario);
 }
 
@@ -689,75 +733,44 @@ html:has(.landing) {
 /* ---------- Contacto ---------- */
 .landing-contacto {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
-  max-width: 980px;
+  max-width: 820px;
   margin-inline: auto;
-}
-
-.landing-formulario {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.landing-formulario label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.landing-formulario input,
-.landing-formulario textarea {
-  font: inherit;
-  font-weight: 400;
-  padding: 11px 12px;
-  border: 1px solid var(--color-borde-fuerte);
-  border-radius: 10px;
-  background: var(--color-superficie);
-  color: var(--color-texto);
-}
-
-.landing-formulario input:focus,
-.landing-formulario textarea:focus {
-  outline: none;
-  border-color: var(--color-primario);
-  box-shadow: var(--anillo);
-}
-
-.landing-contacto__canales {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
 }
 
 .landing-canal {
   display: flex;
-  gap: 14px;
-  align-items: flex-start;
+  gap: 16px;
+  align-items: center;
   color: var(--color-texto-suave);
   text-decoration: none;
-  transition: border-color 160ms ease;
+  overflow-wrap: anywhere;
 }
 
 .landing-canal:hover {
   border-color: var(--color-primario);
 }
 
-.landing-canal svg {
+.landing-canal__icono {
   flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--color-primario-suave);
   color: var(--color-primario);
 }
 
 .landing-canal b {
   display: block;
   margin-bottom: 2px;
+  font-size: 17px;
   color: var(--color-texto);
 }
 
-@media (max-width: 760px) {
+@media (max-width: 640px) {
   .landing-contacto {
     grid-template-columns: 1fr;
   }
@@ -765,14 +778,15 @@ html:has(.landing) {
 
 /* ---------- Pie ---------- */
 .landing-pie {
-  padding: 48px 0 24px;
-  border-top: 1px solid var(--color-borde);
+  padding: 40px 0 20px;
+  border-top: 1px solid var(--landing-borde-tarjeta);
 }
 
 .landing-pie__rejilla {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr) auto;
+  gap: 40px;
+  align-items: start;
 }
 
 .landing-pie p {
@@ -781,30 +795,81 @@ html:has(.landing) {
   color: var(--color-texto-suave);
 }
 
-.landing-pie nav {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.landing-pie__nombre {
+  font-weight: 600;
+  color: var(--color-texto) !important;
 }
 
-.landing-pie nav a {
+.landing-pie__resumen {
+  max-width: 440px;
+  line-height: 1.6;
+}
+
+.landing-pie__enlaces {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  column-gap: 48px;
+  row-gap: 10px;
+  padding-top: 6px;
+}
+
+.landing-pie__enlaces a {
   font-size: 14px;
   color: var(--color-texto-suave);
   text-decoration: none;
 }
 
-.landing-pie nav a:hover {
+.landing-pie__enlaces a:hover {
   color: var(--color-primario);
 }
 
+.landing-pie__titulo {
+  margin: 6px 0 12px !important;
+  font-weight: 600;
+  color: var(--color-texto) !important;
+}
+
+.landing-pie__redes nav {
+  display: flex;
+  gap: 10px;
+}
+
+.landing-pie__redes a {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--landing-borde-tarjeta);
+  background: var(--color-superficie);
+  color: var(--color-texto-suave);
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.landing-pie__redes a:hover {
+  color: var(--color-primario);
+  border-color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
 .landing-pie__derechos {
-  margin-top: 32px !important;
-  padding-top: 18px;
-  border-top: 1px solid var(--color-borde);
+  margin: 28px auto 0 !important;
+  padding-top: 16px;
+  border-top: 1px solid var(--landing-borde-tarjeta);
   font-size: 13px !important;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 860px) {
+  .landing-pie__rejilla {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .landing-pie__rejilla > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
   .landing-pie__rejilla {
     grid-template-columns: 1fr;
   }
@@ -909,11 +974,11 @@ html:has(.landing) {
 }
 
 .landing-paso__numero {
+  flex: none;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  margin-bottom: 16px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: var(--color-primario);
   color: var(--color-sobre-primario);
@@ -1005,7 +1070,7 @@ html:has(.landing) {
 
 /* ---------- Banda final ---------- */
 .landing-cta {
-  padding: 24px 0 72px;
+  padding: 8px 0 48px;
 }
 
 .landing-cta__caja {

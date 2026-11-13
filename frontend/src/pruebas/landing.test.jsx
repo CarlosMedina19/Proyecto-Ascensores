@@ -43,6 +43,12 @@ describe('página de inicio pública', () => {
       expect(screen.getAllByText(seccion).length).toBeGreaterThan(0);
     }
     expect(document.title).toMatch(/SIGMA/);
+    // Contacto solo por WhatsApp y correo (sin formulario); redes sociales como íconos con nombre accesible.
+    expect(document.querySelector('form')).toBeNull();
+    expect(screen.getByRole('link', { name: /WhatsApp/ })).toHaveAttribute('href', expect.stringContaining('wa.me'));
+    for (const red of ['Instagram', 'Facebook', 'LinkedIn']) {
+      expect(screen.getByRole('link', { name: red })).toBeInTheDocument();
+    }
   });
 
   it('con sesión activa el botón lleva al panel', async () => {

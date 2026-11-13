@@ -11,6 +11,7 @@ use App\Http\Resources\HistorialEquipoResource;
 use App\Models\Equipo;
 use App\Services\EquipoService;
 use App\Services\PlanillaService;
+use App\Services\VisitaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -40,13 +41,17 @@ class EquipoController extends Controller
             ->setStatusCode(201);
     }
 
-    public function show(Equipo $equipo): EquipoResource
+    public function show(Request $solicitud, Equipo $equipo): EquipoResource
     {
         $this->authorize('view', $equipo);
 
         $equipo->load(['edificio.cliente', 'ascensor', 'asignacionActiva.plan', 'asignacionActiva.periodicidad', 'asignacionActiva.contrato', 'fotos', 'puertasPiso', 'tecnico.usuario']);
         // Fase 4: estado de cada sección según la última planilla completa (esquema del ascensor).
         $equipo->setAttribute('ultima_revision', app(PlanillaService::class)->ultimaRevision($equipo->id));
+        // Si el usuario puede registrar visitas, se le dice si ahora puede hacerlo y por qué.
+        if ($solicitud->user()->tienePermiso('equipos.historial.crear')) {
+            $equipo->setAttribute('visita', app(VisitaService::class)->habilitacion($equipo, $solicitud->user()));
+        }
 
         return new EquipoResource($equipo);
     }
@@ -85,6 +90,10 @@ class EquipoController extends Controller
     public function agregarHistorial(RegistrarHistorialEquipoRequest $solicitud, Equipo $equipo): JsonResponse
     {
         $this->authorize('agregarHistorial', $equipo);
+        // La visita de mantenimiento del técnico exige mantenimiento activo, emergencia o fecha cercana.
+        if ($solicitud->validated('evento') === 'mantenimiento') {
+            app(VisitaService::class)->exigir($equipo, $solicitud->user());
+        }
         $historial = $this->servicioEquipo->agregarHistorial($equipo, $solicitud->validated());
 
         return (new HistorialEquipoResource($historial))

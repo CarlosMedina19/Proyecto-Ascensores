@@ -310,7 +310,9 @@ class _PantallaDetalleEquipoState extends State<PantallaDetalleEquipo> {
             ),
         ],
       ),
-      floatingActionButton: puedeRegistrar
+      floatingActionButton: !puedeRegistrar
+          ? null
+          : equipo.visitaPermitida
           ? FloatingActionButton.extended(
               onPressed: () async {
                 await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PantallaVisita(equipo: equipo)));
@@ -319,7 +321,22 @@ class _PantallaDetalleEquipoState extends State<PantallaDetalleEquipo> {
               icon: const Icon(Icons.assignment_add),
               label: const Text('Registrar visita'),
             )
-          : null,
+          : FloatingActionButton.extended(
+              key: const Key('visita-no-disponible'),
+              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+              foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (contexto) => AlertDialog(
+                  icon: const Icon(Icons.event_busy),
+                  title: const Text('Visita no disponible'),
+                  content: Text(equipo.motivoVisita ?? 'Por ahora no puede registrar una visita a este ascensor.'),
+                  actions: [FilledButton(onPressed: () => Navigator.pop(contexto), child: const Text('Entendido'))],
+                ),
+              ),
+              icon: const Icon(Icons.lock_clock),
+              label: const Text('Visita no disponible'),
+            ),
       body: RefreshIndicator(
         onRefresh: _cargar,
         child: ListView(

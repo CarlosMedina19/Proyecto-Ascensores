@@ -7,6 +7,12 @@ export const SEO = {
     'SIGMA organiza clientes, edificios y ascensores, programa los mantenimientos, guarda la documentación y da trazabilidad completa con códigos QR y una app para técnicos.',
 };
 
+/** Texto corto del pie de página: qué hace SIGMA. */
+export const PIE = {
+  resumen:
+    'Programamos los mantenimientos, asignamos los técnicos y entregamos informes en PDF. Las empresas de ascensores, administraciones y conjuntos controlan sus equipos desde el panel web y la app móvil.',
+};
+
 export const CONTACTO = {
   correo: 'sigma3172409@gmail.com',
   // Número de WhatsApp con indicativo y sin espacios. Cámbielo por el real.

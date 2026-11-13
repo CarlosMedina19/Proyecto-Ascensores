@@ -44,6 +44,18 @@ void main() {
       expect(emergencia.seguimiento.single.nota, 'Reporte desde la app.');
     });
 
+    test('el detalle del ascensor dice si el técnico puede registrar la visita y por qué', () {
+      final cerrada = Equipo.desdeJson({
+        'id': 7,
+        'codigo': 'ASC-007',
+        'visita': {'permitida': false, 'motivo': 'El próximo es el 19/11/2026.'},
+      });
+      expect(cerrada.visitaPermitida, isFalse);
+      expect(cerrada.motivoVisita, contains('19/11/2026'));
+      // Sin el dato (listados o roles sin restricción) se permite.
+      expect(Equipo.desdeJson({'id': 8, 'codigo': 'ASC-008'}).visitaPermitida, isTrue);
+    });
+
     test('el usuario lee su rol, permisos y cliente', () {
       final usuario = Usuario.desdeJson({
         'id': 7,

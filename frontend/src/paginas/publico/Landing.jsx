@@ -20,7 +20,7 @@ import {
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { useTema } from '../../hooks/useTema';
 import { Logo } from '../../componentes/Marca';
-import { APP_MOVIL, AUDIENCIAS, BENEFICIOS, CONTACTO, CTA, FUNCIONES, HERO, INSIGNIAS_HERO, NAVEGACION, PASOS, PLANES, PREGUNTAS, PROBLEMAS, RECORRIDO, SEO } from './contenidoLanding';
+import { APP_MOVIL, AUDIENCIAS, BENEFICIOS, CONTACTO, CTA, FUNCIONES, HERO, INSIGNIAS_HERO, NAVEGACION, PASOS, PIE, PLANES, PREGUNTAS, PROBLEMAS, RECORRIDO, SEO } from './contenidoLanding';
 import './landing.css';
 
 const ICONOS = { clientes: Users, edificios: Building2, historial: ClipboardCheck, documentos: FileText, qr: QrCode, alertas: Bell };
@@ -208,54 +208,56 @@ function Recorrido() {
 }
 
 function Contacto() {
-  const [datos, setDatos] = useState({ nombre: '', empresa: '', mensaje: '' });
-  const cambiar = (campo) => (e) => setDatos((d) => ({ ...d, [campo]: e.target.value }));
   const whatsapp = `https://wa.me/${CONTACTO.whatsapp}?text=${encodeURIComponent(CONTACTO.mensajeWhatsapp)}`;
-
-  // Sin servidor de por medio: el formulario arma el correo en la aplicación de correo del visitante.
-  function enviar(evento) {
-    evento.preventDefault();
-    const asunto = `Demo de SIGMA · ${datos.empresa || datos.nombre}`;
-    const cuerpo = `Nombre: ${datos.nombre}\nEmpresa: ${datos.empresa}\n\n${datos.mensaje}`;
-    window.location.href = `mailto:${CONTACTO.correo}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
-  }
 
   return (
     <div className="landing-contacto aparece">
-      <form className="landing-tarjeta landing-formulario" onSubmit={enviar}>
-        <label>
-          Nombre
-          <input required value={datos.nombre} onChange={cambiar('nombre')} autoComplete="name" />
-        </label>
-        <label>
-          Empresa o conjunto
-          <input value={datos.empresa} onChange={cambiar('empresa')} autoComplete="organization" />
-        </label>
-        <label>
-          ¿Qué necesita?
-          <textarea rows={4} value={datos.mensaje} onChange={cambiar('mensaje')} placeholder="Número de ascensores, ciudad, cómo gestiona hoy los mantenimientos…" />
-        </label>
-        <button type="submit" className="landing-boton landing-boton--primario">
-          <Mail size={18} aria-hidden="true" /> Solicitar demo
-        </button>
-      </form>
-      <div className="landing-contacto__canales">
-        <a className="landing-tarjeta landing-canal" href={whatsapp} target="_blank" rel="noreferrer">
-          <MessageCircle size={22} aria-hidden="true" />
-          <span>
-            <b>WhatsApp</b>
-            Escríbanos y le respondemos hoy mismo.
-          </span>
-        </a>
-        <a className="landing-tarjeta landing-canal" href={`mailto:${CONTACTO.correo}`}>
-          <Mail size={22} aria-hidden="true" />
-          <span>
-            <b>Correo</b>
-            {CONTACTO.correo}
-          </span>
-        </a>
-      </div>
+      <a className="landing-tarjeta landing-canal" href={whatsapp} target="_blank" rel="noreferrer">
+        <span className="landing-canal__icono">
+          <MessageCircle size={24} aria-hidden="true" />
+        </span>
+        <span>
+          <b>WhatsApp</b>
+          Escríbanos y le respondemos hoy mismo.
+        </span>
+      </a>
+      <a className="landing-tarjeta landing-canal" href={`mailto:${CONTACTO.correo}?subject=${encodeURIComponent('Demostración de SIGMA')}`}>
+        <span className="landing-canal__icono">
+          <Mail size={24} aria-hidden="true" />
+        </span>
+        <span>
+          <b>Correo</b>
+          {CONTACTO.correo}
+        </span>
+      </a>
     </div>
+  );
+}
+
+/** Íconos de las redes sociales (trazos simples, mismo estilo de los demás íconos). */
+const ICONOS_REDES = {
+  Instagram: (
+    <>
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </>
+  ),
+  Facebook: <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />,
+  LinkedIn: (
+    <>
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+      <rect x="2" y="9" width="4" height="12" />
+      <circle cx="4" cy="4" r="2" />
+    </>
+  ),
+};
+
+function IconoRed({ nombre }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {ICONOS_REDES[nombre]}
+    </svg>
   );
 }
 
@@ -305,8 +307,10 @@ export default function Landing() {
           <ol className="landing-pasos">
             {PASOS.map((p, k) => (
               <li key={p.titulo} className="landing-tarjeta landing-paso aparece">
-                <span className="landing-paso__numero">{k + 1}</span>
-                <h3>{p.titulo}</h3>
+                <div className="landing-tarjeta__cabecera">
+                  <span className="landing-paso__numero">{k + 1}</span>
+                  <h3>{p.titulo}</h3>
+                </div>
                 <p>{p.texto}</p>
               </li>
             ))}
@@ -369,8 +373,10 @@ export default function Landing() {
           <div className="landing-rejilla landing-rejilla--4">
             {BENEFICIOS.map((b, k) => (
               <article key={b.titulo} className="landing-tarjeta landing-beneficio aparece">
-                <span className="landing-beneficio__numero">0{k + 1}</span>
-                <h3>{b.titulo}</h3>
+                <div className="landing-tarjeta__cabecera">
+                  <span className="landing-beneficio__numero">0{k + 1}</span>
+                  <h3>{b.titulo}</h3>
+                </div>
                 <p>{b.texto}</p>
               </article>
             ))}
@@ -437,7 +443,7 @@ export default function Landing() {
           </div>
         </section>
 
-        <Seccion id="contacto" etiqueta="Contacto" titulo="Pida una demostración" texto="Le mostramos SIGMA con sus propios datos y le ayudamos a cargar su información.">
+        <Seccion id="contacto" etiqueta="Contacto" titulo="Pida una demostración" texto="Escríbanos por WhatsApp o por correo: le mostramos SIGMA con sus propios datos y le ayudamos a cargar su información.">
           <Contacto />
         </Seccion>
       </main>
@@ -449,9 +455,10 @@ export default function Landing() {
               <Logo tamano={32} />
               <span>SIGMA</span>
             </a>
-            <p>Sistema Integral de Gestión y Mantenimiento de Ascensores.</p>
+            <p className="landing-pie__nombre">Sistema Integral de Gestión y Mantenimiento de Ascensores.</p>
+            <p className="landing-pie__resumen">{PIE.resumen}</p>
           </div>
-          <nav aria-label="Enlaces del pie de página">
+          <nav aria-label="Enlaces del pie de página" className="landing-pie__enlaces">
             {NAVEGACION.map((n) => (
               <a key={n.id} href={`#${n.id}`}>
                 {n.texto}
@@ -459,13 +466,16 @@ export default function Landing() {
             ))}
             <Link to="/iniciar-sesion">Iniciar sesión</Link>
           </nav>
-          <nav aria-label="Redes sociales">
-            {CONTACTO.redes.map((r) => (
-              <a key={r.nombre} href={r.url}>
-                {r.nombre}
-              </a>
-            ))}
-          </nav>
+          <div className="landing-pie__redes">
+            <p className="landing-pie__titulo">Síganos</p>
+            <nav aria-label="Redes sociales">
+              {CONTACTO.redes.map((r) => (
+                <a key={r.nombre} href={r.url} aria-label={r.nombre} title={r.nombre} target="_blank" rel="noreferrer">
+                  <IconoRed nombre={r.nombre} />
+                </a>
+              ))}
+            </nav>
+          </div>
         </div>
         <p className="landing-contenedor landing-pie__derechos">© {new Date().getFullYear()} SIGMA. Todos los derechos reservados.</p>
       </footer>

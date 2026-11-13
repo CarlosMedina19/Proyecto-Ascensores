@@ -191,6 +191,8 @@ class Equipo {
     this.observaciones,
     this.ascensor,
     this.asignacionActiva,
+    this.visitaPermitida = true,
+    this.motivoVisita,
   });
 
   factory Equipo.desdeJson(Map<String, dynamic> json) {
@@ -198,6 +200,7 @@ class Equipo {
     final cliente = edificio?['cliente'] as Map<String, dynamic>?;
     final ascensor = json['ascensor'] as Map<String, dynamic>?;
     final asignacion = json['asignacion_activa'] as Map<String, dynamic>?;
+    final visita = json['visita'] as Map<String, dynamic>?;
     return Equipo(
       id: _entero(json['id'])!,
       codigo: json['codigo'] as String? ?? '',
@@ -213,6 +216,8 @@ class Equipo {
       observaciones: json['observaciones'] as String?,
       ascensor: ascensor == null ? null : Ascensor.desdeJson(ascensor),
       asignacionActiva: asignacion == null ? null : AsignacionPlan.desdeJson(asignacion),
+      visitaPermitida: visita?['permitida'] as bool? ?? true,
+      motivoVisita: visita?['motivo'] as String?,
     );
   }
 
@@ -232,6 +237,10 @@ class Equipo {
 
   /// Fase 2: plan de mantenimiento vigente (solo llega en el detalle del equipo).
   final AsignacionPlan? asignacionActiva;
+
+  /// Solo en el detalle: el técnico registra la visita con mantenimiento activo, emergencia o fecha cercana.
+  final bool visitaPermitida;
+  final String? motivoVisita;
 
   String get marcaModelo => [marca, modelo].whereType<String>().where((t) => t.isNotEmpty).join(' · ');
 }
