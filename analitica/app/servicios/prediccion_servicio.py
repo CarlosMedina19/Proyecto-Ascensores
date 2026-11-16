@@ -7,6 +7,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 
 from ..core.config import configuracion
 from ..esquemas.esquemas import Datos
+from .fechas import hora_local, serie_hora_local
 
 TIPOS_FALLA = {"falla", "atrapamiento"}
 
@@ -14,8 +15,8 @@ TIPOS_FALLA = {"falla", "atrapamiento"}
 def pronosticar_emergencias(datos: Datos, meses_adelante: int = 3) -> tuple[list[dict], str]:
     """Regresión lineal sobre las emergencias por mes; con poca historia, el promedio."""
     meses = pd.period_range(pd.Timestamp(datos.desde).to_period("M"), pd.Timestamp(datos.hasta).to_period("M"), freq="M")
-    fechas = pd.to_datetime(pd.Series([e.reportada_en for e in datos.emergencias], dtype="object"), utc=True)
-    conteo = fechas.dt.tz_localize(None).dt.to_period("M").value_counts().reindex(meses, fill_value=0) if not fechas.empty else pd.Series(0, index=meses)
+    fechas = serie_hora_local(e.reportada_en for e in datos.emergencias)
+    conteo = fechas.dt.to_period("M").value_counts().reindex(meses, fill_value=0) if not fechas.empty else pd.Series(0, index=meses)
 
     y = conteo.to_numpy(dtype=float)
     x = np.arange(len(y)).reshape(-1, 1)
@@ -46,7 +47,7 @@ def _caracteristicas(datos: Datos, corte: pd.Timestamp) -> pd.DataFrame:
     """Por ascensor, lo que se sabía en la fecha de corte: fallas recientes, atraso del mantenimiento y edad."""
     filas = []
     fallas = pd.DataFrame(
-        [{"equipo_id": e.equipo_id, "fecha": pd.Timestamp(e.reportada_en).tz_localize(None) if pd.Timestamp(e.reportada_en).tzinfo is None else pd.Timestamp(e.reportada_en).tz_convert(None)} for e in datos.emergencias if e.tipo in TIPOS_FALLA],
+        [{"equipo_id": e.equipo_id, "fecha": hora_local(e.reportada_en)} for e in datos.emergencias if e.tipo in TIPOS_FALLA],
         columns=["equipo_id", "fecha"],
     )
     visitas = pd.DataFrame([v.model_dump() for v in datos.visitas], columns=["equipo_id", "fecha_programada", "estado", "fecha_ejecucion"])

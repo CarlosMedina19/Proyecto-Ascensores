@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 from ..esquemas.esquemas import Datos
+from .fechas import serie_hora_local
 
 
 def _meses(desde, hasta) -> pd.PeriodIndex:
@@ -29,7 +30,7 @@ def resumen(datos: Datos) -> dict:
     finalizadas = ordenes[ordenes["estado"] == "finalizada"]
     preventivos = _conteo_por_mes(finalizadas.loc[finalizadas["servicio"] == "preventivo", "fecha"], meses)
     correctivos = _conteo_por_mes(finalizadas.loc[finalizadas["servicio"] == "correctivo", "fecha"], meses)
-    por_mes_emergencias = _conteo_por_mes(emergencias["reportada_en"], meses)
+    por_mes_emergencias = _conteo_por_mes(serie_hora_local(emergencias["reportada_en"]), meses)
 
     # Cumplimiento: de las visitas que vencían en el mes (sin canceladas), cuántas se ejecutaron.
     cumplimiento = pd.Series(np.nan, index=meses)
@@ -45,7 +46,7 @@ def resumen(datos: Datos) -> dict:
         con_llegada = emergencias.dropna(subset=["llegada_en"]).copy()
         if not con_llegada.empty:
             con_llegada["minutos"] = (pd.to_datetime(con_llegada["llegada_en"]) - pd.to_datetime(con_llegada["reportada_en"])).dt.total_seconds() / 60
-            con_llegada["mes"] = pd.to_datetime(con_llegada["reportada_en"]).dt.tz_localize(None).dt.to_period("M")
+            con_llegada["mes"] = serie_hora_local(con_llegada["reportada_en"]).dt.to_period("M").to_numpy()
             respuesta = con_llegada.groupby("mes")["minutos"].mean().reindex(meses)
 
     movil = por_mes_emergencias.rolling(window=3, min_periods=1).mean()
