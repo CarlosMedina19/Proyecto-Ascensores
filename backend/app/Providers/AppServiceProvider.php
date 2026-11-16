@@ -124,6 +124,17 @@ class AppServiceProvider extends ServiceProvider
                 fn () => response()->json(['mensaje' => 'Demasiadas solicitudes. Espere un minuto.'], 429)
             );
         });
+
+        // Asistente de la página pública (sin sesión; cada pregunta puede ir a la IA, que tiene costo).
+        // Una conversación real no pasa de unos pocos mensajes por minuto.
+        RateLimiter::for('asistente-publico', function (Request $solicitud) {
+            $respuesta = fn () => response()->json(['mensaje' => 'Ha enviado muchos mensajes seguidos. Intente de nuevo en unos minutos.'], 429);
+
+            return [
+                Limit::perMinute(10)->by('asistente-min|'.$solicitud->ip())->response($respuesta),
+                Limit::perHour(60)->by('asistente-hora|'.$solicitud->ip())->response($respuesta),
+            ];
+        });
     }
 
     /**

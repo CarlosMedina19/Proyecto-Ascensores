@@ -36,6 +36,9 @@ return [
         'url_landing' => env('ASISTENTE_N8N_URL_LANDING'),
         'clave' => env('ASISTENTE_N8N_CLAVE'),
         'tiempo' => (int) env('ASISTENTE_N8N_TIEMPO', 40),
+        // Máximo de preguntas del asistente público que van a la IA (n8n) por día, para acotar el costo.
+        // Al pasarlo responde el motor local, sin costo. 0 = sin tope.
+        'limite_diario_publico' => (int) env('ASISTENTE_LIMITE_DIARIO_PUBLICO', 500),
         'contacto' => [
             'whatsapp' => env('SIGMA_WHATSAPP', '573000000000'),
             'whatsapp_visible' => env('SIGMA_WHATSAPP_VISIBLE', '+57 300 000 0000'),
