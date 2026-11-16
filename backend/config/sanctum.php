@@ -50,7 +50,10 @@ return [
     |
     */
 
-    'expiration' => null,
+    // SIGMA: además del cierre por inactividad (SIGMA_MINUTOS_INACTIVIDAD), todo token vence a las
+    // 12 horas de creado aunque se use sin parar, para que un token robado no sirva indefinidamente.
+    // 0 o vacío = sin vencimiento absoluto.
+    'expiration' => ((int) env('SANCTUM_EXPIRATION', 720)) ?: null,
 
     /*
     |--------------------------------------------------------------------------
