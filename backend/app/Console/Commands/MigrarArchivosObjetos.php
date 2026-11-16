@@ -12,7 +12,7 @@ use Throwable;
  *
  * No es destructivo: no borra los archivos locales ni cambia la base de datos (la clave del objeto es la
  * misma ruta relativa). Es idempotente: si el objeto ya existe con el mismo tamaño, lo omite.
- * Deja un reporte JSON en storage/app/migracion-archivos/.
+ * Deja un reporte JSON en la carpeta migracion-archivos del disco local.
  */
 class MigrarArchivosObjetos extends Command
 {
@@ -81,7 +81,7 @@ class MigrarArchivosObjetos extends Command
         Storage::disk('local')->put($archivo, json_encode($reporte, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
         $this->table(['Copiados', 'Ya estaban', 'Sin archivo local', 'Fallidos'], [[count($reporte['copiados']), count($reporte['omitidos']), count($reporte['faltantes']), count($reporte['fallidos'])]]);
-        $this->line("Reporte: storage/app/{$archivo}");
+        $this->line("Reporte: ".Storage::disk('local')->path($archivo));
 
         return $reporte['fallidos'] === [] ? self::SUCCESS : self::FAILURE;
     }
