@@ -119,15 +119,15 @@ class PruebasFaseCuatroTest extends TestCase
 
         $secciones = collect($respuesta->json('datos'))->groupBy('seccion')->map->count();
         $this->assertSame(
-            ['cuarto_maquinas' => 12, 'cabina' => 11, 'contrapeso' => 5, 'puertas' => 9, 'hueco' => 7, 'foso' => 4],
+            ['cuarto_maquinas' => 11, 'cabina' => 9, 'contrapeso' => 3, 'puertas' => 11, 'hueco' => 7, 'foso' => 4],
             $secciones->all()
         );
-        $this->assertTrue(collect($respuesta->json('datos'))->firstWhere('codigo', 'FO-02')['critico']);
+        $this->assertTrue(collect($respuesta->json('datos'))->firstWhere('codigo', 'EF-02')['critico']);
     }
 
     public function test_la_planilla_solo_se_diligencia_en_un_preventivo_en_proceso_por_su_tecnico(): void
     {
-        $fila = ['resultados' => [['item_id' => $this->item('CM-01')->id, 'resultado' => 'INS', 'estado' => 'B']]];
+        $fila = ['resultados' => [['item_id' => $this->item('MQ-01')->id, 'resultado' => 'INS', 'estado' => 'B']]];
 
         $correctivo = $this->crearOrden('correctivo');
         $this->putJson("/api/v1/ordenes/{$correctivo->id}/planilla", $fila)
@@ -146,13 +146,13 @@ class PruebasFaseCuatroTest extends TestCase
         $this->actingAs($this->tecnico->usuario, 'sanctum')
             ->putJson("/api/v1/ordenes/{$orden->id}/planilla", $fila)
             ->assertOk()
-            ->assertJsonPath('faltantes', 47);
+            ->assertJsonPath('faltantes', 44);
     }
 
     public function test_cada_item_tiene_resultado_y_estado_y_r_o_m_exigen_observacion(): void
     {
         $orden = $this->crearOrden();
-        $item = $this->item('CA-02')->id;
+        $item = $this->item('CB-02')->id;
 
         $this->putJson("/api/v1/ordenes/{$orden->id}/planilla", ['resultados' => [['item_id' => $item, 'resultado' => 'OK', 'estado' => 'X']]])
             ->assertUnprocessable()
@@ -178,10 +178,10 @@ class PruebasFaseCuatroTest extends TestCase
     public function test_un_item_critico_en_malo_avisa_de_inmediato_y_una_sola_vez(): void
     {
         $orden = $this->crearOrden();
-        $parada = ['item_id' => $this->item('FO-02')->id, 'resultado' => 'INS', 'estado' => 'M', 'observacion' => 'No detiene el ascensor'];
+        $parada = ['item_id' => $this->item('EF-02')->id, 'resultado' => 'INS', 'estado' => 'M', 'observacion' => 'No detiene el ascensor'];
 
         $this->putJson("/api/v1/ordenes/{$orden->id}/planilla", ['resultados' => [$parada]])->assertOk();
-        Notification::assertSentTo($this->coordinador, ChecklistNotification::class, fn ($n) => $n->inmediato && str_contains($n->mensaje(), 'Parada de emergencia'));
+        Notification::assertSentTo($this->coordinador, ChecklistNotification::class, fn ($n) => $n->inmediato && str_contains($n->mensaje(), 'stop de emergencia'));
 
         // Un aviso sale por dos canales (aplicación y correo). Guardar de nuevo no lo repite.
         Notification::assertSentToTimes($this->coordinador, ChecklistNotification::class, 2);
@@ -189,7 +189,7 @@ class PruebasFaseCuatroTest extends TestCase
         Notification::assertSentToTimes($this->coordinador, ChecklistNotification::class, 2);
 
         // Un ítem no crítico en M no avisa de inmediato.
-        $this->putJson("/api/v1/ordenes/{$orden->id}/planilla", ['resultados' => [['item_id' => $this->item('CA-03')->id, 'resultado' => 'INS', 'estado' => 'M', 'observacion' => 'Espejo roto']]])->assertOk();
+        $this->putJson("/api/v1/ordenes/{$orden->id}/planilla", ['resultados' => [['item_id' => $this->item('CB-01')->id, 'resultado' => 'INS', 'estado' => 'M', 'observacion' => 'Espejo roto']]])->assertOk();
         Notification::assertSentToTimes($this->coordinador, ChecklistNotification::class, 2);
     }
 
@@ -202,13 +202,13 @@ class PruebasFaseCuatroTest extends TestCase
 
         $this->patchJson("/api/v1/ordenes/{$orden->id}/estado", $finalizar)
             ->assertUnprocessable()
-            ->assertJsonPath('mensaje', 'Para finalizar la orden falta 48 ítems de la planilla y la firma del técnico y la firma de quien recibe.');
+            ->assertJsonPath('mensaje', 'Para finalizar la orden falta 45 ítems de la planilla y la firma del técnico y la firma de quien recibe.');
 
         $this->putJson("/api/v1/ordenes/{$orden->id}/planilla", [
-            'resultados' => [...$this->todosEnBueno(['CA-03' => true]), ['item_id' => $this->item('CA-03')->id, 'resultado' => 'INS', 'estado' => 'M', 'observacion' => 'Espejo roto']],
+            'resultados' => [...$this->todosEnBueno(['CB-01' => true]), ['item_id' => $this->item('CB-01')->id, 'resultado' => 'INS', 'estado' => 'M', 'observacion' => 'Espejo roto']],
         ])->assertOk()->assertJsonPath('faltantes', 0);
         $this->firmar($orden);
-        $this->post("/api/v1/ordenes/{$orden->id}/planilla/fotos", ['foto' => UploadedFile::fake()->createWithContent('cabina.png', base64_decode(self::PNG)), 'item_id' => $this->item('CA-03')->id], ['Accept' => 'application/json'])
+        $this->post("/api/v1/ordenes/{$orden->id}/planilla/fotos", ['foto' => UploadedFile::fake()->createWithContent('cabina.png', base64_decode(self::PNG)), 'item_id' => $this->item('CB-01')->id], ['Accept' => 'application/json'])
             ->assertCreated();
 
         $this->patchJson("/api/v1/ordenes/{$orden->id}/estado", $finalizar)
@@ -285,11 +285,11 @@ class PruebasFaseCuatroTest extends TestCase
     {
         $orden = $this->crearOrden();
         $this->putJson("/api/v1/ordenes/{$orden->id}/planilla", ['resultados' => [
-            ['item_id' => $this->item('FO-04')->id, 'resultado' => 'INS', 'estado' => 'M', 'observacion' => 'Amortiguador con fuga de aceite'],
-            ['item_id' => $this->item('FO-01')->id, 'resultado' => 'INS', 'estado' => 'B'],
+            ['item_id' => $this->item('EF-04')->id, 'resultado' => 'INS', 'estado' => 'M', 'observacion' => 'Amortiguador con fuga de aceite'],
+            ['item_id' => $this->item('EF-01')->id, 'resultado' => 'INS', 'estado' => 'B'],
         ]])->assertOk();
-        $malo = PlanillaResultado::whereHas('item', fn ($i) => $i->where('codigo', 'FO-04'))->firstOrFail();
-        $bueno = PlanillaResultado::whereHas('item', fn ($i) => $i->where('codigo', 'FO-01'))->firstOrFail();
+        $malo = PlanillaResultado::whereHas('item', fn ($i) => $i->where('codigo', 'EF-04'))->firstOrFail();
+        $bueno = PlanillaResultado::whereHas('item', fn ($i) => $i->where('codigo', 'EF-01'))->firstOrFail();
 
         $this->postJson("/api/v1/ordenes/{$orden->id}/planilla/resultados/{$bueno->id}/correctivo")
             ->assertUnprocessable()
@@ -302,7 +302,7 @@ class PruebasFaseCuatroTest extends TestCase
             ->assertJsonPath('datos.prioridad', 'alta')
             ->assertJsonPath('datos.estado', 'programada')
             ->assertJsonPath('datos.fecha', '2026-01-06');
-        $this->assertStringContainsString('Amortiguadores en estado Malo', $respuesta->json('datos.descripcion'));
+        $this->assertStringContainsString('Verificación del buffer. en estado Malo', $respuesta->json('datos.descripcion'));
 
         $correctivo = OrdenTrabajo::findOrFail($respuesta->json('datos.id'));
         $this->assertSame($orden->id, $correctivo->orden_origen_id);
@@ -315,6 +315,6 @@ class PruebasFaseCuatroTest extends TestCase
         $this->actingAs($this->coordinador, 'sanctum')
             ->getJson("/api/v1/ordenes/{$orden->id}")
             ->assertJsonPath('datos.correctivos_derivados.0.numero', $correctivo->numero);
-        $this->getJson("/api/v1/ordenes/{$correctivo->id}")->assertJsonPath('datos.orden_origen.item', 'Amortiguadores');
+        $this->getJson("/api/v1/ordenes/{$correctivo->id}")->assertJsonPath('datos.orden_origen.item', 'Verificación del buffer.');
     }
 }

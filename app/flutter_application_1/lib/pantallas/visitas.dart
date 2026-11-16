@@ -76,7 +76,7 @@ class _PantallaVisitasState extends State<PantallaVisitas> {
                             leading: Icon(Icons.edit_note, color: esquema.primary),
                             title: Text('Ascensor ${visita.equipoCodigo}', style: const TextStyle(fontWeight: FontWeight.w600)),
                             subtitle: Text(
-                              'Iniciada ${fechaHora(visita.inicio)} · ${visita.zonasRevisadas}/${visita.zonas.length} zonas'
+                              'Iniciada ${fechaHora(visita.inicio)} · ${visita.respondidos}/${visita.totalItems} actividades'
                               '${visita.listaParaEnviar ? ' · lista para enviar' : ''}',
                             ),
                             trailing: const Icon(Icons.chevron_right),

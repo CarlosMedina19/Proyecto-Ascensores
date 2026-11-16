@@ -10,6 +10,7 @@ import {
   CircleHelp,
   CircleUser,
   ClipboardCheck,
+  ListChecks,
   ClipboardList,
   FileText,
   HardHat,
@@ -30,6 +31,7 @@ import {
   Package,
 } from 'lucide-react';
 import { useAutenticacion } from '../contexto/AutenticacionContexto';
+import ChatAsistente from './ChatAsistente';
 import { useInactividad } from '../hooks/useInactividad';
 import { useTema } from '../hooks/useTema';
 import { autenticacion } from '../api/servicios';
@@ -75,6 +77,7 @@ function opcionesMenu(esCliente, esTecnico) {
     { ruta: '/roles', texto: 'Roles y permisos', icono: ShieldCheck, permiso: 'roles.ver' },
     { ruta: '/auditoria', texto: 'Auditoría', icono: ScrollText, permiso: 'registros_auditoria.ver' },
     { ruta: '/configuracion', texto: 'Configuración', icono: Settings, permiso: 'configuracion.editar' },
+    { ruta: '/configuracion/planilla', texto: 'Planilla técnica', icono: ListChecks, permiso: 'configuracion.editar' },
     { grupo: 'Cuenta' },
     { ruta: '/perfil', texto: 'Mi perfil', icono: CircleUser },
   ];
@@ -275,6 +278,12 @@ export default function Estructura() {
           <Outlet />
         </main>
         <RecorridoGuiado />
+        <ChatAsistente
+          modo="panel"
+          titulo="Asistente SIGMA"
+          saludo={`Hola, ${usuario?.nombre?.split(' ')[0] || ''}. Puedo buscar ascensores, edificios u órdenes, mostrarle sus pendientes y darle los PDF que su rol permite. ¿Qué necesita?`}
+          sugerencias={['¿Qué puedes hacer?', esTecnico ? 'Mis órdenes activas' : 'Mantenimientos de esta semana', 'Emergencias abiertas']}
+        />
       </div>
 
       <Modal

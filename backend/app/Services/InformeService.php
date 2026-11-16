@@ -4,12 +4,15 @@ namespace App\Services;
 
 use App\Exceptions\ReglaNegocioException;
 use App\Models\ChecklistItem;
+use App\Models\ChecklistSeccion;
 use App\Models\InformeOrden;
 use App\Models\OrdenTrabajo;
+use App\Support\Archivos;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * RF-039: informe técnico en PDF con datos, checklist, observaciones, fotos, recomendaciones y firmas.
@@ -17,8 +20,6 @@ use Illuminate\Support\Facades\Storage;
  */
 class InformeService
 {
-    private const DISCO = 'local';
-
     /** Ancho máximo de las fotos dentro del PDF (se reducen para que el archivo no pese demasiado). */
     private const ANCHO_FOTO = 900;
 
@@ -36,7 +37,7 @@ class InformeService
 
             $contenido = $this->pdf($orden, $version, $motivo);
             $ruta = "ordenes/{$orden->identificador_uuid}/informes/{$orden->numero}-v{$version}.pdf";
-            Storage::disk(self::DISCO)->put($ruta, $contenido);
+            Archivos::disco()->put($ruta, $contenido);
 
             $informe = InformeOrden::create([
                 'orden_id' => $orden->id,
@@ -54,9 +55,9 @@ class InformeService
         });
     }
 
-    public function rutaAbsoluta(InformeOrden $informe): string
+    public function responder(InformeOrden $informe, string $nombre): StreamedResponse
     {
-        return Storage::disk(self::DISCO)->path($informe->ruta);
+        return Archivos::responder($informe->ruta, $nombre, 'application/pdf');
     }
 
     private function pdf(OrdenTrabajo $orden, int $version, ?string $motivo): string
@@ -67,11 +68,14 @@ class InformeService
         ]);
 
         $resultados = $orden->planilla?->resultados ?? collect();
+        // Secciones en el orden de la plantilla (también las retiradas, para planillas antiguas).
+        $nombres = ChecklistSeccion::orderBy('orden')->orderBy('id')->pluck('nombre', 'clave')->all() + ChecklistItem::SECCIONES;
+        $claves = array_unique([...array_keys($nombres), ...$resultados->map(fn ($r) => $r->item?->seccion)->filter()->all()]);
         $secciones = [];
-        foreach (ChecklistItem::SECCIONES as $clave => $nombre) {
+        foreach ($claves as $clave) {
             $filas = $resultados->filter(fn ($r) => $r->item?->seccion === $clave)->sortBy(fn ($r) => $r->item->orden)->values();
             if ($filas->isNotEmpty()) {
-                $secciones[$nombre] = $filas;
+                $secciones[$nombres[$clave] ?? $clave] = $filas;
             }
         }
 
@@ -115,7 +119,7 @@ class InformeService
     /** Imagen como data URI; las fotos se reducen y se pasan a JPEG. */
     private function imagen(string $ruta, bool $reducir = true): ?string
     {
-        $disco = Storage::disk(self::DISCO);
+        $disco = Archivos::disco();
         if (! $disco->exists($ruta)) {
             return null;
         }

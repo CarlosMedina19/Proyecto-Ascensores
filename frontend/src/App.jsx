@@ -39,6 +39,7 @@ import FormularioContrato from './paginas/contratos/FormularioContrato';
 import DetalleContrato from './paginas/contratos/DetalleContrato';
 import Calendario from './paginas/mantenimientos/Calendario';
 import Configuracion from './paginas/configuracion/Configuracion';
+import PlantillaPlanilla from './paginas/configuracion/PlantillaPlanilla';
 import ListaTecnicos from './paginas/tecnicos/ListaTecnicos';
 import FormularioTecnico from './paginas/tecnicos/FormularioTecnico';
 import DetalleTecnico from './paginas/tecnicos/DetalleTecnico';
@@ -130,6 +131,7 @@ export default function App() {
               <Route path="/contratos/:id/editar" element={conPermiso('contratos.editar', <FormularioContrato />)} />
 
               <Route path="/configuracion" element={conPermiso('configuracion.editar', <Configuracion />)} />
+              <Route path="/configuracion/planilla" element={conPermiso('configuracion.editar', <PlantillaPlanilla />)} />
 
               {/* Fase 3: técnicos, agenda y órdenes de trabajo (RF-022 a RF-029). */}
               <Route path="/ordenes" element={conPermiso('ordenes.ver', <ListaOrdenes />)} />

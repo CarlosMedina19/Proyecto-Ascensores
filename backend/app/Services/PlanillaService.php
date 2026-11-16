@@ -4,18 +4,19 @@ namespace App\Services;
 
 use App\Exceptions\ReglaNegocioException;
 use App\Models\ChecklistItem;
+use App\Models\ChecklistSeccion;
 use App\Models\FirmaOrden;
 use App\Models\OrdenTrabajo;
 use App\Models\Planilla;
 use App\Models\PlanillaFoto;
 use App\Models\PlanillaResultado;
 use App\Notifications\ChecklistNotification;
+use App\Support\Archivos;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -23,8 +24,6 @@ use Illuminate\Support\Str;
  */
 class PlanillaService
 {
-    private const DISCO = 'local';
-
     /** Firma en PNG de máximo 500 KB. */
     private const PESO_MAXIMO_FIRMA = 512000;
 
@@ -36,9 +35,10 @@ class PlanillaService
     /** @return Collection<int, ChecklistItem> */
     public function catalogo(): Collection
     {
-        $orden = array_keys(ChecklistItem::SECCIONES);
+        $orden = array_keys(ChecklistSeccion::mapa());
 
         return ChecklistItem::where('activo', true)
+            ->whereIn('seccion', $orden)
             ->get()
             ->sortBy(fn (ChecklistItem $i) => [array_search($i->seccion, $orden, true), $i->orden])
             ->values();
@@ -147,7 +147,7 @@ class PlanillaService
             return PlanillaFoto::create([
                 'planilla_id' => $planilla->id,
                 'item_id' => $itemId,
-                'ruta' => $archivo->store("ordenes/{$orden->identificador_uuid}/fotos", self::DISCO),
+                'ruta' => $archivo->store("ordenes/{$orden->identificador_uuid}/fotos", Archivos::nombreDisco()),
                 'nombre_original' => mb_substr($archivo->getClientOriginalName(), 0, 255),
                 'tipo_mime' => $archivo->getMimeType(),
                 'tamano' => $archivo->getSize(),
@@ -161,7 +161,7 @@ class PlanillaService
     {
         $this->exigirEnProceso($orden);
         $foto->delete();
-        Storage::disk(self::DISCO)->delete($foto->ruta);
+        Archivos::disco()->delete($foto->ruta);
     }
 
     // ------------------------------------------------------------------ firmas
@@ -180,7 +180,7 @@ class PlanillaService
 
         return DB::transaction(function () use ($orden, $datos, $png) {
             $ruta = "ordenes/{$orden->identificador_uuid}/firmas/{$datos['tipo']}-".Str::random(12).'.png';
-            Storage::disk(self::DISCO)->put($ruta, $png);
+            Archivos::disco()->put($ruta, $png);
 
             $anterior = FirmaOrden::where('orden_id', $orden->id)->where('tipo', $datos['tipo'])->first();
             $firma = FirmaOrden::updateOrCreate(['orden_id' => $orden->id, 'tipo' => $datos['tipo']], [
@@ -192,7 +192,7 @@ class PlanillaService
                 'firmado_en' => now(),
             ]);
             if ($anterior) {
-                Storage::disk(self::DISCO)->delete($anterior->ruta);
+                Archivos::disco()->delete($anterior->ruta);
             }
 
             return $firma;

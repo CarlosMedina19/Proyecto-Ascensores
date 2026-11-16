@@ -20,10 +20,10 @@ use App\Models\PlanillaResultado;
 use App\Services\InformeService;
 use App\Services\OrdenTrabajoService;
 use App\Services\PlanillaService;
+use App\Support\Archivos;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Fase 4 (RF-030 a RF-039): planilla digital, fotos, firmas, correctivo derivado e informe PDF.
@@ -36,13 +36,14 @@ class PlanillaController extends Controller
         protected OrdenTrabajoService $ordenes,
     ) {}
 
-    /** Ítems de las seis secciones (catálogo). */
+    /** Actividades vigentes de la plantilla, en el orden de sus secciones (las edita el administrador). */
     public function catalogo(): JsonResponse
     {
         return response()->json([
             'datos' => $this->planillas->catalogo()->map(fn ($i) => [
                 'id' => $i->id,
                 'seccion' => $i->seccion,
+                'seccion_nombre' => $i->nombreSeccion(),
                 'codigo' => $i->codigo,
                 'nombre' => $i->nombre,
                 'critico' => $i->critico,
@@ -81,7 +82,7 @@ class PlanillaController extends Controller
         return response()->json(['datos' => ['id' => $foto->id, 'ruta_archivo' => "/ordenes/{$orden->id}/planilla/fotos/{$foto->id}/archivo"], 'mensaje' => 'Foto agregada.'], 201);
     }
 
-    public function foto(OrdenTrabajo $orden, PlanillaFoto $foto): BinaryFileResponse
+    public function foto(OrdenTrabajo $orden, PlanillaFoto $foto): StreamedResponse
     {
         $this->authorize('view', $orden);
         abort_unless($foto->planilla?->orden_id === $orden->id, 404);
@@ -106,7 +107,7 @@ class PlanillaController extends Controller
         return (new FirmaOrdenResource($firma))->additional(['mensaje' => 'Firma registrada.'])->response()->setStatusCode(201);
     }
 
-    public function firma(OrdenTrabajo $orden, FirmaOrden $firma): BinaryFileResponse
+    public function firma(OrdenTrabajo $orden, FirmaOrden $firma): StreamedResponse
     {
         $this->authorize('view', $orden);
         abort_unless($firma->orden_id === $orden->id, 404);
@@ -145,26 +146,16 @@ class PlanillaController extends Controller
         return (new InformeOrdenResource($informe->load('generador')))->response()->setStatusCode(201);
     }
 
-    public function pdf(OrdenTrabajo $orden, InformeOrden $informe): BinaryFileResponse
+    public function pdf(OrdenTrabajo $orden, InformeOrden $informe): StreamedResponse
     {
         $this->authorize('view', $orden);
         abort_unless($informe->orden_id === $orden->id, 404);
 
-        return response()->file($this->informes->rutaAbsoluta($informe), [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => "inline; filename=\"Informe-{$orden->numero}-v{$informe->version}.pdf\"",
-            'Cache-Control' => 'private, max-age=3600',
-        ]);
+        return $this->informes->responder($informe, "Informe-{$orden->numero}-v{$informe->version}.pdf");
     }
 
-    private function archivo(string $ruta, string $tipo): BinaryFileResponse
+    private function archivo(string $ruta, string $tipo): StreamedResponse
     {
-        abort_unless(Storage::disk('local')->exists($ruta), 404);
-
-        return response()->file(Storage::disk('local')->path($ruta), [
-            'Content-Type' => $tipo,
-            'Cache-Control' => 'private, max-age=3600',
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+        return Archivos::responder($ruta, basename($ruta), $tipo);
     }
 }

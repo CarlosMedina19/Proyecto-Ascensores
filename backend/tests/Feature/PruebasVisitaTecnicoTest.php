@@ -11,8 +11,8 @@ use App\Models\MantenimientoProgramado;
 use App\Models\Periodicidad;
 use App\Models\Rol;
 use App\Models\Usuario;
+use App\Support\PlantillaPlanilla;
 use Carbon\CarbonImmutable;
-use Database\Seeders\ChecklistSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -112,7 +112,7 @@ class PruebasVisitaTecnicoTest extends TestCase
 
     public function test_el_sembrado_de_produccion_crea_la_planilla_sin_pisar_cambios(): void
     {
-        $this->assertSame(collect(ChecklistSeeder::ITEMS)->flatten(1)->count(), ChecklistItem::count());
+        $this->assertSame(PlantillaPlanilla::totalActividades(), ChecklistItem::where('activo', true)->count());
         $item = ChecklistItem::first();
         $item->update(['nombre' => 'Nombre ajustado', 'activo' => false]);
         $this->seed(DatabaseSeeder::class);

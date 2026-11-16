@@ -168,68 +168,80 @@ void main() {
     });
   });
 
-  group('Visita de mantenimiento', () {
+  group('Planilla de asistencia técnica', () {
+    List<SeccionPlanilla> plantilla() => [
+      SeccionPlanilla(clave: 'cabina', nombre: 'Cabina', items: [
+        ItemPlanilla(id: 1, codigo: 'CB-01', nombre: 'Verificación de cabina.'),
+        ItemPlanilla(id: 2, codigo: 'CB-07', nombre: 'Señales de emergencia.', critico: true),
+      ]),
+      SeccionPlanilla(clave: 'foso', nombre: 'En foso', items: [ItemPlanilla(id: 3, codigo: 'EF-04', nombre: 'Verificación del buffer.')]),
+    ];
+
     VisitaBorrador visitaCompleta() {
-      final visita = VisitaBorrador(equipoId: 4, equipoCodigo: 'ASC-001', inicio: DateTime(2026, 10, 16, 8, 12));
-      for (final zona in visita.zonas.values) {
-        zona.estado = 'B';
+      final visita = VisitaBorrador(equipoId: 4, equipoCodigo: 'ASC-001', plantilla: plantilla(), inicio: DateTime(2026, 10, 16, 8, 12));
+      for (final seccion in visita.plantilla) {
+        visita.todoBueno(seccion);
       }
       visita
-        ..diagnostico = 'Equipo operando normalmente.'
         ..firmaBase64 = 'iVBORw0KGgo='
         ..firmaRecibeBase64 = 'iVBORw0KGgo='
-        ..nombreRecibe = 'Marta Díaz';
+        ..nombreRecibe = 'Marta Díaz'
+        ..documentoRecibe = '52123456';
       return visita;
     }
 
-    test('exige revisar todas las zonas, diagnóstico y firma', () {
-      final visita = VisitaBorrador(equipoId: 4, equipoCodigo: 'ASC-001');
+    test('exige marcar todas las actividades, el nombre y la C.C. de quien recibe y las firmas', () {
+      final visita = VisitaBorrador(equipoId: 4, equipoCodigo: 'ASC-001', plantilla: plantilla());
       expect(visita.listaParaEnviar, isFalse);
-      expect(visita.pendientes, contains('Falta el diagnóstico'));
+      expect(visita.pendientes, contains('Faltan 3 actividad(es) por marcar'));
       expect(visita.pendientes, contains('Falta la firma del técnico'));
-      expect(visita.pendientes, contains('Falta el nombre de quien recibe'));
-      expect(visita.pendientes, contains('Falta la firma de quien recibe'));
+      expect(visita.pendientes, contains('Falta la C.C. de quien recibe'));
       expect(visitaCompleta().listaParaEnviar, isTrue);
     });
 
-    test('un estado Regular o Malo exige observación (RF-037)', () {
+    test('Regular o Malo exigen observación y N.A. cuenta como marcada', () {
       final visita = visitaCompleta();
-      visita.zonas['Foso']!.estado = 'M';
+      visita.respuesta(3).estado = 'M';
       expect(visita.listaParaEnviar, isFalse);
-      expect(visita.zonasConObservacionPendiente, 1);
-
-      visita.zonas['Foso']!.observacion = 'Fuga leve en amortiguador izquierdo.';
+      expect(visita.sinObservacion, 1);
+      visita.respuesta(3).observacion = 'Fuga leve en el amortiguador.';
+      visita.respuesta(1)
+        ..na = true
+        ..estado = '';
       expect(visita.listaParaEnviar, isTrue);
-      expect(visita.estadoGeneral, 'M');
+      expect(visita.conteo, {'B': 1, 'R': 0, 'M': 1, 'NA': 1});
     });
 
-    test('el resumen para el historial incluye zonas, repuestos y duración', () {
+    test('los datos para la API llevan cada actividad, el tipo y las firmas', () {
       final visita = visitaCompleta()
-        ..repuestos.add(Repuesto('Rodamiento', 2))
-        ..actividades.add('Lubricación del equipo');
-      visita.zonas['Cabina']!
+        ..tipoServicio = 'correctivo'
+        ..repuestos.add(Repuesto('Rodamiento', 2));
+      visita.respuesta(2)
         ..estado = 'R'
-        ..observacion = 'Dos paneles LED parpadean.';
-
-      final resumen = visita.resumen(fin: DateTime(2026, 10, 16, 10, 21));
-      expect(resumen, contains('duración 2 h 9 min'));
-      expect(resumen, contains('Resultado general: Regular.'));
-      expect(resumen, contains('- Cabina: Regular — Dos paneles LED parpadean.'));
-      expect(resumen, contains('Rodamiento (2)'));
-      expect(resumen, contains('por el técnico y por Marta Díaz (recibe el servicio)'));
-      expect(resumen.length, lessThanOrEqualTo(2000));
+        ..observacion = 'Luz de emergencia débil.';
+      final datos = visita.paraEnviar(salida: DateTime(2026, 10, 16, 10, 21));
+      expect(datos['tipo_servicio'], 'correctivo');
+      expect((datos['resultados'] as List).length, 3);
+      expect((datos['resultados'] as List)[1], {'item_id': 2, 'ins': true, 'estado': 'R', 'na': false, 'observacion': 'Luz de emergencia débil.'});
+      expect(datos['recibe_documento'], '52123456');
+      expect((datos['firma_tecnico'] as String).startsWith('data:image/png;base64,'), isTrue);
     });
 
-    test('se guarda y se recupera igual (modo sin conexión)', () {
+    test('se guarda y se recupera igual (sin conexión) y conserva lo marcado al cambiar la plantilla', () {
       final visita = visitaCompleta()..repuestos.add(Repuesto('Contacto', 1));
       final recuperada = VisitaBorrador.desdeJson(jsonDecode(jsonEncode(visita.aJson())) as Map<String, dynamic>);
       expect(recuperada.equipoCodigo, 'ASC-001');
-      expect(recuperada.zonasRevisadas, 6);
+      expect(recuperada.respondidos, 3);
       expect(recuperada.repuestos.single.nombre, 'Contacto');
       expect(recuperada.inicio, visita.inicio);
-      expect(recuperada.nombreRecibe, 'Marta Díaz');
-      expect(recuperada.tieneFirmaRecibe, isTrue);
       expect(recuperada.listaParaEnviar, isTrue);
+
+      // El administrador quitó una actividad y agregó otra: lo marcado se conserva y la nueva queda pendiente.
+      recuperada.actualizarPlantilla([
+        SeccionPlanilla(clave: 'cabina', nombre: 'Cabina', items: [ItemPlanilla(id: 1, codigo: 'CB-01', nombre: 'Verificación de cabina.'), ItemPlanilla(id: 9, codigo: 'CB-10', nombre: 'Nueva.')]),
+      ]);
+      expect(recuperada.respondidos, 1);
+      expect(recuperada.pendientes, contains('Faltan 1 actividad(es) por marcar'));
     });
   });
 }

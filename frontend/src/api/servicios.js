@@ -215,6 +215,30 @@ export const ordenes = {
 };
 
 // Fase 4 (RF-030 a RF-039): planilla, fotos, firmas, correctivo derivado e informe PDF
+// Planilla de asistencia técnica: plantilla editable (administrador) y planillas de cada visita.
+export const plantillaPlanilla = {
+  obtener: () => api.obtener('/planilla/plantilla'),
+  crearSeccion: (nombre) => api.crear('/planilla/secciones', { nombre }),
+  actualizarSeccion: (id, datos) => api.actualizar(`/planilla/secciones/${id}`, datos),
+  eliminarSeccion: (id) => api.eliminar(`/planilla/secciones/${id}`),
+  crearItem: (datos) => api.crear('/planilla/items', datos),
+  actualizarItem: (id, datos) => api.actualizar(`/planilla/items/${id}`, datos),
+  eliminarItem: (id) => api.eliminar(`/planilla/items/${id}`),
+  restablecer: () => api.crear('/planilla/restablecer', {}),
+};
+
+export const visitasTecnicas = {
+  listar: (equipoId) => api.obtener(`/equipos/${equipoId}/visitas`),
+  pdf: (visita) => descargarArchivo(visita.ruta_pdf, `Planilla-${visita.numero}.pdf`),
+};
+
+// Asistente con IA: el del panel (según el rol) y el de la página pública.
+export const asistente = {
+  panel: (mensaje, sesion) => api.crear('/asistente', { mensaje, sesion }),
+  publico: (mensaje, sesion) => api.crear('/publico/asistente', { mensaje, sesion }),
+  descargar: (ruta, nombre) => descargarArchivo(ruta, nombre),
+};
+
 export const planilla = {
   catalogo: () => api.obtener('/checklist/items'),
   obtener: (ordenId) => api.obtener(`/ordenes/${ordenId}/planilla`),

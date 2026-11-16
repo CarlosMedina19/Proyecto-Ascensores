@@ -12,6 +12,7 @@ import CorteAscensor from '../../componentes/CorteAscensor';
 import LineaTiempo from '../../componentes/LineaTiempo';
 import PlanDelEquipo from './PlanDelEquipo';
 import OrdenesDelEquipo from './OrdenesDelEquipo';
+import PlanillasDelEquipo from './PlanillasDelEquipo';
 import { GaleriaFotos } from '../../componentes/FotosEquipo';
 import { CertificacionAscensor, CodigoQrAscensor, DocumentosAscensor, EmergenciasAscensor } from '../../componentes/ServicioAscensor';
 
@@ -278,6 +279,7 @@ export default function DetalleEquipo() {
             )}
           </Tarjeta>
         )}
+        {puedeVerHistorial && <PlanillasDelEquipo equipoId={id} />}
         {puedeVerHistorial && <DocumentosAscensor equipo={equipo} />}
         <CodigoQrAscensor equipo={equipo} />
       </div>

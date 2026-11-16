@@ -7143,3 +7143,537 @@ textarea.campo__control[rows='2'] {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Configuración · Planilla de asistencia técnica (editor con el aspecto de la planilla en papel) ---------- */
+
+.planilla-editor {
+  display: grid;
+  gap: 14px;
+}
+
+.planilla-editor__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: #14294a;
+  color: #fff;
+}
+
+.planilla-editor__cabecera b {
+  display: block;
+  font: 700 18px/1.15 var(--fuente-titulos);
+  letter-spacing: 0.01em;
+}
+
+.planilla-editor__cabecera span {
+  font-size: 12px;
+  color: #c9d3e6;
+}
+
+.planilla-editor__datos {
+  max-width: 460px;
+}
+
+.planilla-editor__columnas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.planilla-editor__columna {
+  display: grid;
+  gap: 14px;
+}
+
+.planilla-editor__seccion {
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-superficie);
+}
+
+.planilla-editor__titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px 8px 14px;
+  background: #14294a;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.planilla-editor__titulo .planilla-editor__icono {
+  color: #c9d3e6;
+}
+
+.planilla-editor__titulo .campo__control {
+  height: 30px;
+  text-transform: none;
+}
+
+.planilla-editor__tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.planilla-editor__tabla th {
+  background: var(--color-superficie-media);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  padding: 5px 6px;
+  color: var(--color-texto-suave);
+}
+
+.planilla-editor__tabla th:first-child {
+  text-align: left;
+  padding-left: 12px;
+}
+
+.planilla-editor__tabla td {
+  border-top: 1px solid var(--color-borde);
+  padding: 4px 6px;
+  vertical-align: middle;
+}
+
+.planilla-editor__tabla td:first-child {
+  padding-left: 12px;
+}
+
+.planilla-editor__casilla {
+  width: 34px;
+  border-left: 1px solid var(--color-borde);
+  background: var(--color-superficie-suave);
+}
+
+.planilla-editor__acciones {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+td.planilla-editor__acciones {
+  display: table-cell;
+  width: 1%;
+  border-left: 1px solid var(--color-borde);
+}
+
+.planilla-editor__texto {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.planilla-editor__texto .planilla-editor__icono {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.planilla-editor__texto:hover .planilla-editor__icono,
+.planilla-editor__texto .planilla-editor__icono:focus-visible {
+  opacity: 1;
+}
+
+.planilla-editor__edicion {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.planilla-editor__edicion .campo__control {
+  flex: 1;
+  height: 32px;
+  min-width: 0;
+}
+
+.planilla-editor__icono {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-texto-tenue);
+  cursor: pointer;
+}
+
+.planilla-editor__icono:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primario) 14%, transparent);
+  color: var(--color-primario);
+}
+
+.planilla-editor__icono:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.planilla-editor__icono--critica {
+  color: var(--color-peligro, #d9344a);
+}
+
+.planilla-editor__nueva {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px dashed var(--color-borde);
+}
+
+.planilla-editor__nueva .campo__control {
+  flex: 1;
+  height: 34px;
+  min-width: 0;
+}
+
+.planilla-editor__nueva--seccion {
+  border: 1px dashed var(--color-borde-fuerte);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.planilla-editor__critica {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-texto-suave);
+  white-space: nowrap;
+}
+
+.planilla-editor__convenciones {
+  margin: 0;
+  padding: 9px 14px;
+  border-radius: 10px;
+  background: #14294a;
+  color: #e3e9f4;
+  font-size: 12px;
+}
+
+@media (max-width: 1100px) {
+  .planilla-editor__columnas {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .planilla-editor__casilla {
+    display: none;
+  }
+
+  .planilla-editor__tabla th:nth-child(2),
+  .planilla-editor__tabla th:nth-child(3),
+  .planilla-editor__tabla th:nth-child(4) {
+    display: none;
+  }
+}
+
+/* Planillas de asistencia técnica en la ficha del ascensor */
+.lista-planillas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.lista-planillas li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+}
+
+.lista-planillas li > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.lista-planillas__conteo {
+  display: inline-flex;
+  gap: 4px;
+}
+
+/* ---------- Asistente con IA (página pública y panel) ---------- */
+
+.asistente {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.asistente__boton {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-primario);
+  color: #fff;
+  box-shadow: 0 10px 28px -8px color-mix(in srgb, var(--color-primario) 70%, transparent);
+  cursor: pointer;
+  transition: transform 160ms ease;
+}
+
+.asistente__boton:hover {
+  transform: translateY(-2px);
+}
+
+.asistente__boton:active {
+  transform: scale(0.96);
+}
+
+.asistente__panel {
+  display: flex;
+  flex-direction: column;
+  width: min(380px, calc(100vw - 32px));
+  height: min(560px, calc(100vh - 120px));
+  border: 1px solid var(--color-borde);
+  border-radius: 18px;
+  background: var(--color-superficie);
+  box-shadow: 0 24px 60px -20px rgb(20 10 50 / 0.45);
+  overflow: hidden;
+  animation: asistente-entra 180ms ease-out;
+}
+
+@keyframes asistente-entra {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .asistente__panel {
+    animation: none;
+  }
+}
+
+.asistente__cabecera {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 12px 14px;
+  background: var(--color-primario);
+  color: #fff;
+}
+
+.asistente__cabecera div {
+  flex: 1;
+  display: grid;
+}
+
+.asistente__cabecera small {
+  opacity: 0.85;
+  font-size: 12px;
+}
+
+.asistente__avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.18);
+}
+
+.asistente__cerrar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.asistente__cerrar:hover {
+  background: rgb(255 255 255 / 0.15);
+}
+
+.asistente__mensajes {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--color-superficie-suave);
+}
+
+.asistente__mensaje {
+  max-width: 88%;
+  padding: 9px 12px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.asistente__mensaje p {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.asistente__mensaje--bot {
+  align-self: flex-start;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-bottom-left-radius: 4px;
+  color: var(--color-texto);
+}
+
+.asistente__mensaje--usuario {
+  align-self: flex-end;
+  background: var(--color-primario);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.asistente__mensaje--error {
+  border-color: color-mix(in srgb, var(--color-peligro) 40%, transparent);
+}
+
+.asistente__acciones {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.asistente__accion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  background: var(--color-superficie-suave);
+  color: var(--color-primario);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.asistente__accion:hover {
+  border-color: var(--color-primario);
+}
+
+.asistente__sugerencias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.asistente__sugerencias button {
+  padding: 5px 10px;
+  border: 1px solid color-mix(in srgb, var(--color-primario) 40%, transparent);
+  border-radius: 999px;
+  background: var(--color-primario-suave);
+  color: var(--color-primario);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.asistente__escribiendo {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.asistente__escribiendo i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-texto-tenue);
+  animation: asistente-punto 1s infinite ease-in-out;
+}
+
+.asistente__escribiendo i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.asistente__escribiendo i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes asistente-punto {
+  50% {
+    opacity: 0.3;
+    transform: translateY(-2px);
+  }
+}
+
+.asistente__formulario {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--color-borde);
+  background: var(--color-superficie);
+}
+
+.asistente__formulario input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 10px;
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  font: inherit;
+  font-size: 16px;
+}
+
+.asistente__formulario input:focus {
+  outline: none;
+  border-color: var(--color-primario);
+}
+
+.asistente__formulario button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-primario);
+  color: #fff;
+  cursor: pointer;
+}
+
+.asistente__formulario button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (max-width: 520px) {
+  .asistente {
+    right: 12px;
+    bottom: 12px;
+  }
+}

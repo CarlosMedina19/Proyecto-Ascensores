@@ -8,14 +8,6 @@ import { Alerta, Cargando, Insignia, Tarjeta } from '../../componentes/Basicos';
 import { ImagenProtegida, validarFotos } from '../../componentes/FotosEquipo';
 import { ModalCotizacion } from '../servicio/Cotizaciones';
 
-const SECCIONES = {
-  cuarto_maquinas: 'Cuarto de máquinas',
-  cabina: 'Cabina',
-  contrapeso: 'Contrapeso',
-  puertas: 'Puertas',
-  hueco: 'Hueco y recorrido',
-  foso: 'Foso',
-};
 const RESULTADOS = [
   { valor: 'INS', texto: 'INS' },
   { valor: 'EST', texto: 'EST' },
@@ -77,6 +69,17 @@ export default function PlanillaOrden({ orden, alCambiar, notificar }) {
   }, [orden.id, aplicar]);
 
   useEffect(cargar, [cargar]);
+
+  // Secciones de la plantilla vigente, en el orden del catálogo (el administrador las edita).
+  const secciones = useMemo(() => {
+    const mapa = new Map();
+    (catalogo || []).forEach((i) => mapa.has(i.seccion) || mapa.set(i.seccion, i.seccion_nombre || i.seccion));
+    return [...mapa.entries()];
+  }, [catalogo]);
+
+  useEffect(() => {
+    if (secciones.length && !secciones.some(([clave]) => clave === seccion)) setSeccion(secciones[0][0]);
+  }, [secciones, seccion]);
 
   // Valor visible de cada ítem: el cambio sin guardar o lo guardado.
   const valor = useCallback((itemId) => ({ ...guardados[itemId], ...cambios[itemId] }), [guardados, cambios]);
@@ -217,7 +220,7 @@ export default function PlanillaOrden({ orden, alCambiar, notificar }) {
         </div>
 
         <div className="planilla__secciones" role="tablist" aria-label="Secciones del ascensor">
-          {Object.entries(SECCIONES).map(([clave, nombre]) => {
+          {secciones.map(([clave, nombre]) => {
             const s = resumen.porSeccion[clave] || { total: 0, hechos: 0, estados: [] };
             const peor = peorEstado(s.estados);
             return (

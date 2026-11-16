@@ -29,6 +29,20 @@ return [
     ],
 
     // Microservicio de analítica en Python (backend/analitica). Solo en la red interna de Docker.
+    // Asistentes con IA (n8n + DeepSeek). Sin n8n activo responde el motor local de SIGMA.
+    'asistente' => [
+        'n8n_activo' => (bool) env('ASISTENTE_N8N_ACTIVO', false),
+        'url_panel' => env('ASISTENTE_N8N_URL_PANEL'),
+        'url_landing' => env('ASISTENTE_N8N_URL_LANDING'),
+        'clave' => env('ASISTENTE_N8N_CLAVE'),
+        'tiempo' => (int) env('ASISTENTE_N8N_TIEMPO', 40),
+        'contacto' => [
+            'whatsapp' => env('SIGMA_WHATSAPP', '573000000000'),
+            'whatsapp_visible' => env('SIGMA_WHATSAPP_VISIBLE', '+57 300 000 0000'),
+            'correo' => env('SIGMA_CORREO_CONTACTO', 'sigma3172409@gmail.com'),
+        ],
+    ],
+
     'analitica' => [
         'url' => env('ANALITICA_URL', 'http://sigma_analitica:8001'),
         'clave' => env('ANALITICA_CLAVE'),

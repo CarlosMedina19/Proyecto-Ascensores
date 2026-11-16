@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources;
 
-use App\Models\ChecklistItem;
+use App\Models\ChecklistSeccion;
 use Illuminate\Http\Request;
 
 /**
@@ -39,7 +39,7 @@ class PlanillaResource extends RecursoApi
                 'descripcion' => $f->descripcion,
                 'ruta_archivo' => "/ordenes/{$this->orden_id}/planilla/fotos/{$f->id}/archivo",
             ])->values()),
-            'secciones' => ChecklistItem::SECCIONES,
+            'secciones' => ChecklistSeccion::mapa(),
         ];
     }
 }

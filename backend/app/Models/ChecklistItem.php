@@ -11,7 +11,10 @@ class ChecklistItem extends Model
 {
     protected $table = 'checklist_items';
 
-    /** Secciones en el orden en que se recorren y su nombre visible. */
+    /**
+     * Zonas del esquema del ascensor (claves fijas de las secciones base). Los nombres visibles y el orden
+     * de las secciones están en checklist_secciones y los edita el administrador.
+     */
     public const SECCIONES = [
         'cuarto_maquinas' => 'Cuarto de máquinas',
         'cabina' => 'Cabina',
@@ -30,6 +33,6 @@ class ChecklistItem extends Model
 
     public function nombreSeccion(): string
     {
-        return self::SECCIONES[$this->seccion] ?? $this->seccion;
+        return ChecklistSeccion::nombre($this->seccion);
     }
 }

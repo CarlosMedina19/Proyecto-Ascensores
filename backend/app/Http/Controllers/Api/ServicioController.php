@@ -24,12 +24,13 @@ use App\Services\CotizacionService;
 use App\Services\EmergenciaService;
 use App\Services\IndicadoresServicioService;
 use App\Services\OrdenTrabajoService;
+use App\Support\Archivos;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\Rule;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Servicio comercial: certificación anual, emergencias 24/7, cotizaciones de correctivos, indicadores
@@ -168,12 +169,12 @@ class ServicioController extends Controller
         ]);
     }
 
-    public function archivoCertificado(Request $solicitud, Certificacion $certificacion): BinaryFileResponse
+    public function archivoCertificado(Request $solicitud, Certificacion $certificacion): StreamedResponse
     {
         $usuario = $this->exigir($solicitud, 'certificaciones.ver', 'consultar las certificaciones');
         $this->exigirEquipo($usuario, $certificacion->equipo);
 
-        return response()->download($this->certificaciones->rutaArchivo($certificacion), $certificacion->archivo_nombre ?: 'certificado.pdf');
+        return Archivos::responder($this->certificaciones->rutaArchivo($certificacion), $certificacion->archivo_nombre ?: 'certificado.pdf', null, true);
     }
 
     // ---------- Emergencias ----------

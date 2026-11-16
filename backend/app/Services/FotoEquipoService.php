@@ -5,19 +5,18 @@ namespace App\Services;
 use App\Exceptions\ReglaNegocioException;
 use App\Models\Equipo;
 use App\Models\FotoEquipo;
+use App\Support\Archivos;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Fotos del ascensor: máximo 3 por equipo, en el disco privado (solo se descargan con token).
  */
 class FotoEquipoService
 {
-    private const DISCO = 'local';
-
     /**
      * @param  array<int, UploadedFile>  $archivos
      * @return Collection<int, FotoEquipo>
@@ -40,7 +39,7 @@ class FotoEquipoService
             $guardadas = collect();
 
             foreach ($archivos as $archivo) {
-                $ruta = $archivo->store("equipos/{$equipo->identificador_uuid}", self::DISCO);
+                $ruta = $archivo->store("equipos/{$equipo->identificador_uuid}", Archivos::nombreDisco());
                 $guardadas->push(FotoEquipo::create([
                     'equipo_id' => $equipo->id,
                     'ruta' => $ruta,
@@ -70,16 +69,16 @@ class FotoEquipoService
             RegistroAuditoriaService::registrar('foto_eliminada', $foto->equipo, ['foto' => $foto->nombre_original]);
         });
 
-        Storage::disk(self::DISCO)->delete($foto->ruta);
+        Archivos::disco()->delete($foto->ruta);
     }
 
     public function existe(FotoEquipo $foto): bool
     {
-        return Storage::disk(self::DISCO)->exists($foto->ruta);
+        return Archivos::disco()->exists($foto->ruta);
     }
 
-    public function rutaAbsoluta(FotoEquipo $foto): string
+    public function responder(FotoEquipo $foto): StreamedResponse
     {
-        return Storage::disk(self::DISCO)->path($foto->ruta);
+        return Archivos::responder($foto->ruta, $foto->nombre_original ?: basename($foto->ruta), $foto->tipo_mime);
     }
 }

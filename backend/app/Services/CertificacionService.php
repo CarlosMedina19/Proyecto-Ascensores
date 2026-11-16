@@ -7,11 +7,11 @@ use App\Models\Certificacion;
 use App\Models\Configuracion;
 use App\Models\Equipo;
 use App\Notifications\AlertaCertificacionNotification;
+use App\Support\Archivos;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Certificación anual de cada ascensor: registro con su certificado, estado (vigente, por vencer, vencida)
@@ -19,8 +19,6 @@ use Illuminate\Support\Facades\Storage;
  */
 class CertificacionService
 {
-    private const DISCO = 'local';
-
     public function __construct(private readonly NotificacionService $notificaciones) {}
 
     public function registrar(Equipo $equipo, array $datos, ?UploadedFile $archivo = null): Certificacion
@@ -34,7 +32,7 @@ class CertificacionService
             $certificacion->norma ??= 'NTC 5926-1';
 
             if ($archivo) {
-                $certificacion->archivo_ruta = $archivo->store("certificaciones/{$equipo->identificador_uuid}", self::DISCO);
+                $certificacion->archivo_ruta = $archivo->store("certificaciones/{$equipo->identificador_uuid}", Archivos::nombreDisco());
                 $certificacion->archivo_nombre = mb_substr($archivo->getClientOriginalName(), 0, 255);
             }
             $certificacion->save();
@@ -59,11 +57,11 @@ class CertificacionService
     {
         $anterior = $certificacion->archivo_ruta;
         $certificacion->update([
-            'archivo_ruta' => $archivo->store("certificaciones/{$certificacion->equipo->identificador_uuid}", self::DISCO),
+            'archivo_ruta' => $archivo->store("certificaciones/{$certificacion->equipo->identificador_uuid}", Archivos::nombreDisco()),
             'archivo_nombre' => mb_substr($archivo->getClientOriginalName(), 0, 255),
         ]);
         if ($anterior) {
-            Storage::disk(self::DISCO)->delete($anterior);
+            Archivos::disco()->delete($anterior);
         }
 
         return $certificacion;
@@ -71,11 +69,11 @@ class CertificacionService
 
     public function rutaArchivo(Certificacion $certificacion): string
     {
-        if (! $certificacion->archivo_ruta || ! Storage::disk(self::DISCO)->exists($certificacion->archivo_ruta)) {
+        if (! $certificacion->archivo_ruta || ! Archivos::disco()->exists($certificacion->archivo_ruta)) {
             throw new ReglaNegocioException('Esta certificación no tiene el certificado adjunto. Súbalo desde la ficha del ascensor.');
         }
 
-        return Storage::disk(self::DISCO)->path($certificacion->archivo_ruta);
+        return $certificacion->archivo_ruta;
     }
 
     /** Última certificación de cada ascensor activo, con su estado (incluye los que no tienen ninguna). */

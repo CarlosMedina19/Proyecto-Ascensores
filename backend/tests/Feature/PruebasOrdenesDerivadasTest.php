@@ -165,11 +165,11 @@ class PruebasOrdenesDerivadasTest extends TestCase
         }
         $item = fn (string $codigo) => ChecklistItem::where('codigo', $codigo)->value('id');
         $this->putJson("/api/v1/ordenes/{$orden->id}/planilla", ['resultados' => [
-            ['item_id' => $item('FO-04'), 'resultado' => 'INS', 'estado' => 'M', 'observacion' => 'Amortiguador con fuga de aceite'],
-            ['item_id' => $item('FO-01'), 'resultado' => 'INS', 'estado' => 'B'],
+            ['item_id' => $item('EF-04'), 'resultado' => 'INS', 'estado' => 'M', 'observacion' => 'Amortiguador con fuga de aceite'],
+            ['item_id' => $item('EF-01'), 'resultado' => 'INS', 'estado' => 'B'],
         ]])->assertOk();
-        $malo = PlanillaResultado::where('item_id', $item('FO-04'))->value('id');
-        $bueno = PlanillaResultado::where('item_id', $item('FO-01'))->value('id');
+        $malo = PlanillaResultado::where('item_id', $item('EF-04'))->value('id');
+        $bueno = PlanillaResultado::where('item_id', $item('EF-01'))->value('id');
 
         $id = $this->cotizacion(['resultado_origen_id' => $malo]);
         $this->getJson("/api/v1/cotizaciones/{$id}")->assertJsonPath('datos.resultado_origen_id', $malo);

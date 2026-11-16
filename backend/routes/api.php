@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AsignacionPlanController;
+use App\Http\Controllers\Api\AsistenteController;
 use App\Http\Controllers\Api\AutenticacionController;
 use App\Http\Controllers\Api\BusquedaController;
 use App\Http\Controllers\Api\CarteraController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\Api\PanelController;
 use App\Http\Controllers\Api\PermisoController;
 use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\PlanillaController;
+use App\Http\Controllers\Api\PlantillaPlanillaController;
 use App\Http\Controllers\Api\RegistroAuditoriaController;
 use App\Http\Controllers\Api\ResumenController;
 use App\Http\Controllers\Api\RolController;
@@ -30,6 +32,8 @@ use App\Http\Controllers\Api\ServicioController;
 use App\Http\Controllers\Api\TecnicoController;
 use App\Http\Controllers\Api\UbicacionController;
 use App\Http\Controllers\Api\UsuarioController;
+use App\Http\Controllers\Api\VisitaTecnicaController;
+use App\Http\Middleware\LimitarTokenAsistente;
 use Illuminate\Support\Facades\Route;
 
 // RF-001: rutas públicas de autenticación.
@@ -43,11 +47,16 @@ Route::get('/verificar-correo/{usuario}/{hash}', [AutenticacionController::class
 // Reporte de fallas por el QR de la cabina, sin iniciar sesión.
 Route::get('/publico/ascensores/{codigo}', [ServicioController::class, 'ascensorPublico'])->middleware('throttle:30,1');
 Route::post('/publico/ascensores/{codigo}/reportes', [ServicioController::class, 'reportarPorQr'])->middleware('throttle:reporte-qr');
+// Asistente de la página pública (información general y contacto).
+Route::post('/publico/asistente', [AsistenteController::class, 'publico'])->middleware('throttle:20,1');
 
 // Eventos de la pasarela Wompi (PSE): sin sesión, firmados con el secreto de eventos.
 Route::post('/publico/wompi/eventos', [PagoEnLineaController::class, 'evento'])->middleware('throttle:60,1');
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', LimitarTokenAsistente::class])->group(function () {
+    // Asistente del panel: responde según el rol; el agente de n8n consulta datos por /asistente/herramienta.
+    Route::post('/asistente', [AsistenteController::class, 'panel'])->middleware('throttle:30,1');
+    Route::post('/asistente/herramienta', [AsistenteController::class, 'herramienta'])->name('asistente.herramienta')->middleware('throttle:60,1');
 
     Route::post('/cerrar-sesion', [AutenticacionController::class, 'cerrarSesion']);
     Route::get('/perfil', [AutenticacionController::class, 'perfil']);
@@ -219,6 +228,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/pagos-en-linea/confirmar', [PagoEnLineaController::class, 'confirmar'])->middleware('throttle:30,1');
 
     Route::get('/checklist/items', [PlanillaController::class, 'catalogo']);
+    // Planilla de asistencia técnica: plantilla editable (administrador) y planillas de cada visita.
+    Route::get('/planilla/plantilla', [PlantillaPlanillaController::class, 'index']);
+    Route::post('/planilla/secciones', [PlantillaPlanillaController::class, 'guardarSeccion']);
+    Route::patch('/planilla/secciones/{seccion}', [PlantillaPlanillaController::class, 'actualizarSeccion']);
+    Route::delete('/planilla/secciones/{seccion}', [PlantillaPlanillaController::class, 'eliminarSeccion']);
+    Route::post('/planilla/items', [PlantillaPlanillaController::class, 'guardarItem']);
+    Route::patch('/planilla/items/{item}', [PlantillaPlanillaController::class, 'actualizarItem']);
+    Route::delete('/planilla/items/{item}', [PlantillaPlanillaController::class, 'eliminarItem']);
+    Route::post('/planilla/restablecer', [PlantillaPlanillaController::class, 'restablecer']);
+    Route::get('/equipos/{equipo}/visitas', [VisitaTecnicaController::class, 'index']);
+    Route::post('/equipos/{equipo}/visitas', [VisitaTecnicaController::class, 'store'])->middleware('throttle:20,1');
+    Route::get('/visitas/{visita}/pdf', [VisitaTecnicaController::class, 'pdf']);
     Route::get('/ordenes/{orden}/planilla', [PlanillaController::class, 'show']);
     Route::put('/ordenes/{orden}/planilla', [PlanillaController::class, 'guardar']);
     Route::post('/ordenes/{orden}/planilla/fotos', [PlanillaController::class, 'agregarFoto']);

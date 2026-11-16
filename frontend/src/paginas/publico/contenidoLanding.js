@@ -44,7 +44,7 @@ export const HERO = {
   botonPrincipal: 'Solicitar demo',
   botonSecundario: 'Ver funciones',
   cifras: [
-    { valor: '48', texto: 'ítems de checklist por visita' },
+    { valor: '45', texto: 'actividades en la planilla de cada visita' },
     { valor: '24/7', texto: 'reporte de emergencias' },
     { valor: '1 QR', texto: 'único por ascensor' },
   ],

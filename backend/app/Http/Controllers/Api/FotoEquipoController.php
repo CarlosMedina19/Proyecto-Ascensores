@@ -10,7 +10,7 @@ use App\Models\FotoEquipo;
 use App\Services\FotoEquipoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Fotos del ascensor (máximo 3).
@@ -39,16 +39,12 @@ class FotoEquipoController extends Controller
             ->setStatusCode(201);
     }
 
-    public function archivo(Equipo $equipo, FotoEquipo $foto): BinaryFileResponse
+    public function archivo(Equipo $equipo, FotoEquipo $foto): StreamedResponse
     {
         $this->authorize('view', $equipo);
         abort_unless($foto->equipo_id === $equipo->id && $this->servicioFotos->existe($foto), 404);
 
-        return response()->file($this->servicioFotos->rutaAbsoluta($foto), [
-            'Content-Type' => $foto->tipo_mime,
-            'Cache-Control' => 'private, max-age=3600',
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+        return $this->servicioFotos->responder($foto);
     }
 
     public function destroy(Equipo $equipo, FotoEquipo $foto): JsonResponse

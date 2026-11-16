@@ -20,6 +20,7 @@ import {
 import { useAutenticacion } from '../../contexto/AutenticacionContexto';
 import { useTema } from '../../hooks/useTema';
 import { Logo } from '../../componentes/Marca';
+import ChatAsistente from '../../componentes/ChatAsistente';
 import { APP_MOVIL, AUDIENCIAS, BENEFICIOS, CONTACTO, CTA, FUNCIONES, HERO, INSIGNIAS_HERO, NAVEGACION, PASOS, PIE, PLANES, PREGUNTAS, PROBLEMAS, RECORRIDO, SEO } from './contenidoLanding';
 import './landing.css';
 
@@ -481,6 +482,12 @@ export default function Landing() {
         </div>
         <p className="landing-contenedor landing-pie__derechos">© {new Date().getFullYear()} SIGMA. Todos los derechos reservados.</p>
       </footer>
+      <ChatAsistente
+        modo="publico"
+        titulo="Asistente SIGMA"
+        saludo="Hola, soy el asistente de SIGMA. Le cuento qué hace el sistema, cómo funciona la app, el plan y cómo contactarnos."
+        sugerencias={['¿Qué hace SIGMA?', '¿Cómo funciona la app?', '¿Cuánto cuesta?', 'Quiero una demostración']}
+      />
     </div>
   );
 }

@@ -161,9 +161,10 @@ class _PantallaPlanillaState extends State<PantallaPlanilla> {
     }
 
     final hechos = items.where((i) => _valor(i.id).completo).length;
+    final secciones = seccionesDe(items);
 
     return DefaultTabController(
-      length: nombresSeccion.length + 1,
+      length: secciones.length + 1,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Planilla · $hechos/${items.length}'),
@@ -171,7 +172,7 @@ class _PantallaPlanillaState extends State<PantallaPlanilla> {
             isScrollable: true,
             tabAlignment: TabAlignment.start,
             tabs: [
-              for (final entrada in nombresSeccion.entries)
+              for (final entrada in secciones.entries)
                 Tab(
                   text:
                       '${entrada.value} ${items.where((i) => i.seccion == entrada.key && _valor(i.id).completo).length}/${items.where((i) => i.seccion == entrada.key).length}',
@@ -194,7 +195,7 @@ class _PantallaPlanillaState extends State<PantallaPlanilla> {
             : null,
         body: TabBarView(
           children: [
-            for (final seccion in nombresSeccion.keys)
+            for (final seccion in secciones.keys)
               ListView(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
                 children: [

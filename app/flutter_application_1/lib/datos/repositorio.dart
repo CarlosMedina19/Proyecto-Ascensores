@@ -1,4 +1,5 @@
 import 'cliente_api.dart';
+import '../estado/visitas.dart';
 import 'modelos.dart';
 
 /// Acceso a los recursos de la API usados por la app móvil.
@@ -106,6 +107,15 @@ class Repositorio {
             }))['datos']
             as Map<String, dynamic>,
       );
+
+  // Planilla de asistencia técnica de la visita (la plantilla la edita el administrador en el panel).
+  Future<List<SeccionPlanilla>> plantillaPlanilla() async => (((await api.obtener('/planilla/plantilla'))['datos'] as List?) ?? const [])
+      .map((s) => SeccionPlanilla.desdeJson(s as Map<String, dynamic>))
+      .toList();
+
+  /// Envía la planilla diligenciada; el servidor genera el PDF y devuelve el número de la planilla.
+  Future<Map<String, dynamic>> registrarVisita(int equipoId, Map<String, Object?> datos) async =>
+      (await api.crear('/equipos/$equipoId/visitas', datos))['datos'] as Map<String, dynamic>;
 
   // Fase 4 (RF-030 a RF-039): planilla, fotos, firmas y correctivo derivado
   Future<List<ItemChecklist>> catalogoChecklist() async => (((await api.obtener('/checklist/items'))['datos'] as List?) ?? const [])

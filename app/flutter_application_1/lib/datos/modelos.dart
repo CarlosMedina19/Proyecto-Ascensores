@@ -650,22 +650,18 @@ class OrdenTrabajo {
 
 // ---------------------------------------------------------------- Fase 4
 
-const nombresSeccion = {
-  'cuarto_maquinas': 'Cuarto de máquinas',
-  'cabina': 'Cabina',
-  'contrapeso': 'Contrapeso',
-  'puertas': 'Puertas',
-  'hueco': 'Hueco y recorrido',
-  'foso': 'Foso',
-};
+/// Secciones de la planilla en el orden del catálogo: clave → nombre (las edita el administrador).
+Map<String, String> seccionesDe(Iterable<ItemChecklist> items) => {for (final i in items) i.seccion: i.seccionNombre};
 
-/// RF-031 a RF-036: componente que se revisa en la planilla.
+/// RF-031 a RF-036: actividad que se revisa en la planilla.
 class ItemChecklist {
-  ItemChecklist({required this.id, required this.seccion, required this.codigo, required this.nombre, this.critico = false});
+  ItemChecklist({required this.id, required this.seccion, required this.codigo, required this.nombre, this.critico = false, String? seccionNombre})
+    : seccionNombre = seccionNombre ?? seccion;
 
   factory ItemChecklist.desdeJson(Map<String, dynamic> json) => ItemChecklist(
     id: _entero(json['id'])!,
     seccion: json['seccion'] as String? ?? '',
+    seccionNombre: json['seccion_nombre'] as String?,
     codigo: json['codigo'] as String? ?? '',
     nombre: json['nombre'] as String? ?? '',
     critico: json['critico'] as bool? ?? false,
@@ -673,6 +669,7 @@ class ItemChecklist {
 
   final int id;
   final String seccion;
+  final String seccionNombre;
   final String codigo;
   final String nombre;
   final bool critico;

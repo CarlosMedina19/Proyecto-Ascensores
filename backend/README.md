@@ -105,6 +105,42 @@ cabecera `X-Api-Key` (`ANALITICA_CLAVE`); el servicio no publica puertos ni toca
 cd ../analitica && pip install -r requirements-pruebas.txt && python -m pytest -q pruebas   # pruebas del servicio
 ```
 
+## Planilla de asistencia técnica
+
+- El técnico la diligencia en cada visita desde la app (**Registrar visita** en la ficha del ascensor): datos del
+  edificio, fecha, hora de entrada y salida, tipo (preventivo, correctivo o reparación), cada actividad en B, R, M o
+  N.A. (R y M con observación), observaciones, repuestos y firmas con C.C. de quien recibe y del técnico. Funciona sin
+  conexión y al enviarla el servidor genera el PDF con el formato de la planilla en papel (`/visitas/{id}/pdf`), lo
+  deja en la ficha del ascensor y avisa al administrador y al cliente.
+- La plantilla (secciones y actividades) la edita el administrador en **Configuración → Planilla técnica**: agregar,
+  renombrar, ordenar, marcar como crítica o quitar. Lo que ya se usó queda inactivo para no alterar las planillas
+  diligenciadas; cada planilla guarda su propia copia de la plantilla. «Restablecer original» vuelve al formato base.
+
+## Object Storage (archivos)
+
+Fotos, firmas, certificados, informes y planillas en PDF se guardan en el disco que indique `SIGMA_DISCO_ARCHIVOS`:
+`objetos` (Object Storage S3 compatible, bucket de SIGMA, prefijo `produccion` o `desarrollo`) o `local`. La base de
+datos guarda solo la clave del objeto y los archivos siempre se sirven por la API, que revisa permisos (el bucket es
+privado). Para copiar al bucket los archivos que ya estaban en el disco local (no borra los originales; repetirlo es
+seguro):
+
+```sh
+docker exec sigma_backend php artisan sigma:migrar-archivos --simular   # muestra qué copiaría
+docker exec sigma_backend php artisan sigma:migrar-archivos             # copia y deja un reporte JSON
+```
+
+## Asistentes con IA (n8n)
+
+- **Página pública**: información general de SIGMA y contacto (`POST /api/v1/publico/asistente`).
+- **Panel**: responde según el rol (`POST /api/v1/asistente`): búsquedas, órdenes activas, emergencias, próximos
+  mantenimientos, estado de un ascensor, cartera y PDF (informe de orden, contrato, indicadores, planilla de visita).
+  El administrador tiene todo; los demás roles, solo lo que sus permisos permiten.
+- En n8n hay dos flujos: **SIGMA** (panel) y **SIGMA Landing**. Laravel los llama con la cabecera `X-Sigma-Clave`.
+  El agente del panel consulta datos con un token temporal (10 min) del mismo usuario que solo abre
+  `/asistente/herramienta`, así Laravel sigue aplicando los permisos. El modelo es DeepSeek: al tener la API, se crea
+  la credencial en n8n, se elige en el nodo «DeepSeek Chat Model» de ambos flujos, se activan y se pone
+  `ASISTENTE_N8N_ACTIVO=true`. Mientras tanto (o si n8n falla) responde el motor local de SIGMA.
+
 ## Tiempo real y ubicación de técnicos
 
 - **WebSocket con Laravel Reverb** (contenedor `sigma_reverb`), solo para **Auditoría** (canal privado
