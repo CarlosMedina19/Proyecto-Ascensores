@@ -1,0 +1,29 @@
+# Saltos de línea del repositorio.
+# El equipo trabaja en Windows, Linux y macOS: todos los archivos de texto se guardan
+# con LF, sin importar el sistema ni la configuración core.autocrlf de cada persona.
+# Así se evitan los cambios "fantasma" de línea completa en los commits y los scripts
+# que fallan dentro de Docker por tener CRLF.
+# (backend/.gitattributes agrega sus propias reglas para Laravel.)
+* text=auto eol=lf
+
+# Scripts de Windows: necesitan CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Archivos binarios: nunca se convierten ni se comparan como texto.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.xlsx binary
+*.jar binary
+*.keystore binary
+*.jks binary
