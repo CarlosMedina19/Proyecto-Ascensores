@@ -81,7 +81,7 @@ class MigrarArchivosObjetos extends Command
         Storage::disk('local')->put($archivo, json_encode($reporte, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
         $this->table(['Copiados', 'Ya estaban', 'Sin archivo local', 'Fallidos'], [[count($reporte['copiados']), count($reporte['omitidos']), count($reporte['faltantes']), count($reporte['fallidos'])]]);
-        $this->line("Reporte: ".Storage::disk('local')->path($archivo));
+        $this->line('Reporte: '.Storage::disk('local')->path($archivo));
 
         return $reporte['fallidos'] === [] ? self::SUCCESS : self::FAILURE;
     }
