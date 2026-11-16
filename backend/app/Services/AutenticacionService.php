@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Models\Usuario;
+use App\Notifications\AlertaSeguridadNotification;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -130,8 +132,38 @@ class AutenticacionService
             ];
 
             RegistroAuditoriaService::registrar('cuenta_bloqueada', $usuario, ['intentos' => $intentos], $usuario->id, 'autenticacion');
+            $usuario->forceFill($datos)->save();
+            $this->avisarCuentaBloqueada($usuario, $intentos);
+
+            return;
         }
 
         $usuario->forceFill($datos)->save();
+    }
+
+    /**
+     * Avisa a los administradores y al dueño de la cuenta (campana del panel y/o correo, según la
+     * configuración). Un fallo al avisar no impide responder al intento de inicio de sesión.
+     */
+    private function avisarCuentaBloqueada(Usuario $usuario, int $intentos): void
+    {
+        try {
+            $destinatarios = Usuario::query()
+                ->where('activo', true)
+                ->whereHas('rol', fn ($rol) => $rol->where('nombre', 'administrador'))
+                ->get()
+                ->push($usuario)
+                ->unique('id');
+
+            app(NotificacionService::class)->enviar(
+                $destinatarios,
+                new AlertaSeguridadNotification($usuario, $intentos, (int) config('sigma.sesion.minutos_bloqueo'), request()?->ip()),
+                'cuenta_bloqueada_'.now()->format('YmdHisv'),
+                'usuario',
+                $usuario->id,
+            );
+        } catch (\Throwable $e) {
+            Log::warning('No fue posible avisar el bloqueo de la cuenta', ['usuario_id' => $usuario->id, 'error' => $e->getMessage()]);
+        }
     }
 }
