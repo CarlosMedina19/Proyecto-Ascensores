@@ -30,3 +30,5 @@ Schedule::command('sigma:alertar-certificaciones')->dailyAt('07:10')->withoutOve
 Schedule::command('sigma:procesar-vigencias')->dailyAt('00:15')->withoutOverlapping();
 Schedule::command('sigma:enviar-avisos')->dailyAt('07:00')->withoutOverlapping();
 Schedule::command('queue:prune-failed --hours=720')->weekly();
+// Borra de la base los tokens de sesión vencidos (config/sanctum.php → expiration).
+Schedule::command('sanctum:prune-expired --hours=24')->dailyAt('03:30');
