@@ -1,5 +1,7 @@
-fastapi==0.115.6
-uvicorn[standard]==0.32.1
+fastapi==0.163.1
+# Dependencia de FastAPI fijada para no instalar versiones con vulnerabilidades conocidas.
+starlette==1.10.0
+uvicorn[standard]==0.54.0
 pydantic==2.10.4
 pandas==2.2.3
 numpy==2.2.1
