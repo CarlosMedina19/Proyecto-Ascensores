@@ -1,0 +1,94 @@
+# Dependabot revisa cada semana las dependencias de cada parte del proyecto y abre
+# Pull Requests cuando hay versiones nuevas o correcciones de seguridad.
+# Las actualizaciones de una misma parte se agrupan en un solo PR para no llenar el
+# repositorio de PRs; las de seguridad llegan aparte y lo antes posible.
+# Cada PR pasa por las pruebas de .github/workflows/pruebas.yml antes de unirse.
+version: 2
+
+updates:
+  # API (Laravel / PHP)
+  - package-ecosystem: composer
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: America/Bogota
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(backend)"
+    groups:
+      backend:
+        update-types: [minor, patch]
+
+  # Panel web (React / Vite)
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: America/Bogota
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(frontend)"
+    groups:
+      frontend:
+        update-types: [minor, patch]
+
+  # Analítica (Python / FastAPI)
+  - package-ecosystem: pip
+    directory: /analitica
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: America/Bogota
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(analitica)"
+    groups:
+      analitica:
+        update-types: [minor, patch]
+
+  # App móvil (Flutter / Dart)
+  - package-ecosystem: pub
+    directory: /app/flutter_application_1
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: America/Bogota
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(app)"
+    groups:
+      app:
+        update-types: [minor, patch]
+
+  # Imágenes base de Docker (php, python). Cambiar de versión de PHP o de Python
+  # es una decisión del equipo, así que aquí solo se proponen parches.
+  - package-ecosystem: docker
+    directories:
+      - /backend
+      - /analitica
+    schedule:
+      interval: monthly
+      timezone: America/Bogota
+    commit-message:
+      prefix: "deps(docker)"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  # Acciones usadas en GitHub Actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+      timezone: America/Bogota
+    commit-message:
+      prefix: "deps(ci)"
+    groups:
+      acciones:
+        patterns: ["*"]
