@@ -48,7 +48,7 @@ Route::get('/verificar-correo/{usuario}/{hash}', [AutenticacionController::class
 Route::get('/publico/ascensores/{codigo}', [ServicioController::class, 'ascensorPublico'])->middleware('throttle:30,1');
 Route::post('/publico/ascensores/{codigo}/reportes', [ServicioController::class, 'reportarPorQr'])->middleware('throttle:reporte-qr');
 // Asistente de la página pública (información general y contacto).
-Route::post('/publico/asistente', [AsistenteController::class, 'publico'])->middleware('throttle:20,1');
+Route::post('/publico/asistente', [AsistenteController::class, 'publico'])->middleware('throttle:asistente-publico');
 
 // Eventos de la pasarela Wompi (PSE): sin sesión, firmados con el secreto de eventos.
 Route::post('/publico/wompi/eventos', [PagoEnLineaController::class, 'evento'])->middleware('throttle:60,1');

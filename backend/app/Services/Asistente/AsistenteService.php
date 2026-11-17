@@ -40,7 +40,7 @@ class AsistenteService
     public function publico(string $mensaje, string $sesion): array
     {
         $configuracion = config('services.asistente');
-        if (($configuracion['n8n_activo'] ?? false) && filled($configuracion['url_landing'] ?? null)) {
+        if (($configuracion['n8n_activo'] ?? false) && filled($configuracion['url_landing'] ?? null) && $this->hayCupoPublico($configuracion)) {
             try {
                 $r = Http::withHeaders(['X-Sigma-Clave' => (string) $configuracion['clave']])->acceptJson()
                     ->timeout((int) ($configuracion['tiempo'] ?? 30))
@@ -55,6 +55,27 @@ class AsistenteService
         }
 
         return $this->localPublico($mensaje) + ['origen' => 'local'];
+    }
+
+    /**
+     * Cupo diario del asistente público hacia la IA: cada pregunta cuesta y la página no pide sesión.
+     * El contador se reinicia cada día; al agotarse responde el motor local.
+     */
+    private function hayCupoPublico(array $configuracion): bool
+    {
+        $limite = (int) ($configuracion['limite_diario_publico'] ?? 0);
+        if ($limite <= 0) {
+            return true;
+        }
+
+        $clave = 'asistente:publico:'.now()->toDateString();
+        Cache::add($clave, 0, now()->endOfDay());
+        $usadas = Cache::increment($clave);
+        if ($usadas === $limite + 1) {
+            Log::warning('Asistente público: se alcanzó el tope diario de preguntas a la IA', ['limite' => $limite]);
+        }
+
+        return $usadas <= $limite;
     }
 
     // ---------- n8n ----------
