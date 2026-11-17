@@ -9,6 +9,7 @@ import { useFormulario } from '../hooks/useFormulario';
 import { Alerta, Cargando, EstadoVacio, Insignia, Modal, Tarjeta } from './Basicos';
 import { CampoArea, CampoSelector, CampoTexto } from './Campos';
 import { fecha, fechaHora, fechaIso } from '../utilidades/formato';
+import { documentoImpresionQr } from '../utilidades/html';
 import { ESTADOS_CERTIFICACION, ESTADOS_EMERGENCIA, RESULTADOS_CERTIFICACION, TIPOS_EMERGENCIA, plazoCertificacion } from '../utilidades/servicio';
 import { ModalReportarEmergencia } from '../paginas/servicio/Emergencias';
 
@@ -206,11 +207,18 @@ export function CodigoQrAscensor({ equipo }) {
   function imprimir() {
     const ventana = window.open('', '_blank', 'width=420,height=600');
     if (!ventana) return;
-    ventana.document.write(`<!doctype html><title>QR ${equipo.codigo}</title>
-      <style>@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@600&family=Geist:wght@400&display=swap');body{font-family:'Geist',system-ui,sans-serif;text-align:center;padding:24px}svg{width:260px;height:260px}h1{font:600 22px/1.2 'Barlow',system-ui,sans-serif;letter-spacing:-0.01em;margin:12px 0 4px}p{margin:4px 0;color:#333}</style>
-      ${svg}<h1>¿Falla en el ascensor ${equipo.codigo}?</h1><p>Escanee el código para reportarla las 24 horas.</p><p>${qr.url}</p>
-      <script>window.onload=()=>window.print()</script>`);
+    ventana.document.write(documentoImpresionQr({ codigo: equipo.codigo, url: qr.url, svg }));
+    // Se imprime al terminar de cargar (fuentes incluidas), sin <script> dentro de la ventana.
+    let impreso = false;
+    const imprimirUnaVez = () => {
+      if (impreso) return;
+      impreso = true;
+      ventana.focus();
+      ventana.print();
+    };
+    ventana.addEventListener('load', imprimirUnaVez, { once: true });
     ventana.document.close();
+    if (ventana.document.readyState === 'complete') imprimirUnaVez();
   }
 
   if (qr === false) return null;
