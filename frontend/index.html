@@ -14,13 +14,8 @@
       href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600&family=Barlow+Semi+Condensed:wght@600&family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Michroma&display=swap"
       rel="stylesheet"
     />
-    <script>
-      // Aplica el tema guardado antes de pintar para evitar un destello.
-      try {
-        const tema = localStorage.getItem('sigma.tema');
-        if (tema) document.documentElement.setAttribute('data-tema', tema);
-      } catch (e) {}
-    </script>
+    <!-- Tema guardado antes de pintar (archivo aparte para cumplir la CSP sin scripts en línea). -->
+    <script src="/tema-inicial.js"></script>
     <title>SIGMA · Software de gestión y mantenimiento de ascensores</title>
   </head>
   <body>

@@ -14,5 +14,6 @@ RUN npm run build
 
 FROM nginx:1.27-alpine
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/seguridad.conf /etc/nginx/snippets/seguridad.conf
 COPY --from=compilacion /app/dist /usr/share/nginx/html
 EXPOSE 80
