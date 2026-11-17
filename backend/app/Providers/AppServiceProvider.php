@@ -99,10 +99,15 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('iniciar-sesion', function (Request $solicitud) {
             $correo = Str::lower((string) $solicitud->input('correo'));
+            $respuesta = fn () => response()->json(['mensaje' => 'Demasiados intentos de inicio de sesión. Espere un minuto.'], 429);
 
-            return Limit::perMinute(5)->by($correo.'|'.$solicitud->ip())->response(
-                fn () => response()->json(['mensaje' => 'Demasiados intentos de inicio de sesión. Espere un minuto.'], 429)
-            );
+            return [
+                // Por cuenta: 5 intentos por minuto para un mismo correo desde una misma dirección.
+                Limit::perMinute(5)->by($correo.'|'.$solicitud->ip())->response($respuesta),
+                // Por dirección: evita probar contraseñas en muchas cuentas distintas desde una misma IP
+                // (relleno de credenciales), que el límite por correo no detiene.
+                Limit::perMinute(20)->by('ip|'.$solicitud->ip())->response($respuesta),
+            ];
         });
 
         RateLimiter::for('restablecer-contrasena', function (Request $solicitud) {
