@@ -1,6 +1,6 @@
 # Imagen de producción de la API de SIGMA: Apache + PHP 8.2 con el código y las dependencias adentro.
 # (El Dockerfile normal es para desarrollo: monta el código como volumen y usa "php artisan serve".)
-FROM php:8.2-apache
+FROM php:8.3-apache
 
 # Extensiones: PostgreSQL, zip (Excel), gd (fotos y firmas en el informe PDF) , OPcache y pcntl (señales del servidor WebSocket Reverb).
 RUN apt-get update && apt-get install -y --no-install-recommends \

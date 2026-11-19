@@ -4,8 +4,8 @@ namespace App\Providers;
 
 use App\Models\AsignacionPlan;
 use App\Models\Cliente;
-use App\Models\Contrato;
 use App\Models\Conjunto;
+use App\Models\Contrato;
 use App\Models\Edificio;
 use App\Models\Equipo;
 use App\Models\MantenimientoProgramado;
@@ -18,8 +18,8 @@ use App\Models\Tecnico;
 use App\Models\Usuario;
 use App\Policies\AsignacionPlanPolicy;
 use App\Policies\ClientePolicy;
-use App\Policies\ContratoPolicy;
 use App\Policies\ConjuntoPolicy;
+use App\Policies\ContratoPolicy;
 use App\Policies\EdificioPolicy;
 use App\Policies\EquipoPolicy;
 use App\Policies\MantenimientoProgramadoPolicy;
@@ -30,8 +30,14 @@ use App\Policies\RegistroAuditoriaPolicy;
 use App\Policies\RolPolicy;
 use App\Policies\TecnicoPolicy;
 use App\Policies\UsuarioPolicy;
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Dedoc\Scramble\Support\Generator\Server;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -132,6 +138,17 @@ class AppServiceProvider extends ServiceProvider
 
         // Asistente de la página pública (sin sesión; cada pregunta puede ir a la IA, que tiene costo).
         // Una conversación real no pasa de unos pocos mensajes por minuto.
+        // Límite general de la API (300 solicitudes por minuto por usuario, o por IP sin sesión). El panel
+        // usa una fracción de eso; frena scripts con error o un token robado que intente saturar el servidor.
+        RateLimiter::for('api', function (Request $solicitud) {
+            return Limit::perMinute((int) config('sigma.limite_api_por_minuto', 300))
+                ->by($solicitud->user()?->id ? 'api-usuario|'.$solicitud->user()->id : 'api-ip|'.$solicitud->ip())
+                ->response(fn () => response()->json(['mensaje' => 'Demasiadas solicitudes seguidas. Espere un momento.'], 429));
+        });
+
+        // /up (chequeo de salud de Docker y del monitor externo) también comprueba la base de datos.
+        Event::listen(DiagnosingHealth::class, fn () => DB::select('select 1'));
+
         RateLimiter::for('asistente-publico', function (Request $solicitud) {
             $respuesta = fn () => response()->json(['mensaje' => 'Ha enviado muchos mensajes seguidos. Intente de nuevo en unos minutos.'], 429);
 
@@ -149,13 +166,13 @@ class AppServiceProvider extends ServiceProvider
      */
     private function documentacionApi(): void
     {
-        if (! class_exists(\Dedoc\Scramble\Scramble::class)) {
+        if (! class_exists(Scramble::class)) {
             return;
         }
 
         // Scramble lee su configuración antes que este proveedor: título, versión y servidores se fijan
         // directamente sobre el documento generado.
-        \Dedoc\Scramble\Scramble::configure()->withDocumentTransformers(function ($documento) {
+        Scramble::configure()->withDocumentTransformers(function ($documento) {
             $documento->info->title = 'SIGMA API';
             $documento->info->setVersion('1.1');
             $documento->info->setDescription('API de SIGMA (Sistema Integral de Gestión y Mantenimiento de Ascensores). '
@@ -163,9 +180,9 @@ class AppServiceProvider extends ServiceProvider
                 .'exigen el token que entrega POST /v1/iniciar-sesion en el encabezado Authorization: Bearer. '
                 .'Cada rol solo accede a las rutas que sus permisos le permiten.');
             $documento->servers = [];
-            $documento->addServer(\Dedoc\Scramble\Support\Generator\Server::make('https://sigma.proyectoscampus.top/api')->setDescription('Producción'));
-            $documento->addServer(\Dedoc\Scramble\Support\Generator\Server::make('http://127.0.0.1:8000/api')->setDescription('Desarrollo'));
-            $documento->secure(\Dedoc\Scramble\Support\Generator\SecurityScheme::http('bearer'));
+            $documento->addServer(Server::make('https://sigma.proyectoscampus.top/api')->setDescription('Producción'));
+            $documento->addServer(Server::make('http://127.0.0.1:8000/api')->setDescription('Desarrollo'));
+            $documento->secure(SecurityScheme::http('bearer'));
         });
     }
 }

@@ -132,13 +132,23 @@ class PruebasTiempoRealAnaliticaTest extends TestCase
     {
         $rolAdmin = $this->administrador->rol_id;
         $this->getJson('/api/v1/roles/credenciales')->assertOk()->assertJsonFragment(['rol_id' => $rolAdmin, 'correo' => $this->administrador->correo]);
-        $this->getJson("/api/v1/roles/{$rolAdmin}/credencial")->assertOk()->assertJsonPath('datos.contrasena', 'AdminClave123');
+        // Hay que confirmar la contraseña del administrador: una sesión robada no basta.
+        $this->postJson("/api/v1/roles/{$rolAdmin}/credencial")->assertStatus(422);
+        $this->postJson("/api/v1/roles/{$rolAdmin}/credencial", ['password' => 'otra-clave'])->assertStatus(422)->assertJsonValidationErrors('password', 'errores');
+        $this->assertDatabaseHas('registros_auditoria', ['accion' => 'credencial_rechazada']);
+        $this->postJson("/api/v1/roles/{$rolAdmin}/credencial", ['password' => 'AdminClave123'])->assertOk()->assertJsonPath('datos.contrasena', 'AdminClave123');
         $this->assertDatabaseHas('registros_auditoria', ['accion' => 'credencial_consultada']);
         // La copia cifrada nunca sale en las respuestas de usuarios.
         $this->assertArrayNotHasKey('contrasena_cifrada', $this->administrador->fresh()->toArray());
 
         $this->actingAs($this->tecnico, 'sanctum');
         $this->getJson('/api/v1/roles/credenciales')->assertForbidden();
-        $this->getJson("/api/v1/roles/{$rolAdmin}/credencial")->assertForbidden();
+        $this->postJson("/api/v1/roles/{$rolAdmin}/credencial", ['password' => 'Clave1234'])->assertForbidden();
+
+        // Se puede desactivar en la instalación de un cliente real.
+        config(['sigma.mostrar_credenciales' => false]);
+        $this->actingAs($this->administrador, 'sanctum');
+        $this->getJson('/api/v1/roles/credenciales')->assertOk()->assertJsonPath('habilitado', false)->assertJsonCount(0, 'datos');
+        $this->postJson("/api/v1/roles/{$rolAdmin}/credencial", ['password' => 'AdminClave123'])->assertNotFound();
     }
 }

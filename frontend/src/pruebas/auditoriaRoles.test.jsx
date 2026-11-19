@@ -78,21 +78,26 @@ describe('credenciales en roles y permisos', () => {
   const rutas = (rol) => ({
     '/perfil': perfil(rol),
     '/roles': { datos: [{ id: 2, nombre: 'tecnico', descripcion: 'Técnicos', permisos: [], usuarios_count: 1 }] },
-    '/roles/credenciales': { datos: [{ rol_id: 2, correo: 'tecnicosigma@gmail.com', tiene_contrasena: true }] },
-    '/roles/2/credencial': { datos: { rol_id: 2, correo: 'tecnicosigma@gmail.com', contrasena: 'tecnicosigma123' } },
+    '/roles/credenciales': { datos: [{ rol_id: 2, correo: 'tecnico@sigma.test', tiene_contrasena: true }] },
+    '/roles/2/credencial': { datos: { rol_id: 2, correo: 'tecnico@sigma.test', contrasena: 'Clave-ficticia-9' } },
   });
 
   it('el administrador ve el correo y la contraseña oculta hasta tocar el ojo', async () => {
     simularApi(rutas('administrador'));
     montar(<ListaRoles />);
-    expect(await screen.findByText('tecnicosigma@gmail.com')).toBeInTheDocument();
-    expect(screen.queryByText('tecnicosigma123')).not.toBeInTheDocument();
+    expect(await screen.findByText('tecnico@sigma.test')).toBeInTheDocument();
+    expect(screen.queryByText('Clave-ficticia-9')).not.toBeInTheDocument();
     expect(screen.getByText('••••••••')).toBeInTheDocument();
 
+    // Ver la contraseña exige confirmar la del administrador.
     await userEvent.click(screen.getByRole('button', { name: 'Mostrar contraseña' }));
-    expect(await screen.findByText('tecnicosigma123')).toBeInTheDocument();
+    expect(await screen.findByText('Confirme su contraseña')).toBeInTheDocument();
+    expect(screen.queryByText('Clave-ficticia-9')).not.toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Su contraseña'), 'mi-clave-de-admin');
+    await userEvent.click(screen.getByRole('button', { name: 'Ver contraseña' }));
+    expect(await screen.findByText('Clave-ficticia-9')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Ocultar contraseña' }));
-    expect(screen.queryByText('tecnicosigma123')).not.toBeInTheDocument();
+    expect(screen.queryByText('Clave-ficticia-9')).not.toBeInTheDocument();
   });
 
   it('otros roles no ven las columnas de credenciales', async () => {

@@ -1,4 +1,4 @@
-FROM php:8.2-cli
+FROM php:8.3-cli
 
 # gd: imágenes (fotos y firmas) dentro del informe PDF de la fase 4.
 RUN apt-get update && apt-get install -y \

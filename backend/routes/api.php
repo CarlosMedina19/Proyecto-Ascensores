@@ -68,7 +68,7 @@ Route::middleware(['auth:sanctum', LimitarTokenAsistente::class])->group(functio
     // RF-002: roles y permisos.
     Route::get('/roles', [RolController::class, 'index']);
     Route::get('/roles/credenciales', [RolController::class, 'credenciales']);
-    Route::get('/roles/{rol}/credencial', [RolController::class, 'credencial'])->middleware('throttle:30,1');
+    Route::post('/roles/{rol}/credencial', [RolController::class, 'credencial'])->middleware('throttle:10,1');
     Route::get('/roles/{rol}', [RolController::class, 'show']);
     Route::post('/roles', [RolController::class, 'store']);
     Route::patch('/roles/{rol}', [RolController::class, 'update']);

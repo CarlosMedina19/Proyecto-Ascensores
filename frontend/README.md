@@ -19,6 +19,10 @@ La API debe estar corriendo (ver `../backend`). Para producción: `npm run build
 npm test
 ```
 
+En Windows, si Vitest responde «failed to find the current suite» en todos los archivos, la terminal abrió la
+carpeta con la unidad en minúscula (`c:\…`): ábrala con `C:\…` (por ejemplo `cd C:\Users\…\frontend`) y vuelva a
+ejecutar las pruebas.
+
 ## Estructura
 
 ```

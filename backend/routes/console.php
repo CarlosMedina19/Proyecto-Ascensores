@@ -30,5 +30,10 @@ Schedule::command('sigma:alertar-certificaciones')->dailyAt('07:10')->withoutOve
 Schedule::command('sigma:procesar-vigencias')->dailyAt('00:15')->withoutOverlapping();
 Schedule::command('sigma:enviar-avisos')->dailyAt('07:00')->withoutOverlapping();
 Schedule::command('queue:prune-failed --hours=720')->weekly();
+// Vigilancia de la operación: cola, servicios, almacenamiento, respaldo remoto y disco.
+Schedule::command('sigma:vigilar')->everyFiveMinutes()->withoutOverlapping();
+// Respaldo fuera del servidor: el volcado de las 03:00 se sube al Object Storage (y se reintenta en la tarde).
+Schedule::command('sigma:respaldar-remoto')->twiceDaily(4, 16)->withoutOverlapping()
+    ->when(fn () => (bool) config('sigma.respaldos.vigilar'));
 // Borra de la base los tokens de sesión vencidos (config/sanctum.php → expiration).
 Schedule::command('sanctum:prune-expired --hours=24')->dailyAt('03:30');

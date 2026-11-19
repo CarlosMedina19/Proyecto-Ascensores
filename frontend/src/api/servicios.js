@@ -25,7 +25,7 @@ export const roles = {
   permisos: () => api.obtener('/permisos'),
   // Solo el administrador: correo de la cuenta principal de cada rol y, al pedirla, su contraseña.
   credenciales: () => api.obtener('/roles/credenciales'),
-  credencial: (id) => api.obtener(`/roles/${id}/credencial`),
+  credencial: (id, password) => api.crear(`/roles/${id}/credencial`, { password }),
 };
 
 // RF-003 Usuarios

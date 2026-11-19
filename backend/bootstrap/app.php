@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EncabezadosSeguridad;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -32,8 +33,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // No hay página de ingreso en Laravel (la tiene el panel): sin sesión la API responde 401 en JSON
         // aunque la solicitud no pida JSON, en lugar de buscar la ruta «login».
         $middleware->redirectGuestsTo(fn () => null);
+        // Límite general de solicitudes en todas las rutas de la API (limitador «api», AppServiceProvider).
+        $middleware->throttleApi();
         // Encabezados de seguridad en todas las respuestas (API, archivos y /up).
-        $middleware->append(\App\Http\Middleware\EncabezadosSeguridad::class);
+        $middleware->append(EncabezadosSeguridad::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Toda la API responde en JSON y con mensajes en español.

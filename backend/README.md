@@ -163,9 +163,12 @@ externa `proxy`, envía `/api/*` y `/up` al backend y el resto al panel.
 
 ```sh
 cd /opt/apps/sigma/backend
-cp .env.produccion.example .env && chmod 600 .env    # completar claves
-docker compose -f docker-compose.prod.yml up -d --build
+cp .env.produccion.example .env && chmod 600 .env    # completar claves (solo la primera vez)
+sh scripts/desplegar.sh                              # respaldo, construcción, salud y reversión automática
 ```
+
+Cada contenedor de SIGMA tiene límite de memoria y registros de Docker con rotación (10 MB × 5). Backend,
+panel, analítica, WebSocket y base de datos tienen chequeo de salud (`docker ps` muestra `healthy`).
 
 Bloque de Caddy:
 
@@ -197,6 +200,63 @@ docker exec -i sigma_db pg_restore --clean --if-exists --no-owner -U "$DB_USERNA
 # Restaurar los archivos:
 docker run --rm -v sigma_archivos:/archivos -v "$PWD/respaldos":/r alpine tar -xzf /r/sigma_archivos_AAAAMMDD_HHMM.tar.gz -C /archivos
 ```
+
+Además, `sigma_scheduler` sube cada respaldo al Object Storage (`respaldos/`, 30 días) a las 4:00 y a las 16:00
+(`sigma:respaldar-remoto`). La restauración se probó el 19-nov-2026: el volcado del día restauró las 62 tablas
+con los mismos conteos que producción.
+
+## Operación y emergencias (runbook)
+
+**Alertas.** `sigma:vigilar` corre cada 5 minutos y avisa a los administradores en la campana (una vez por hora y
+por problema) y en el registro: trabajos fallidos, cola detenida, analítica u Object Storage sin respuesta,
+respaldo remoto atrasado (más de 30 h) o con error, y disco con menos del 10 % libre.
+
+```sh
+docker exec sigma_backend php artisan sigma:vigilar --sin-avisos   # estado actual, sin avisar
+docker ps --filter name=sigma_                                     # salud de cada contenedor
+docker logs sigma_backend --tail 100                               # salida reciente (también queue, scheduler…)
+docker exec sigma_backend ls storage/logs                          # registro diario (14 días, volumen sigma_registros)
+```
+
+**Cola detenida o trabajos fallidos.** `docker restart sigma_queue`; luego
+`docker exec sigma_backend php artisan queue:failed` y, corregida la causa, `php artisan queue:retry all`.
+
+**Despliegue fallido.** `scripts/desplegar.sh` vuelve solo a las imágenes anteriores si los chequeos de salud no
+pasan en 5 minutos. Reversión manual:
+
+```sh
+cd /opt/apps/sigma/backend
+for i in sigma-backend sigma-frontend sigma-analitica; do docker tag $i:anterior $i:latest; done
+docker compose -f docker-compose.prod.yml up -d --no-build
+```
+
+Si la versión fallida aplicó migraciones, restaure también la base con el respaldo que el script tomó antes de
+desplegar (lo imprime al terminar).
+
+**Restaurar la base.** Detenga lo que escribe, restaure y vuelva a levantar:
+
+```sh
+cd /opt/apps/sigma/backend
+docker compose -f docker-compose.prod.yml stop sigma_backend sigma_queue sigma_scheduler sigma_reverb
+docker exec -i sigma_db pg_restore --clean --if-exists --no-owner -U "$DB_USERNAME" -d "$DB_DATABASE" < respaldos/sigma_db_AAAAMMDD_HHMM.dump
+docker compose -f docker-compose.prod.yml up -d
+```
+
+**Servidor perdido.** En una VPS nueva: clonar el repositorio en `/opt/apps/sigma`, copiar el `.env` (guárdelo
+también fuera del servidor), levantar solo la base (`up -d sigma_db`), traer el último respaldo del Object
+Storage y restaurarlo como arriba:
+
+```sh
+# --entrypoint php: no migra ni siembra la base vacía antes de restaurarla.
+docker compose -f docker-compose.prod.yml run --rm --no-deps --entrypoint php sigma_backend artisan sigma:traer-respaldo --listar
+docker compose -f docker-compose.prod.yml run --rm --no-deps --entrypoint php -v "$PWD/respaldos:/var/www/html/storage/app/private/respaldos-descargados" sigma_backend artisan sigma:traer-respaldo
+```
+
+Los archivos (fotos, firmas, PDF) ya están en el Object Storage y no requieren restauración.
+
+**Rotar secretos.** Edite `backend/.env` (permisos 600), haga una copia `.env.respaldo-AAAAMMDD` y vuelva a desplegar.
+Si rota `APP_KEY`, las copias cifradas de contraseñas de «Roles y permisos» dejan de leerse (se regeneran al
+cambiar cada contraseña); los tokens de sesión siguen funcionando.
 
 ## Documentación de la API
 

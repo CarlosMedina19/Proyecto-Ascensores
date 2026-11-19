@@ -14,6 +14,27 @@ return [
         'minutos_bloqueo' => (int) env('SIGMA_MINUTOS_BLOQUEO', 15),
     ],
 
+    // Respaldos fuera del servidor: los volcados diarios (carpeta montada desde sigma_respaldos) se suben
+    // al Object Storage. La vigilancia avisa si el último respaldo remoto tiene más de 30 horas.
+    'respaldos' => [
+        'carpeta' => env('SIGMA_RUTA_RESPALDOS', storage_path('respaldos')),
+        'disco_remoto' => env('SIGMA_DISCO_RESPALDOS', 'objetos'),
+        'dias_remotos' => (int) env('SIGMA_DIAS_RESPALDO_REMOTO', 30),
+        'vigilar' => (bool) env('SIGMA_VIGILAR_RESPALDOS', false),
+    ],
+
+    // «Roles y permisos»: el administrador puede ver la contraseña de la cuenta principal de cada rol
+    // (confirmando la suya). En la instalación de un cliente real conviene desactivarlo.
+    'mostrar_credenciales' => (bool) env('SIGMA_MOSTRAR_CREDENCIALES', true),
+
+    // Vigilancia: porcentaje mínimo de disco libre antes de avisar a los administradores.
+    'vigilancia' => [
+        'disco_minimo' => (float) env('SIGMA_DISCO_MINIMO_LIBRE', 10),
+    ],
+
+    // Límite general de solicitudes a la API por usuario (o por IP sin sesión) y por minuto.
+    'limite_api_por_minuto' => (int) env('SIGMA_LIMITE_API_POR_MINUTO', 300),
+
     // URL pública del frontend web, usada en los enlaces de los correos.
     'url_frontend' => rtrim((string) env('FRONTEND_URL', 'http://localhost:5173'), '/'),
 

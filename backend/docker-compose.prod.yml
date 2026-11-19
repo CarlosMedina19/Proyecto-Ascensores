@@ -3,9 +3,30 @@
 # a sigma_frontend. La base de datos queda en la red privada del proyecto y no publica puertos.
 # Las variables están en backend/.env de la VPS (ver .env.produccion.example); nunca se suben a Git.
 #
-# Uso en la VPS:  cd /opt/apps/sigma/backend && docker compose -f docker-compose.prod.yml up -d --build
+# Despliegue en la VPS (respaldo, construcción, chequeo de salud y reversión automática):
+#   sh /opt/apps/sigma/backend/scripts/desplegar.sh
 # Para desarrollo local se sigue usando docker-compose.yml.
 name: sigma
+
+# Registros de Docker con rotación: la VPS es compartida y sin límite pueden llenar el disco.
+x-registros: &registros
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+# Variables comunes de los contenedores de Laravel (cada servicio agrega su SIGMA_ROL).
+x-entorno-backend: &entorno-backend
+  DB_CONNECTION: pgsql
+  DB_HOST: sigma_db
+  DB_PORT: 5432
+  # Registro de Laravel: archivo diario (14 días, en el volumen sigma_registros) y salida estándar (docker logs).
+  LOG_CHANNEL: stack
+  LOG_STACK: daily,stderr
+  LOG_DAILY_DAYS: 14
+  # Respaldos diarios montados en solo lectura para subirlos al Object Storage (sigma:respaldar-remoto).
+  SIGMA_RUTA_RESPALDOS: /var/www/respaldos
+  SIGMA_VIGILAR_RESPALDOS: "true"
 
 x-backend: &backend
   build:
@@ -14,12 +35,10 @@ x-backend: &backend
   image: sigma-backend:latest
   restart: unless-stopped
   env_file: .env
-  environment:
-    DB_CONNECTION: pgsql
-    DB_HOST: sigma_db
-    DB_PORT: 5432
+  logging: *registros
   volumes:
     - sigma_archivos:/var/www/html/storage/app
+    - sigma_registros:/var/www/html/storage/logs
   depends_on:
     sigma_db:
       condition: service_healthy
@@ -29,37 +48,46 @@ services:
     <<: *backend
     container_name: sigma_backend
     environment:
-      DB_CONNECTION: pgsql
-      DB_HOST: sigma_db
-      DB_PORT: 5432
+      <<: *entorno-backend
       SIGMA_ROL: web
+    mem_limit: 1g
+    healthcheck:
+      # /up arranca Laravel y consulta la base de datos.
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1/up"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
     networks:
       - proxy
       - sigma_interna
 
-  # Envía los correos y avisos encolados.
+  # Envía los correos y avisos encolados. La vigilancia avisa si la cola se detiene.
   sigma_queue:
     <<: *backend
     container_name: sigma_queue
     environment:
-      DB_CONNECTION: pgsql
-      DB_HOST: sigma_db
-      DB_PORT: 5432
+      <<: *entorno-backend
       SIGMA_ROL: cola
     command: ["su", "-s", "/bin/sh", "www-data", "-c", "php artisan queue:work --tries=3 --sleep=3 --max-time=3600"]
+    mem_limit: 512m
     networks:
       - sigma_interna
 
-  # Tareas diarias: vigencias, avisos de mantenimiento, contratos y certificación anual.
+  # Tareas programadas: vigencias, avisos, vigilancia cada 5 minutos y respaldo remoto.
   sigma_scheduler:
     <<: *backend
     container_name: sigma_scheduler
     environment:
-      DB_CONNECTION: pgsql
-      DB_HOST: sigma_db
-      DB_PORT: 5432
+      <<: *entorno-backend
       SIGMA_ROL: programador
     command: ["su", "-s", "/bin/sh", "www-data", "-c", "php artisan schedule:work"]
+    volumes:
+      - sigma_archivos:/var/www/html/storage/app
+      - sigma_registros:/var/www/html/storage/logs
+      # Fuera de storage/: el arranque cambia el dueño de storage y este montaje es de solo lectura.
+      - ./respaldos:/var/www/respaldos:ro
+    mem_limit: 512m
     networks:
       - sigma_interna
 
@@ -69,11 +97,16 @@ services:
     <<: *backend
     container_name: sigma_reverb
     environment:
-      DB_CONNECTION: pgsql
-      DB_HOST: sigma_db
-      DB_PORT: 5432
+      <<: *entorno-backend
       SIGMA_ROL: tiempo_real
     command: ["su", "-s", "/bin/sh", "www-data", "-c", "php artisan reverb:start --host=0.0.0.0 --port=8080"]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 8080) ? 0 : 1);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
     networks:
       - sigma_interna
 
@@ -88,6 +121,13 @@ services:
     environment:
       ANALITICA_CLAVE: ${ANALITICA_CLAVE}
     mem_limit: 512m
+    logging: *registros
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/salud', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     networks:
       - sigma_interna
 
@@ -100,6 +140,14 @@ services:
     image: sigma-frontend:latest
     container_name: sigma_frontend
     restart: unless-stopped
+    mem_limit: 128m
+    logging: *registros
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     volumes:
       # APK de la app: se copia a backend/descargas en el servidor y queda en /descargas/sigma.apk.
       - ./descargas:/usr/share/nginx/html/descargas:ro
@@ -116,6 +164,8 @@ services:
       POSTGRES_DB: ${DB_DATABASE}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+    mem_limit: 1g
+    logging: *registros
     volumes:
       - sigma_pgdata:/var/lib/postgresql/data
     networks:
@@ -127,6 +177,7 @@ services:
       retries: 20
 
   # RNF-06: respaldo diario de la base de datos y de los archivos en backend/respaldos (14 días).
+  # sigma_scheduler los sube además al Object Storage (respaldos/, 30 días).
   sigma_respaldos:
     image: postgres:16-alpine
     container_name: sigma_respaldos
@@ -140,6 +191,8 @@ services:
       PGPASSWORD: ${DB_PASSWORD}
       RESPALDO_HORA: 3
       RESPALDO_DIAS: 14
+    mem_limit: 512m
+    logging: *registros
     volumes:
       - ./docker/respaldo.sh:/respaldo.sh:ro
       - ./respaldos:/respaldos
@@ -155,6 +208,8 @@ volumes:
     name: sigma_pgdata
   sigma_archivos:
     name: sigma_archivos
+  sigma_registros:
+    name: sigma_registros
 
 networks:
   # Red compartida con Caddy (ya existe en la VPS).

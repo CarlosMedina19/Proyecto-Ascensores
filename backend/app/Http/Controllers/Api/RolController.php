@@ -15,6 +15,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class RolController extends Controller
 {
@@ -81,6 +83,9 @@ class RolController extends Controller
     public function credenciales(Request $solicitud): JsonResponse
     {
         $this->exigirAdministrador($solicitud);
+        if (! config('sigma.mostrar_credenciales')) {
+            return response()->json(['datos' => [], 'habilitado' => false]);
+        }
 
         $datos = Rol::orderBy('id')->get()->map(fn (Rol $rol) => [
             'rol_id' => $rol->id,
@@ -88,13 +93,24 @@ class RolController extends Controller
             'tiene_contrasena' => filled($this->cuentaPrincipal($rol)?->contrasena_cifrada),
         ]);
 
-        return response()->json(['datos' => $datos]);
+        return response()->json(['datos' => $datos, 'habilitado' => true]);
     }
 
-    /** Solo el administrador: revela la contraseña de la cuenta principal del rol. Queda en auditoría. */
+    /**
+     * Solo el administrador, y confirmando su propia contraseña: revela la contraseña de la cuenta principal
+     * del rol. Así una sesión de administrador robada no basta para llevarse las credenciales. Queda en auditoría.
+     */
     public function credencial(Request $solicitud, Rol $rol): JsonResponse
     {
         $this->exigirAdministrador($solicitud);
+        abort_unless(config('sigma.mostrar_credenciales'), 404, 'La consulta de credenciales está desactivada.');
+        $administrador = $solicitud->user();
+        $clave = $solicitud->validate(['password' => ['required', 'string', 'max:255']], [], ['password' => 'su contraseña'])['password'];
+        if (! Hash::check($clave, $administrador->password)) {
+            RegistroAuditoriaService::registrar('credencial_rechazada', $administrador, ['rol' => $rol->nombre], modulo: 'roles');
+
+            throw ValidationException::withMessages(['password' => 'La contraseña no es correcta.']);
+        }
         $usuario = $this->cuentaPrincipal($rol);
         if ($usuario) {
             RegistroAuditoriaService::registrar('credencial_consultada', $usuario, ['rol' => $rol->nombre, 'correo' => $usuario->correo], modulo: 'roles');

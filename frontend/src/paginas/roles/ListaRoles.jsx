@@ -52,35 +52,9 @@ function ModalNuevoRol({ abierto, alCerrar, alCrear }) {
   );
 }
 
-/** Contraseña de la cuenta principal del rol: oculta por defecto, se pide a la API solo al tocar el ojo. */
-function ContrasenaRol({ rolId, disponible }) {
-  const [visible, setVisible] = useState(false);
-  const [valor, setValor] = useState(null);
-  const [cargando, setCargando] = useState(false);
-  const [error, setError] = useState('');
-
-  async function alternar(evento) {
-    evento.stopPropagation();
-    if (visible) {
-      setVisible(false);
-      return;
-    }
-    if (valor === null) {
-      setCargando(true);
-      try {
-        const r = await roles.credencial(rolId);
-        setValor(r.datos?.contrasena ?? '');
-        setError('');
-      } catch (e) {
-        setError(e.message);
-        return;
-      } finally {
-        setCargando(false);
-      }
-    }
-    setVisible(true);
-  }
-
+/** Contraseña de la cuenta principal del rol: oculta por defecto; verla exige confirmar la del administrador. */
+function ContrasenaRol({ rol, disponible, valor, alPedir, alOcultar }) {
+  const visible = valor !== undefined;
   if (!disponible) return <span className="texto-suave">—</span>;
   return (
     <span className="columna-credencial">
@@ -88,11 +62,14 @@ function ContrasenaRol({ rolId, disponible }) {
       <button
         type="button"
         className="boton boton--fantasma boton--pequeno"
-        onClick={alternar}
-        disabled={cargando}
+        onClick={(evento) => {
+          evento.stopPropagation();
+          if (visible) alOcultar(rol.id);
+          else alPedir(rol);
+        }}
         aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
         aria-pressed={visible}
-        title={error || (visible ? 'Ocultar contraseña' : 'Mostrar contraseña')}
+        title={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
       >
         {visible ? <EyeOff size={15} /> : <Eye size={15} />}
       </button>
@@ -100,10 +77,68 @@ function ContrasenaRol({ rolId, disponible }) {
   );
 }
 
+/** Confirmación con la contraseña del administrador antes de revelar una credencial. */
+function ModalConfirmarClave({ rol, alCerrar, alRevelar }) {
+  const [clave, setClave] = useState('');
+  const [error, setError] = useState('');
+  const [enviando, setEnviando] = useState(false);
+
+  useEffect(() => {
+    setClave('');
+    setError('');
+  }, [rol]);
+
+  async function confirmar(evento) {
+    evento.preventDefault();
+    if (!clave) return;
+    setEnviando(true);
+    try {
+      const r = await roles.credencial(rol.id, clave);
+      alRevelar(rol.id, r.datos?.contrasena ?? '');
+    } catch (e) {
+      setError(e.errores?.password?.[0] || e.message);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <Modal
+      abierto={Boolean(rol)}
+      titulo="Confirme su contraseña"
+      alCerrar={alCerrar}
+      pie={
+        <>
+          <button type="button" className="boton boton--secundario" onClick={alCerrar}>
+            Cancelar
+          </button>
+          <button type="submit" form="confirmar-clave" className="boton" disabled={!clave || enviando}>
+            {enviando ? 'Verificando…' : 'Ver contraseña'}
+          </button>
+        </>
+      }
+    >
+      <form id="confirmar-clave" className="formulario" onSubmit={confirmar}>
+        <p className="texto-suave" style={{ margin: 0 }}>
+          Para ver la contraseña de la cuenta principal del rol {rol ? nombreRol(rol.nombre) : ''} escriba la suya. La consulta queda en la auditoría.
+        </p>
+        <Alerta>{error}</Alerta>
+        <label className="campo" htmlFor="clave-administrador">
+          <span className="campo__etiqueta">Su contraseña</span>
+          <input id="clave-administrador" className="campo__control" type="password" autoComplete="current-password" autoFocus value={clave} onChange={(e) => setClave(e.target.value)} />
+        </label>
+      </form>
+    </Modal>
+  );
+}
+
 export default function ListaRoles() {
   const { tienePermiso, usuario } = useAutenticacion();
   const esAdministrador = usuario?.rol?.nombre === 'administrador';
   const [credenciales, setCredenciales] = useState({});
+  const [credencialesActivas, setCredencialesActivas] = useState(false);
+  const [reveladas, setReveladas] = useState({});
+  const [confirmando, setConfirmando] = useState(null);
   const notificar = useNotificar();
   const navegar = useNavigate();
   const [lista, setLista] = useState(null);
@@ -124,7 +159,10 @@ export default function ListaRoles() {
     if (!esAdministrador) return;
     roles
       .credenciales()
-      .then((r) => setCredenciales(Object.fromEntries((r.datos || []).map((c) => [c.rol_id, c]))))
+      .then((r) => {
+        setCredencialesActivas(r.habilitado !== false);
+        setCredenciales(Object.fromEntries((r.datos || []).map((c) => [c.rol_id, c])));
+      })
       .catch(() => {});
   }, [esAdministrador]);
 
@@ -159,13 +197,26 @@ export default function ListaRoles() {
               },
               { clave: 'permisos', titulo: 'Permisos', render: (r) => r.permisos?.length ?? 0 },
               { clave: 'usuarios_count', titulo: 'Usuarios' },
-              ...(esAdministrador
+              ...(esAdministrador && credencialesActivas
                 ? [
                     { clave: 'correo', titulo: 'Correo', render: (r) => credenciales[r.id]?.correo || <span className="texto-suave">Sin usuarios</span> },
                     {
                       clave: 'contrasena',
                       titulo: 'Contraseña',
-                      render: (r) => <ContrasenaRol rolId={r.id} disponible={Boolean(credenciales[r.id]?.correo)} />,
+                      render: (r) => (
+                        <ContrasenaRol
+                          rol={r}
+                          disponible={Boolean(credenciales[r.id]?.correo)}
+                          valor={reveladas[r.id]}
+                          alPedir={setConfirmando}
+                          alOcultar={(id) =>
+                            setReveladas((actual) => {
+                              const { [id]: _oculta, ...resto } = actual;
+                              return resto;
+                            })
+                          }
+                        />
+                      ),
                     },
                   ]
                 : []),
@@ -173,6 +224,15 @@ export default function ListaRoles() {
           />
         )}
       </Tarjeta>
+
+      <ModalConfirmarClave
+        rol={confirmando}
+        alCerrar={() => setConfirmando(null)}
+        alRevelar={(id, valor) => {
+          setReveladas((actual) => ({ ...actual, [id]: valor }));
+          setConfirmando(null);
+        }}
+      />
 
       <ModalNuevoRol
         abierto={modal}
