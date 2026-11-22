@@ -141,6 +141,44 @@ docker exec sigma_backend php artisan sigma:migrar-archivos             # copia 
   la credencial en n8n, se elige en el nodo «DeepSeek Chat Model» de ambos flujos, se activan y se pone
   `ASISTENTE_N8N_ACTIVO=true`. Mientras tanto (o si n8n falla) responde el motor local de SIGMA.
 
+### Fotos del ascensor en el chat
+
+El chat del panel acepta una foto tomada con la cámara o elegida de la galería (`imagen` en `POST /api/v1/asistente`,
+JPG/PNG/WEBP de hasta 8 MB; el panel la reduce a 1600 px antes de enviarla). Con n8n activo, la foto va al flujo en
+`imagen.url` (data URL lista para el modelo con visión de DeepSeek). Sin IA, `AnalisisImagenService` mide luz,
+nitidez (varianza del laplaciano) y colores para señalar tonos de óxido o manchas oscuras, sugiere qué revisar con
+las actividades de la planilla según la zona que se nombre (puertas, cabina, cuarto de máquinas, cables, foso…) y,
+si el mensaje trae un código de ascensor, agrega su estado. La foto no se guarda.
+
+## Verificación en dos pasos y recuperación por celular
+
+- **Dos pasos (correo)**: con `usuarios.doble_factor` activo, `POST /iniciar-sesion` responde
+  `requiere_verificacion: true` y un `desafio` en lugar del token, y envía un código de 6 dígitos al correo.
+  El ingreso se completa con `POST /iniciar-sesion/verificar` (`desafio`, `codigo`). Cada código vence a los
+  10 minutos, admite 5 intentos y se puede pedir otro cada 60 s (`POST /codigo-verificacion/reenviar`). En la base
+  solo queda la huella (HMAC) del código y del desafío. Cada usuario la activa en **Mi perfil** (pide su
+  contraseña) y el administrador puede activarla al editar un usuario. Actívela solo en cuentas con correo real.
+- **Recuperar con el celular (SMS)**: `POST /recuperar-contrasena/telefono` (`telefono`) envía el código y
+  `POST /restablecer-contrasena/telefono` (`desafio`, `codigo`, `password`, `password_confirmation`) cambia la
+  contraseña y cierra las sesiones. La respuesta es igual exista o no el número. El celular (10 dígitos, sin +57) se
+  registra en Mi perfil, en el formulario de usuarios o con el perfil del técnico.
+- **Operador de SMS** (`SIGMA_SMS`): `log` (solo registro, desarrollo), `twilio` (`TWILIO_SID`, `TWILIO_TOKEN`,
+  `TWILIO_NUMERO`; la cuenta de prueba es gratis y envía a números verificados), `n8n` (`SIGMA_SMS_N8N_URL`: un flujo
+  recibe `{telefono, mensaje}` y lo envía por el canal que tenga) o `simulado` (demostración sin operador: el código
+  se muestra en pantalla, nunca para administradores ni cuentas con dos pasos).
+
+## Entorno simulado (datos inventados)
+
+```sh
+docker exec sigma_backend php artisan db:seed --class=EntornoSimuladoSeeder --force
+```
+
+Agrega una empresa con un año de operación inventada: 14 clientes en 7 ciudades, 36 ascensores (ASC-201 a
+ASC-236), 6 técnicos, contratos con su calendario, 12 meses de órdenes preventivas y correctivas, emergencias,
+facturas y pagos, repuestos con movimientos, certificaciones y cotizaciones, además del trabajo de hoy (órdenes en
+curso con la ubicación del técnico y emergencias abiertas). Solo agrega registros, no envía avisos y es idempotente.
+Los clientes llevan en `observaciones` la marca `EntornoSimuladoSeeder::MARCA`.
+
 ## Tiempo real y ubicación de técnicos
 
 - **WebSocket con Laravel Reverb** (contenedor `sigma_reverb`), solo para **Auditoría** (canal privado

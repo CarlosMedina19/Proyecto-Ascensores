@@ -111,13 +111,26 @@ class Sesion extends ChangeNotifier {
   }
 
   /// `antesDeEntrar` corre con las credenciales ya validadas y antes de mostrar la app (transición).
-  Future<void> iniciarSesion(String correo, String password, {Future<void> Function()? antesDeEntrar}) async {
+  /// Con la verificación en dos pasos activa no entra: devuelve el desafío para pedir el código del correo.
+  Future<DesafioVerificacion?> iniciarSesion(String correo, String password, {Future<void> Function()? antesDeEntrar}) async {
     final resultado = await repositorio.iniciarSesion(correo.trim(), password);
-    repositorio.api.token = resultado.token;
+    if (resultado.verificacion != null) return resultado.verificacion;
+    await _entrar(resultado.token!, resultado.usuario!, resultado.minutosInactividad, antesDeEntrar);
+    return null;
+  }
+
+  /// Segundo paso del ingreso con el código que llegó al correo.
+  Future<void> verificarCodigo(String desafio, String codigo, {Future<void> Function()? antesDeEntrar}) async {
+    final resultado = await repositorio.verificarInicioSesion(desafio, codigo);
+    await _entrar(resultado.token!, resultado.usuario!, resultado.minutosInactividad, antesDeEntrar);
+  }
+
+  Future<void> _entrar(String token, Usuario nuevo, int minutos, Future<void> Function()? antesDeEntrar) async {
+    repositorio.api.token = token;
     if (antesDeEntrar != null) await antesDeEntrar();
-    await _almacen.guardar(resultado.token);
-    minutosInactividad = resultado.minutosInactividad;
-    usuario = resultado.usuario;
+    await _almacen.guardar(token);
+    minutosInactividad = minutos;
+    usuario = nuevo;
     motivoCierre = null;
     _iniciarReloj();
     notifyListeners();

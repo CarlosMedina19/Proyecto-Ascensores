@@ -40,6 +40,11 @@ use Illuminate\Support\Facades\Route;
 Route::post('/iniciar-sesion', [AutenticacionController::class, 'iniciarSesion'])->middleware('throttle:iniciar-sesion');
 Route::post('/recuperar-contrasena', [AutenticacionController::class, 'recuperarContrasena'])->middleware('throttle:recuperar-contrasena');
 Route::post('/restablecer-contrasena', [AutenticacionController::class, 'restablecerContrasena'])->middleware('throttle:restablecer-contrasena');
+// Verificación en dos pasos (código al correo) y recuperación con el número de teléfono (código por SMS).
+Route::post('/iniciar-sesion/verificar', [AutenticacionController::class, 'verificarInicioSesion'])->middleware('throttle:verificar-codigo');
+Route::post('/codigo-verificacion/reenviar', [AutenticacionController::class, 'reenviarCodigo'])->middleware('throttle:recuperar-contrasena');
+Route::post('/recuperar-contrasena/telefono', [AutenticacionController::class, 'recuperarConTelefono'])->middleware('throttle:recuperar-contrasena');
+Route::post('/restablecer-contrasena/telefono', [AutenticacionController::class, 'restablecerConTelefono'])->middleware('throttle:verificar-codigo');
 Route::get('/verificar-correo/{usuario}/{hash}', [AutenticacionController::class, 'verificarCorreo'])
     ->middleware(['signed', 'throttle:6,1'])
     ->name('verificacion.verificar');
@@ -61,6 +66,8 @@ Route::middleware(['auth:sanctum', LimitarTokenAsistente::class])->group(functio
     Route::post('/cerrar-sesion', [AutenticacionController::class, 'cerrarSesion']);
     Route::get('/perfil', [AutenticacionController::class, 'perfil']);
     Route::put('/perfil/contrasena', [AutenticacionController::class, 'cambiarContrasena']);
+    Route::patch('/perfil', [AutenticacionController::class, 'actualizarPerfil']);
+    Route::put('/perfil/doble-factor', [AutenticacionController::class, 'cambiarDobleFactor'])->middleware('throttle:10,1');
     Route::get('/resumen', [ResumenController::class, 'index']);
     Route::get('/panel', PanelController::class);
     Route::get('/buscar', BusquedaController::class)->middleware('throttle:60,1');

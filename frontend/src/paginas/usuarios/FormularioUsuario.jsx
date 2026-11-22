@@ -24,6 +24,8 @@ export default function FormularioUsuario() {
     rol_id: '',
     cliente_id: '',
     activo: true,
+    telefono: '',
+    doble_factor: false,
   });
 
   useEffect(() => {
@@ -41,6 +43,8 @@ export default function FormularioUsuario() {
             rol_id: String(u.rol_id ?? ''),
             cliente_id: String(u.cliente_id ?? ''),
             activo: u.activo,
+            telefono: u.telefono || '',
+            doble_factor: Boolean(u.doble_factor),
           }),
         ),
       );
@@ -111,6 +115,21 @@ export default function FormularioUsuario() {
             autoComplete="new-password"
             ayuda={editando ? 'Déjela vacía para conservar la actual. Si la cambia, se cerrarán las sesiones del usuario.' : 'Mínimo 8 caracteres, con letras y números.'}
           />
+          <div className="formulario__fila">
+            <CampoTexto
+              etiqueta="Celular"
+              tipo="tel"
+              valor={datos.telefono}
+              alCambiar={cambiar('telefono')}
+              error={error('telefono')}
+              placeholder="300 123 4567"
+              ayuda="Sirve para recuperar la contraseña por SMS."
+            />
+            <div className="campo" style={{ alignSelf: 'center' }}>
+              <Casilla etiqueta="Verificación en dos pasos (código al correo)" valor={datos.doble_factor} alCambiar={cambiar('doble_factor')} />
+              <span className="campo__ayuda">Actívela solo si el correo del usuario es real: sin el código no podrá entrar.</span>
+            </div>
+          </div>
           {!esPropio && <Casilla etiqueta="Usuario activo" valor={datos.activo} alCambiar={cambiar('activo')} />}
 
           <div className="formulario__acciones">

@@ -14,11 +14,16 @@ class AsistenteController extends Controller
 {
     public function __construct(private readonly AsistenteService $asistente) {}
 
+    /** Con sesión: texto y, opcionalmente, una foto del ascensor (cámara o galería) para analizar. */
     public function panel(Request $solicitud): JsonResponse
     {
-        $datos = $this->validar($solicitud);
+        $datos = $solicitud->validate([
+            'mensaje' => ['nullable', 'required_without:imagen', 'string', 'max:1000'],
+            'sesion' => ['required', 'string', 'max:64', 'regex:/^[A-Za-z0-9_-]+$/'],
+            'imagen' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+        ], ['imagen.mimes' => 'La foto debe ser JPG, PNG o WEBP.', 'imagen.max' => 'La foto no puede pesar más de 8 MB.'], ['mensaje' => 'mensaje', 'imagen' => 'foto']);
 
-        return response()->json(['datos' => $this->asistente->panel($solicitud->user(), $datos['mensaje'], $datos['sesion'])]);
+        return response()->json(['datos' => $this->asistente->panel($solicitud->user(), (string) ($datos['mensaje'] ?? ''), $datos['sesion'], $solicitud->file('imagen'))]);
     }
 
     public function publico(Request $solicitud): JsonResponse

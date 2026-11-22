@@ -31,6 +31,8 @@ class Usuario extends Authenticatable implements CanResetPassword
         'rol_id',
         'cliente_id',
         'activo',
+        'telefono',
+        'doble_factor',
     ];
 
     protected $hidden = [
@@ -74,6 +76,7 @@ class Usuario extends Authenticatable implements CanResetPassword
             'intentos_fallidos' => 'integer',
             'password' => 'hashed',
             'activo' => 'boolean',
+            'doble_factor' => 'boolean',
         ];
     }
 

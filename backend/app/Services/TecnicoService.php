@@ -7,6 +7,7 @@ use App\Models\OrdenTrabajo;
 use App\Models\Rol;
 use App\Models\Tecnico;
 use App\Models\Usuario;
+use App\Support\Telefono;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -82,6 +83,12 @@ class TecnicoService
                 $tecnico->no_disponible_hasta = null;
             }
             $tecnico->save();
+
+            // El celular del perfil sirve también para recuperar la contraseña, si la cuenta aún no tiene uno.
+            $celular = Telefono::normalizar($tecnico->telefono);
+            if ($celular && blank($usuario->telefono) && Usuario::where('telefono', $celular)->doesntExist()) {
+                $usuario->forceFill(['telefono' => $celular])->save();
+            }
 
             if (array_key_exists('especialidades', $datos)) {
                 $tecnico->especialidades()->sync($datos['especialidades']);

@@ -9,6 +9,14 @@ export const autenticacion = {
   cambiarContrasena: (datos) => api.reemplazar('/perfil/contrasena', datos),
   recuperarContrasena: (correo) => api.crear('/recuperar-contrasena', { correo }),
   restablecerContrasena: (datos) => api.crear('/restablecer-contrasena', datos),
+  // Verificación en dos pasos: el código llega al correo.
+  verificarInicioSesion: (desafio, codigo) => api.crear('/iniciar-sesion/verificar', { desafio, codigo, dispositivo: 'web' }),
+  reenviarCodigo: (desafio, proposito = 'inicio_sesion') => api.crear('/codigo-verificacion/reenviar', { desafio, proposito }),
+  // Recuperación con el número de celular: el código llega por SMS.
+  recuperarConTelefono: (telefono) => api.crear('/recuperar-contrasena/telefono', { telefono }),
+  restablecerConTelefono: (datos) => api.crear('/restablecer-contrasena/telefono', datos),
+  actualizarPerfil: (datos) => api.actualizar('/perfil', datos),
+  cambiarDobleFactor: (activo, password) => api.reemplazar('/perfil/doble-factor', { activo, password }),
 };
 
 export const resumen = {
@@ -234,7 +242,15 @@ export const visitasTecnicas = {
 
 // Asistente con IA: el del panel (según el rol) y el de la página pública.
 export const asistente = {
-  panel: (mensaje, sesion) => api.crear('/asistente', { mensaje, sesion }),
+  // Con foto (cámara o galería) se envía como formulario multipart.
+  panel: (mensaje, sesion, imagen) => {
+    if (!imagen) return api.crear('/asistente', { mensaje, sesion });
+    const formulario = new FormData();
+    if (mensaje) formulario.append('mensaje', mensaje);
+    formulario.append('sesion', sesion);
+    formulario.append('imagen', imagen, imagen.name || 'foto.jpg');
+    return api.crear('/asistente', formulario);
+  },
   publico: (mensaje, sesion) => api.crear('/publico/asistente', { mensaje, sesion }),
   descargar: (ruta, nombre) => descargarArchivo(ruta, nombre),
 };

@@ -71,7 +71,7 @@ function opcionesMenu(esCliente, esTecnico) {
     { ruta: '/emergencias', texto: 'Emergencias', icono: Siren, permiso: 'emergencias.ver', recorrido: 'emergencias' },
     { ruta: '/certificaciones', texto: 'Certificación anual', icono: BadgeCheck, permiso: 'certificaciones.ver', recorrido: 'certificaciones' },
     { ruta: '/cotizaciones', texto: esCliente ? 'Mis cotizaciones' : 'Cotizaciones', icono: ReceiptText, permiso: 'cotizaciones.ver' },
-    { ruta: '/indicadores', texto: 'Indicadores', icono: Activity, permiso: 'indicadores.ver', recorrido: 'indicadores' },
+    { ruta: '/indicadores', texto: 'Indicadores y analítica', icono: Activity, permiso: 'indicadores.ver', recorrido: 'indicadores' },
     { grupo: 'Administración' },
     { ruta: '/usuarios', texto: 'Usuarios', icono: Users, permiso: 'usuarios.ver' },
     { ruta: '/roles', texto: 'Roles y permisos', icono: ShieldCheck, permiso: 'roles.ver' },
@@ -281,7 +281,7 @@ export default function Estructura() {
         <ChatAsistente
           modo="panel"
           titulo="Asistente SIGMA"
-          saludo={`Hola, ${usuario?.nombre?.split(' ')[0] || ''}. Puedo buscar ascensores, edificios u órdenes, mostrarle sus pendientes y darle los PDF que su rol permite. ¿Qué necesita?`}
+          saludo={`Hola, ${usuario?.nombre?.split(' ')[0] || ''}. Puedo buscar ascensores, edificios u órdenes, mostrarle sus pendientes y darle los PDF que su rol permite. También puede enviarme una foto de un ascensor (botón de imagen) para revisar su estado. ¿Qué necesita?`}
           sugerencias={['¿Qué puedes hacer?', esTecnico ? 'Mis órdenes activas' : 'Mantenimientos de esta semana', 'Emergencias abiertas']}
         />
       </div>

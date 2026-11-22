@@ -899,3 +899,25 @@ class RepuestoOrden {
 
 /// "2", "2,5": cantidad sin ceros de más.
 String cantidadTexto(double valor) => valor == valor.roundToDouble() ? valor.toStringAsFixed(0) : valor.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '').replaceAll('.', ',');
+
+/// Código de verificación pendiente: segundo paso del ingreso (llega al correo) o recuperación de la
+/// contraseña con el celular (llega por SMS). `codigoDemo` solo existe en el modo de demostración sin operador.
+class DesafioVerificacion {
+  DesafioVerificacion({required this.desafio, required this.destino, required this.minutos, required this.mensaje, this.codigoDemo, this.nota});
+
+  factory DesafioVerificacion.desdeJson(Map<String, dynamic> json) => DesafioVerificacion(
+    desafio: json['desafio'] as String,
+    destino: json['destino'] as String? ?? '',
+    minutos: (json['minutos'] as num?)?.toInt() ?? 10,
+    mensaje: json['mensaje'] as String? ?? '',
+    codigoDemo: json['codigo_demo'] as String?,
+    nota: json['nota'] as String?,
+  );
+
+  final String desafio;
+  final String destino;
+  final int minutos;
+  final String mensaje;
+  final String? codigoDemo;
+  final String? nota;
+}

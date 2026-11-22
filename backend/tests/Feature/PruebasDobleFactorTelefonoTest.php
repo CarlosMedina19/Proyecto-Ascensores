@@ -1,0 +1,179 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\CodigoVerificacion;
+use App\Models\Rol;
+use App\Models\Usuario;
+use App\Notifications\CodigoVerificacionNotification;
+use Database\Seeders\ConfiguracionSeeder;
+use Database\Seeders\PermisoSeeder;
+use Database\Seeders\RolSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request as SolicitudHttp;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
+use Tests\TestCase;
+
+/** Verificación en dos pasos por correo y recuperación de la contraseña con el número de teléfono. */
+class PruebasDobleFactorTelefonoTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private const CLAVE = 'Clave-segura-2026';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Notification::fake();
+        $this->seed([RolSeeder::class, PermisoSeeder::class, ConfiguracionSeeder::class]);
+    }
+
+    private function usuario(string $rol = 'administrador', array $datos = []): Usuario
+    {
+        return Usuario::factory()->create($datos + [
+            'rol_id' => Rol::where('nombre', $rol)->value('id'),
+            'password' => self::CLAVE,
+            'activo' => true,
+        ]);
+    }
+
+    private function iniciar(Usuario $usuario, string $clave = self::CLAVE)
+    {
+        return $this->postJson('/api/v1/iniciar-sesion', ['correo' => $usuario->correo, 'password' => $clave]);
+    }
+
+    private function codigoDelCorreo(Usuario $usuario): string
+    {
+        $codigo = null;
+        Notification::assertSentTo($usuario, CodigoVerificacionNotification::class, function ($notificacion) use (&$codigo) {
+            $codigo = $notificacion->codigo;
+
+            return true;
+        });
+
+        return $codigo;
+    }
+
+    public function test_con_doble_factor_el_ingreso_pide_el_codigo_enviado_al_correo(): void
+    {
+        $usuario = $this->usuario(datos: ['correo' => 'sigma3172409@gmail.com', 'doble_factor' => true]);
+
+        $paso1 = $this->iniciar($usuario)->assertOk()
+            ->assertJsonPath('requiere_verificacion', true)
+            ->assertJsonPath('canal', 'correo')
+            ->assertJsonPath('destino', 'si***09@gmail.com')
+            ->assertJsonMissingPath('token_acceso');
+        $codigo = $this->codigoDelCorreo($usuario);
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $codigo);
+        $this->assertNotSame($codigo, CodigoVerificacion::first()->codigo, 'en la base solo queda la huella del código');
+
+        $desafio = $paso1->json('desafio');
+        $errado = $codigo === '000000' ? '111111' : '000000';
+        $this->postJson('/api/v1/iniciar-sesion/verificar', ['desafio' => $desafio, 'codigo' => $errado])
+            ->assertStatus(422)->assertJsonValidationErrors('codigo', 'errores');
+
+        $this->postJson('/api/v1/iniciar-sesion/verificar', ['desafio' => $desafio, 'codigo' => $codigo, 'dispositivo' => 'panel'])
+            ->assertOk()->assertJsonStructure(['token_acceso', 'usuario' => ['id', 'doble_factor']]);
+        $this->assertDatabaseHas('registros_auditoria', ['accion' => 'inicio_sesion', 'usuario_id' => $usuario->id]);
+
+        // El código es de un solo uso.
+        $this->postJson('/api/v1/iniciar-sesion/verificar', ['desafio' => $desafio, 'codigo' => $codigo])->assertStatus(422);
+    }
+
+    public function test_cinco_codigos_errados_anulan_la_solicitud_y_reenviar_espera_un_minuto(): void
+    {
+        $usuario = $this->usuario(datos: ['doble_factor' => true]);
+        $desafio = $this->iniciar($usuario)->json('desafio');
+        $codigo = $this->codigoDelCorreo($usuario);
+        $errado = $codigo === '000000' ? '111111' : '000000';
+
+        foreach (range(1, 5) as $_) {
+            $this->postJson('/api/v1/iniciar-sesion/verificar', ['desafio' => $desafio, 'codigo' => $errado])->assertStatus(422);
+        }
+        $this->postJson('/api/v1/iniciar-sesion/verificar', ['desafio' => $desafio, 'codigo' => $codigo])
+            ->assertStatus(422)->assertJsonPath('errores.codigo.0', 'Superó los intentos permitidos. Solicite un código nuevo.');
+
+        $this->postJson('/api/v1/codigo-verificacion/reenviar', ['desafio' => $desafio])->assertStatus(422);
+        $this->travel(61)->seconds();
+        $this->postJson('/api/v1/codigo-verificacion/reenviar', ['desafio' => $desafio])->assertOk()->assertJsonPath('canal', 'correo');
+        Notification::assertSentToTimes($usuario, CodigoVerificacionNotification::class, 2);
+    }
+
+    public function test_sin_doble_factor_el_ingreso_sigue_igual_y_el_usuario_lo_activa_con_su_contrasena(): void
+    {
+        $usuario = $this->usuario();
+        $token = $this->iniciar($usuario)->assertOk()->assertJsonMissingPath('requiere_verificacion')->json('token_acceso');
+        $this->assertNotEmpty($token);
+        Notification::assertNotSentTo($usuario, CodigoVerificacionNotification::class);
+
+        $this->withToken($token)->putJson('/api/v1/perfil/doble-factor', ['activo' => true, 'password' => 'otra-clave-1'])->assertStatus(422);
+        $this->withToken($token)->putJson('/api/v1/perfil/doble-factor', ['activo' => true, 'password' => self::CLAVE])->assertOk()->assertJsonPath('doble_factor', true);
+        $this->assertTrue($usuario->fresh()->doble_factor);
+        $this->iniciar($usuario)->assertJsonPath('requiere_verificacion', true);
+    }
+
+    public function test_recupera_la_contrasena_con_el_codigo_que_llega_por_sms(): void
+    {
+        config(['services.sms' => ['driver' => 'twilio', 'twilio' => ['sid' => 'AC123', 'token' => 'tk', 'numero' => '+15005550006'], 'n8n' => []]]);
+        $mensaje = null;
+        Http::fake(['api.twilio.com/*' => function (SolicitudHttp $s) use (&$mensaje) {
+            $mensaje = $s['Body'];
+
+            return Http::response(['sid' => 'SM1'], 201);
+        }]);
+        $tecnico = $this->usuario('tecnico', ['telefono' => '3001234567']);
+        $tecnico->createToken('app');
+
+        // Un número sin cuenta recibe la misma respuesta y no se envía nada.
+        $this->postJson('/api/v1/recuperar-contrasena/telefono', ['telefono' => '311 000 0000'])->assertOk()->assertJsonStructure(['desafio', 'destino', 'mensaje']);
+        Http::assertNothingSent();
+        $this->postJson('/api/v1/recuperar-contrasena/telefono', ['telefono' => '12345'])->assertStatus(422);
+
+        $desafio = $this->postJson('/api/v1/recuperar-contrasena/telefono', ['telefono' => '+57 300 123 4567'])
+            ->assertOk()->assertJsonPath('destino', '300 *** **67')->assertJsonMissingPath('codigo_demo')->json('desafio');
+        Http::assertSent(fn (SolicitudHttp $s) => $s['To'] === '+573001234567' && $s['From'] === '+15005550006');
+        preg_match('/\b(\d{6})\b/', (string) $mensaje, $m);
+        $this->assertNotEmpty($m[1] ?? null);
+
+        $this->postJson('/api/v1/restablecer-contrasena/telefono', ['desafio' => $desafio, 'codigo' => $m[1], 'password' => 'NuevaClave2026', 'password_confirmation' => 'NuevaClave2026'])->assertOk();
+        $this->assertTrue(Hash::check('NuevaClave2026', $tecnico->fresh()->password));
+        $this->assertSame(0, $tecnico->tokens()->count(), 'se cierran las sesiones abiertas');
+        $this->assertDatabaseHas('registros_auditoria', ['accion' => 'contrasena_restablecida', 'usuario_id' => $tecnico->id]);
+    }
+
+    public function test_el_modo_simulado_muestra_el_codigo_salvo_en_cuentas_protegidas(): void
+    {
+        config(['services.sms.driver' => 'simulado']);
+        $tecnico = $this->usuario('tecnico', ['telefono' => '3001112233']);
+        $this->usuario('administrador', ['telefono' => '3009998877']);
+
+        $respuesta = $this->postJson('/api/v1/recuperar-contrasena/telefono', ['telefono' => '3001112233'])->assertOk();
+        $this->postJson('/api/v1/restablecer-contrasena/telefono', [
+            'desafio' => $respuesta->json('desafio'), 'codigo' => $respuesta->json('codigo_demo'),
+            'password' => 'OtraClave2026', 'password_confirmation' => 'OtraClave2026',
+        ])->assertOk();
+        $this->assertTrue(Hash::check('OtraClave2026', $tecnico->fresh()->password));
+
+        $this->postJson('/api/v1/recuperar-contrasena/telefono', ['telefono' => '3009998877'])->assertOk()
+            ->assertJsonMissingPath('codigo_demo')->assertJsonStructure(['nota']);
+    }
+
+    public function test_el_celular_del_perfil_se_valida_y_no_se_repite(): void
+    {
+        $this->usuario('coordinador', ['telefono' => '3015550000']);
+        $usuario = $this->usuario('tecnico');
+        $this->actingAs($usuario, 'sanctum');
+
+        $this->patchJson('/api/v1/perfil', ['telefono' => 'abc'])->assertStatus(422);
+        $this->patchJson('/api/v1/perfil', ['telefono' => '301 555 0000'])->assertStatus(422);
+        $this->patchJson('/api/v1/perfil', ['telefono' => '+57 300 765 4321'])->assertOk()->assertJsonPath('datos.telefono', '3007654321');
+
+        $this->actingAs($this->usuario(), 'sanctum');
+        $this->postJson('/api/v1/usuarios', [
+            'nombre' => 'Nuevo', 'correo' => 'nuevo@sigma.test', 'password' => 'Clave12345', 'rol_id' => Rol::where('nombre', 'coordinador')->value('id'),
+            'telefono' => '300 765 4321',
+        ])->assertStatus(422)->assertJsonValidationErrors('telefono', 'errores');
+    }
+}

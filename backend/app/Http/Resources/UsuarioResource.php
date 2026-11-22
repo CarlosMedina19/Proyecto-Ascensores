@@ -13,6 +13,8 @@ class UsuarioResource extends RecursoApi
             'nombre' => $this->nombre,
             'correo' => $this->correo,
             'activo' => (bool) $this->activo,
+            'telefono' => $this->telefono,
+            'doble_factor' => (bool) $this->doble_factor,
             'rol_id' => $this->rol_id,
             'rol' => new RolResource($this->whenLoaded('rol')),
             'cliente_id' => $this->cliente_id,

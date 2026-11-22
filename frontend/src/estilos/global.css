@@ -4631,6 +4631,74 @@ a {
   gap: 6px;
 }
 
+/* Verificación en dos pasos y recuperación por celular */
+.perfil__doble-factor {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-borde);
+}
+.perfil__doble-factor p {
+  margin: 6px 0 0;
+}
+@media (max-width: 520px) {
+  .perfil__doble-factor {
+    flex-direction: column;
+  }
+}
+.acceso__acciones-codigo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.acceso__pestanas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: var(--color-superficie-suave);
+}
+.acceso__pestanas button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-texto-suave);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+.acceso__pestanas button[aria-selected='true'] {
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+.acceso__sms-demo {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px dashed var(--color-primario);
+  border-radius: 12px;
+  background: var(--color-primario-suave);
+  font-size: 13px;
+}
+.acceso__sms-demo b {
+  font: 600 22px/1.2 var(--fuente-mono, monospace);
+  letter-spacing: 0.25em;
+  color: var(--color-primario);
+}
+
 /* =====================================================================
    Fase 5 · Ajuste a la pantalla y comodidad
    Escala de radios 8/12/16, ingreso visible sin desplazamiento de 650 px
@@ -7669,6 +7737,86 @@ td.planilla-editor__acciones {
 .asistente__formulario button:disabled {
   opacity: 0.45;
   cursor: default;
+}
+
+/* Fotos del ascensor en el chat del panel (cámara o galería) */
+.asistente__foto-menu {
+  position: relative;
+  display: flex;
+}
+.asistente__formulario .asistente__adjuntar {
+  border: 1px solid var(--color-borde-fuerte);
+  background: var(--color-superficie);
+  color: var(--color-primario);
+}
+.asistente__opciones-foto {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 2;
+  display: grid;
+  min-width: 190px;
+  padding: 6px;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  background: var(--color-superficie);
+  box-shadow: 0 12px 32px -12px rgb(20 10 50 / 0.4);
+}
+.asistente__formulario .asistente__opciones-foto button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-texto);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+}
+.asistente__formulario .asistente__opciones-foto button:hover {
+  background: var(--color-superficie-suave);
+}
+.asistente__adjunto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--color-borde);
+  background: var(--color-superficie-suave);
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--color-texto-suave);
+}
+.asistente__adjunto img {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.asistente__adjunto button {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  cursor: pointer;
+}
+.asistente__foto {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  max-height: 200px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  object-fit: cover;
 }
 
 @media (max-width: 520px) {

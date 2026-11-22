@@ -4,6 +4,7 @@ namespace App\Services\Asistente;
 
 use App\Models\Equipo;
 use App\Models\Usuario;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -20,20 +21,53 @@ use Throwable;
  */
 class AsistenteService
 {
-    public function __construct(private readonly HerramientasAsistente $herramientas) {}
+    public function __construct(
+        private readonly HerramientasAsistente $herramientas,
+        private readonly AnalisisImagenService $analisisImagen,
+    ) {}
 
     /** @return array{texto: string, acciones: array, sugerencias: array, origen: string} */
-    public function panel(Usuario $usuario, string $mensaje, string $sesion): array
+    public function panel(Usuario $usuario, string $mensaje, string $sesion, ?UploadedFile $imagen = null): array
     {
         $configuracion = config('services.asistente');
         if (($configuracion['n8n_activo'] ?? false) && filled($configuracion['url_panel'] ?? null)) {
-            $respuesta = $this->n8nPanel($usuario, $mensaje, $sesion, $configuracion);
+            $respuesta = $this->n8nPanel($usuario, $mensaje, $sesion, $configuracion, $imagen);
             if ($respuesta) {
                 return $respuesta;
             }
         }
 
+        if ($imagen) {
+            return $this->localImagen($usuario, $mensaje, $imagen) + ['origen' => 'local'];
+        }
+
         return $this->localPanel($usuario, $mensaje) + ['origen' => 'local'];
+    }
+
+    /**
+     * Foto sin IA: análisis local de la imagen y, si el mensaje nombra un ascensor visible para el usuario,
+     * su estado y el enlace a su ficha. La foto no se guarda.
+     */
+    private function localImagen(Usuario $usuario, string $mensaje, UploadedFile $imagen): array
+    {
+        $analisis = $this->analisisImagen->analizar($imagen->getRealPath(), $mensaje);
+        $acciones = [];
+        $codigo = $this->codigoAscensor($mensaje);
+        if ($codigo && $usuario->tienePermiso('equipos.ver')) {
+            $estado = $this->herramientas->ejecutar($usuario, 'estado_ascensor', ['codigo' => $codigo]);
+            $analisis['texto'] .= "\n\n".$estado['texto'];
+            $acciones = $estado['acciones'];
+        }
+        if ($analisis['estado'] === 'revisar' && $usuario->tienePermiso('ordenes.crear')) {
+            $acciones[] = ['tipo' => 'enlace', 'texto' => 'Crear una orden correctiva', 'ruta' => '/ordenes/nueva'];
+        }
+
+        return [
+            'texto' => $analisis['texto'],
+            'acciones' => $acciones,
+            'sugerencias' => $analisis['zona'] ? [] : ['Es la puerta de piso', 'Es el cuarto de máquinas', 'Son los cables de tracción'],
+            'analisis' => ['estado' => $analisis['estado'], 'zona' => $analisis['zona']],
+        ];
     }
 
     /** @return array{texto: string, acciones: array, sugerencias: array, origen: string} */
@@ -80,7 +114,7 @@ class AsistenteService
 
     // ---------- n8n ----------
 
-    private function n8nPanel(Usuario $usuario, string $mensaje, string $sesion, array $configuracion): ?array
+    private function n8nPanel(Usuario $usuario, string $mensaje, string $sesion, array $configuracion, ?UploadedFile $imagen = null): ?array
     {
         // Token temporal (10 min) que solo sirve para /asistente/herramienta y se borra al terminar.
         $token = $usuario->createToken('asistente-n8n', ['asistente'], now()->addMinutes(10));
@@ -94,6 +128,12 @@ class AsistenteService
                     'usuario' => ['nombre' => $usuario->nombre, 'rol' => $usuario->rol?->nombre],
                     'acciones_disponibles' => $this->herramientas->disponibles($usuario),
                     'herramientas' => ['url' => rtrim((string) config('app.url'), '/').'/api/v1/asistente/herramienta', 'token' => $token->plainTextToken],
+                    // Foto del ascensor para el modelo con visión de DeepSeek (data URL lista para «image_url»).
+                    'imagen' => $imagen ? [
+                        'tipo' => $imagen->getMimeType(),
+                        'url' => 'data:'.$imagen->getMimeType().';base64,'.base64_encode((string) file_get_contents($imagen->getRealPath())),
+                        'instruccion' => 'Analiza el estado del componente del ascensor de la foto (desgaste, óxido, fugas, daños, limpieza) y di qué revisar.',
+                    ] : null,
                 ]);
             $texto = $r->successful() ? trim((string) ($r->json('respuesta') ?? $r->json('output') ?? '')) : '';
             if ($texto === '') {

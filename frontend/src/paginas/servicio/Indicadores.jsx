@@ -67,7 +67,7 @@ export default function Indicadores() {
 
   return (
     <>
-      <EncabezadoPagina titulo="Indicadores del servicio" descripcion={['Disponibilidad', 'Tiempo entre fallas', 'Respuesta a emergencias', 'Cumplimiento del plan']}>
+      <EncabezadoPagina titulo="Indicadores y analítica" descripcion={['Disponibilidad', 'Tiempo entre fallas', 'Respuesta a emergencias', 'Cumplimiento del plan', 'Pronóstico y riesgo de falla']}>
         <select className="campo__control" value={dias} onChange={(e) => setDias(Number(e.target.value))} aria-label="Período">
           {PERIODOS.map((p) => (
             <option key={p.dias} value={p.dias}>
@@ -125,7 +125,7 @@ export default function Indicadores() {
           </div>
         </>
       )}
-      <div style={{ marginTop: 16 }}>
+      <div id="analitica" style={{ marginTop: 16, scrollMarginTop: 80 }}>
         <AnaliticaAvanzada />
       </div>
     </>

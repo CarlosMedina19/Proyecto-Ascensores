@@ -29,8 +29,8 @@ const PASOS = [
   },
   {
     objetivo: 'indicadores',
-    titulo: 'Indicadores del servicio',
-    texto: 'Disponibilidad, tiempo medio entre fallas, tiempo de respuesta y cumplimiento del plan, listos para presentar al cliente.',
+    titulo: 'Indicadores y analítica',
+    texto: 'Disponibilidad, tiempo medio entre fallas, tiempo de respuesta y cumplimiento del plan, listos para presentar al cliente. Al final, la analítica avanzada: pronóstico de emergencias y ascensores con mayor riesgo de falla.',
   },
 ];
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bot, ExternalLink, FileDown, Link2, MessageCircle, Send, X } from 'lucide-react';
+import { Bot, Camera, ExternalLink, FileDown, ImagePlus, Images, Link2, MessageCircle, Send, X } from 'lucide-react';
 import { asistente } from '../api/servicios';
 
 function sesionDe(modo) {
@@ -16,10 +16,35 @@ function sesionDe(modo) {
   }
 }
 
+const TIPOS_FOTO = ['image/jpeg', 'image/png', 'image/webp'];
+
+/**
+ * Reduce la foto a 1600 px como máximo y la convierte a JPG antes de enviarla (las del celular pesan
+ * varios MB y algunos iPhone usan HEIC). Si el navegador no puede decodificarla, se envía tal cual.
+ */
+async function prepararFoto(archivo) {
+  try {
+    const imagen = await createImageBitmap(archivo);
+    const escala = Math.min(1, 1600 / Math.max(imagen.width, imagen.height));
+    const lienzo = document.createElement('canvas');
+    lienzo.width = Math.round(imagen.width * escala);
+    lienzo.height = Math.round(imagen.height * escala);
+    lienzo.getContext('2d').drawImage(imagen, 0, 0, lienzo.width, lienzo.height);
+    imagen.close?.();
+    const blob = await new Promise((resolver) => lienzo.toBlob(resolver, 'image/jpeg', 0.85));
+    if (blob) return new File([blob], 'foto.jpg', { type: 'image/jpeg' });
+  } catch {
+    // Navegador sin createImageBitmap o formato que no decodifica: se valida abajo.
+  }
+  if (!TIPOS_FOTO.includes(archivo.type)) throw new Error('Formato no compatible. Use una foto JPG, PNG o WEBP.');
+  return archivo;
+}
+
 /**
  * Chat flotante del asistente de SIGMA.
  * - modo «publico»: página de inicio, información general y contacto.
- * - modo «panel»: con sesión; responde según el rol (búsquedas, órdenes, PDF…).
+ * - modo «panel»: con sesión; responde según el rol (búsquedas, órdenes, PDF…) y analiza fotos del
+ *   ascensor tomadas con la cámara o elegidas de la galería.
  */
 export default function ChatAsistente({ modo = 'panel', titulo = 'Asistente SIGMA', saludo, sugerencias = [] }) {
   const navegar = useNavigate();
@@ -27,8 +52,13 @@ export default function ChatAsistente({ modo = 'panel', titulo = 'Asistente SIGM
   const [mensajes, setMensajes] = useState(() => [{ de: 'bot', texto: saludo, sugerencias }]);
   const [texto, setTexto] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [foto, setFoto] = useState(null);
+  const [menuFoto, setMenuFoto] = useState(false);
   const lista = useRef(null);
   const sesion = useRef(sesionDe(modo));
+  const entradaCamara = useRef(null);
+  const entradaGaleria = useRef(null);
+  const conFotos = modo === 'panel';
 
   useEffect(() => {
     if (lista.current) lista.current.scrollTop = lista.current.scrollHeight;
@@ -41,14 +71,37 @@ export default function ChatAsistente({ modo = 'panel', titulo = 'Asistente SIGM
     return () => window.removeEventListener('keydown', alTecla);
   }, [abierto]);
 
+  function elegirFoto(evento) {
+    const archivo = evento.target.files?.[0];
+    evento.target.value = '';
+    setMenuFoto(false);
+    if (!archivo) return;
+    if (archivo.size > 15 * 1024 * 1024) {
+      setMensajes((m) => [...m, { de: 'bot', texto: 'La foto pesa más de 15 MB. Tome otra o elija una más liviana.', error: true }]);
+      return;
+    }
+    setFoto((anterior) => {
+      if (anterior) URL.revokeObjectURL(anterior.vista);
+      return { archivo, vista: URL.createObjectURL(archivo) };
+    });
+  }
+
+  function quitarFoto() {
+    if (foto) URL.revokeObjectURL(foto.vista);
+    setFoto(null);
+  }
+
   async function enviar(mensaje) {
     const limpio = (mensaje ?? texto).trim();
-    if (!limpio || enviando) return;
+    const adjunta = mensaje === undefined ? foto : null;
+    if ((!limpio && !adjunta) || enviando) return;
     setTexto('');
-    setMensajes((m) => [...m, { de: 'usuario', texto: limpio }]);
+    setFoto(null);
+    setMensajes((m) => [...m, { de: 'usuario', texto: limpio, imagen: adjunta?.vista }]);
     setEnviando(true);
     try {
-      const r = await (modo === 'publico' ? asistente.publico(limpio, sesion.current) : asistente.panel(limpio, sesion.current));
+      const imagen = adjunta ? await prepararFoto(adjunta.archivo) : null;
+      const r = await (modo === 'publico' ? asistente.publico(limpio, sesion.current) : asistente.panel(limpio, sesion.current, imagen));
       setMensajes((m) => [...m, { de: 'bot', ...r.datos }]);
     } catch (e) {
       setMensajes((m) => [...m, { de: 'bot', texto: e.message || 'No pude responder en este momento. Intente de nuevo.', error: true }]);
@@ -90,6 +143,7 @@ export default function ChatAsistente({ modo = 'panel', titulo = 'Asistente SIGM
           <div className="asistente__mensajes" ref={lista} aria-live="polite">
             {mensajes.map((m, i) => (
               <div key={i} className={`asistente__mensaje asistente__mensaje--${m.de}${m.error ? ' asistente__mensaje--error' : ''}`}>
+                {m.imagen && <img className="asistente__foto" src={m.imagen} alt="Foto enviada al asistente" />}
                 {m.texto && <p>{m.texto}</p>}
                 {!!m.acciones?.length && (
                   <div className="asistente__acciones">
@@ -126,6 +180,15 @@ export default function ChatAsistente({ modo = 'panel', titulo = 'Asistente SIGM
             )}
           </div>
 
+          {foto && (
+            <div className="asistente__adjunto">
+              <img src={foto.vista} alt="" />
+              <span>Foto lista para analizar. Diga qué parte es (puerta, cabina, cuarto de máquinas…) y el código del ascensor.</span>
+              <button type="button" onClick={quitarFoto} aria-label="Quitar la foto">
+                <X size={15} />
+              </button>
+            </div>
+          )}
           <form
             className="asistente__formulario"
             onSubmit={(e) => {
@@ -133,8 +196,27 @@ export default function ChatAsistente({ modo = 'panel', titulo = 'Asistente SIGM
               enviar();
             }}
           >
-            <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Escriba su pregunta…" maxLength={1000} aria-label="Mensaje para el asistente" />
-            <button type="submit" disabled={!texto.trim() || enviando} aria-label="Enviar">
+            {conFotos && (
+              <div className="asistente__foto-menu">
+                <button type="button" className="asistente__adjuntar" onClick={() => setMenuFoto((v) => !v)} aria-expanded={menuFoto} aria-label="Adjuntar una foto del ascensor" title="Adjuntar una foto del ascensor">
+                  <ImagePlus size={18} />
+                </button>
+                {menuFoto && (
+                  <div className="asistente__opciones-foto" role="menu">
+                    <button type="button" role="menuitem" onClick={() => entradaCamara.current?.click()}>
+                      <Camera size={15} /> Tomar foto
+                    </button>
+                    <button type="button" role="menuitem" onClick={() => entradaGaleria.current?.click()}>
+                      <Images size={15} /> Elegir de la galería
+                    </button>
+                  </div>
+                )}
+                <input ref={entradaCamara} type="file" accept="image/*" capture="environment" hidden onChange={elegirFoto} data-testid="foto-camara" />
+                <input ref={entradaGaleria} type="file" accept="image/*" hidden onChange={elegirFoto} data-testid="foto-galeria" />
+              </div>
+            )}
+            <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={foto ? 'Agregue un comentario (opcional)…' : 'Escriba su pregunta…'} maxLength={1000} aria-label="Mensaje para el asistente" />
+            <button type="submit" disabled={(!texto.trim() && !foto) || enviando} aria-label="Enviar">
               <Send size={17} />
             </button>
           </form>

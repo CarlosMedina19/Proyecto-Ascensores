@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -6,6 +6,8 @@ import {
   Building2,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ClipboardCheck,
   FileText,
   Mail,
@@ -25,6 +27,145 @@ import { APP_MOVIL, AUDIENCIAS, BENEFICIOS, CONTACTO, CTA, FUNCIONES, HERO, INSI
 import './landing.css';
 
 const ICONOS = { clientes: Users, edificios: Building2, historial: ClipboardCheck, documentos: FileText, qr: QrCode, alertas: Bell };
+
+/** Tarjetas que se amplían al hacer clic, por sección (mismo orden que en la página). */
+const GRUPOS = {
+  problema: { etiqueta: 'Problema y solución', items: PROBLEMAS.map((p) => ({ titulo: p.problema, resumen: p.solucion, ...p.ampliado })) },
+  pasos: { etiqueta: 'Cómo funciona', items: PASOS.map((p, k) => ({ titulo: p.titulo, numero: String(k + 1), resumen: p.texto, ...p.ampliado })) },
+  funciones: { etiqueta: 'Funcionalidad', items: FUNCIONES.map((f) => ({ titulo: f.titulo, icono: f.icono, resumen: f.texto, ...f.ampliado })) },
+  beneficios: { etiqueta: 'Beneficio', items: BENEFICIOS.map((b, k) => ({ titulo: b.titulo, numero: `0${k + 1}`, resumen: b.texto, ...b.ampliado })) },
+  audiencias: { etiqueta: '¿Para quién es?', items: AUDIENCIAS.map((a) => ({ titulo: a.titulo, resumen: a.texto, ...a.ampliado })) },
+};
+
+const movimientoReducido = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * Ventana con más información de una tarjeta. Usa <dialog> (foco atrapado, Esc y fondo) y crece desde la
+ * tarjeta que se pulsó; con movimiento reducido solo aparece. Flechas o botones: tarjeta anterior y siguiente.
+ */
+function DetalleTarjeta({ detalle, alCambiar, alCerrar }) {
+  const dialogo = useRef(null);
+  const grupo = GRUPOS[detalle.grupo];
+  const item = grupo.items[detalle.indice];
+  const total = grupo.items.length;
+  const Icono = item.icono ? ICONOS[item.icono] : null;
+  const vertical = item.imagen?.includes('/app-');
+
+  useEffect(() => {
+    const d = dialogo.current;
+    if (!d) return;
+    if (!d.open) {
+      if (typeof d.showModal === 'function') d.showModal();
+      else d.setAttribute('open', '');
+    }
+    const origen = detalle.origen;
+    if (origen && typeof d.animate === 'function' && !movimientoReducido()) {
+      const destino = d.getBoundingClientRect();
+      const dx = origen.left + origen.width / 2 - (destino.left + destino.width / 2);
+      const dy = origen.top + origen.height / 2 - (destino.top + destino.height / 2);
+      const escala = Math.min(1, Math.max(0.25, origen.width / destino.width));
+      d.animate(
+        [
+          { transform: `translate(${dx}px, ${dy}px) scale(${escala})`, opacity: 0 },
+          { transform: 'none', opacity: 1 },
+        ],
+        { duration: 340, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
+      );
+    }
+    // Solo al abrir: al pasar a otra tarjeta cambia el contenido, no la ventana.
+  }, []);
+
+  const cerrar = useCallback(() => {
+    const d = dialogo.current;
+    if (!d) return;
+    const terminar = () => (typeof d.close === 'function' ? d.close() : alCerrar());
+    if (typeof d.animate === 'function' && !movimientoReducido()) {
+      d.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(0.96)' }], { duration: 160, easing: 'ease-in' }).onfinish = terminar;
+    } else {
+      terminar();
+    }
+  }, [alCerrar]);
+
+  function alTeclear(evento) {
+    if (evento.key === 'ArrowRight') alCambiar((detalle.indice + 1) % total);
+    if (evento.key === 'ArrowLeft') alCambiar((detalle.indice - 1 + total) % total);
+  }
+
+  return (
+    <dialog
+      ref={dialogo}
+      className="landing-detalle"
+      aria-labelledby="landing-detalle-titulo"
+      onClose={alCerrar}
+      onCancel={(e) => {
+        e.preventDefault();
+        cerrar();
+      }}
+      onClick={(e) => e.target === e.currentTarget && cerrar()}
+      onKeyDown={alTeclear}
+    >
+      <div className="landing-detalle__caja">
+        <button type="button" className="landing-detalle__cerrar" onClick={cerrar} aria-label="Cerrar">
+          <X size={20} />
+        </button>
+        <div key={`${detalle.grupo}-${detalle.indice}`} className={`landing-detalle__contenido${item.imagen ? ' landing-detalle__contenido--imagen' : ''}${vertical ? ' landing-detalle__contenido--vertical' : ''}`}>
+          <div>
+            <p className="landing-etiqueta">
+              {grupo.etiqueta} · {detalle.indice + 1} de {total}
+            </p>
+            <div className="landing-detalle__cabecera">
+              {Icono && (
+                <span className="landing-funcion__icono">
+                  <Icono size={22} aria-hidden="true" />
+                </span>
+              )}
+              {item.numero && <span className="landing-beneficio__numero">{item.numero}</span>}
+              <h2 id="landing-detalle-titulo">{item.titulo}</h2>
+            </div>
+            <p className="landing-detalle__resumen">{item.resumen}</p>
+            <p>{item.texto}</p>
+            {!!item.puntos?.length && (
+              <ul className="landing-lista landing-lista--compacta">
+                {item.puntos.map((punto) => (
+                  <li key={punto}>
+                    <Check size={16} aria-hidden="true" /> {punto}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {item.imagen && (
+            <figure className="landing-detalle__imagen">
+              <img src={item.imagen} alt={`Pantalla de SIGMA: ${item.titulo}`} loading="lazy" />
+            </figure>
+          )}
+        </div>
+        <div className="landing-detalle__pie">
+          <div className="landing-detalle__navegacion">
+            <button type="button" className="landing-icono" onClick={() => alCambiar((detalle.indice - 1 + total) % total)} aria-label="Anterior">
+              <ChevronLeft size={18} />
+            </button>
+            <button type="button" className="landing-icono" onClick={() => alCambiar((detalle.indice + 1) % total)} aria-label="Siguiente">
+              <ChevronRight size={18} />
+            </button>
+          </div>
+          <a href="#contacto" className="landing-boton landing-boton--primario landing-boton--pequeno" onClick={cerrar}>
+            Solicitar demo <ArrowRight size={16} aria-hidden="true" />
+          </a>
+        </div>
+      </div>
+    </dialog>
+  );
+}
+
+/** Botón «Ver más» de las tarjetas ampliables (el clic en cualquier parte de la tarjeta también abre). */
+function VerMas({ titulo }) {
+  return (
+    <button type="button" className="landing-tarjeta__mas" aria-haspopup="dialog" aria-label={`Ver más sobre ${titulo}`}>
+      Ver más <ArrowRight size={15} aria-hidden="true" />
+    </button>
+  );
+}
 
 /** Aparece suavemente al entrar en pantalla (sin animación si el usuario prefiere movimiento reducido). */
 function useAparecer() {
@@ -268,6 +409,8 @@ function IconoRed({ nombre }) {
  */
 export default function Landing() {
   const raiz = useAparecer();
+  const [detalle, setDetalle] = useState(null);
+  const abrir = (grupo, indice) => (evento) => setDetalle({ grupo, indice, origen: evento.currentTarget.getBoundingClientRect() });
 
   useEffect(() => {
     const anterior = document.title;
@@ -292,13 +435,14 @@ export default function Landing() {
 
         <Seccion id="problema" etiqueta="Problema y solución" titulo="Lo que se pierde sin un sistema, SIGMA lo ordena" alterna>
           <div className="landing-rejilla landing-rejilla--3">
-            {PROBLEMAS.map((p) => (
-              <article key={p.problema} className="landing-tarjeta landing-problema aparece">
+            {PROBLEMAS.map((p, k) => (
+              <article key={p.problema} className="landing-tarjeta landing-tarjeta--ampliable landing-problema aparece" onClick={abrir('problema', k)}>
                 <h3>{p.problema}</h3>
                 <p className="landing-problema__antes">{p.detalle}</p>
                 <p className="landing-problema__despues">
                   <Check size={16} aria-hidden="true" /> {p.solucion}
                 </p>
+                <VerMas titulo={p.problema} />
               </article>
             ))}
           </div>
@@ -307,12 +451,13 @@ export default function Landing() {
         <Seccion id="como-funciona" etiqueta="Cómo funciona" titulo="De la hoja de cálculo al control total en tres pasos">
           <ol className="landing-pasos">
             {PASOS.map((p, k) => (
-              <li key={p.titulo} className="landing-tarjeta landing-paso aparece">
+              <li key={p.titulo} className="landing-tarjeta landing-tarjeta--ampliable landing-paso aparece" onClick={abrir('pasos', k)}>
                 <div className="landing-tarjeta__cabecera">
                   <span className="landing-paso__numero">{k + 1}</span>
                   <h3>{p.titulo}</h3>
                 </div>
                 <p>{p.texto}</p>
+                <VerMas titulo={p.titulo} />
               </li>
             ))}
           </ol>
@@ -324,10 +469,10 @@ export default function Landing() {
 
         <Seccion id="funciones" etiqueta="Funcionalidades" titulo="Todo el mantenimiento de ascensores en un solo sistema">
           <div className="landing-rejilla landing-rejilla--3">
-            {FUNCIONES.map((f) => {
+            {FUNCIONES.map((f, k) => {
               const Icono = ICONOS[f.icono] ?? Check;
               return (
-                <article key={f.titulo} className="landing-tarjeta landing-funcion aparece">
+                <article key={f.titulo} className="landing-tarjeta landing-tarjeta--ampliable landing-funcion aparece" onClick={abrir('funciones', k)}>
                   <div className="landing-tarjeta__cabecera">
                     <span className="landing-funcion__icono">
                       <Icono size={22} aria-hidden="true" />
@@ -335,6 +480,7 @@ export default function Landing() {
                     <h3>{f.titulo}</h3>
                   </div>
                   <p>{f.texto}</p>
+                  <VerMas titulo={f.titulo} />
                 </article>
               );
             })}
@@ -375,12 +521,13 @@ export default function Landing() {
         <Seccion id="beneficios" etiqueta="Beneficios" titulo="Menos papel, menos fallas, más control">
           <div className="landing-rejilla landing-rejilla--4">
             {BENEFICIOS.map((b, k) => (
-              <article key={b.titulo} className="landing-tarjeta landing-beneficio aparece">
+              <article key={b.titulo} className="landing-tarjeta landing-tarjeta--ampliable landing-beneficio aparece" onClick={abrir('beneficios', k)}>
                 <div className="landing-tarjeta__cabecera">
                   <span className="landing-beneficio__numero">0{k + 1}</span>
                   <h3>{b.titulo}</h3>
                 </div>
                 <p>{b.texto}</p>
+                <VerMas titulo={b.titulo} />
               </article>
             ))}
           </div>
@@ -388,10 +535,11 @@ export default function Landing() {
 
         <Seccion id="para-quien" etiqueta="¿Para quién es?" titulo="Pensado para quienes cuidan los ascensores" alterna>
           <div className="landing-rejilla landing-rejilla--2">
-            {AUDIENCIAS.map((a) => (
-              <article key={a.titulo} className="landing-tarjeta landing-audiencia aparece">
+            {AUDIENCIAS.map((a, k) => (
+              <article key={a.titulo} className="landing-tarjeta landing-tarjeta--ampliable landing-audiencia aparece" onClick={abrir('audiencias', k)}>
                 <h3>{a.titulo}</h3>
                 <p>{a.texto}</p>
+                <VerMas titulo={a.titulo} />
               </article>
             ))}
           </div>
@@ -482,6 +630,7 @@ export default function Landing() {
         </div>
         <p className="landing-contenedor landing-pie__derechos">© {new Date().getFullYear()} SIGMA. Todos los derechos reservados.</p>
       </footer>
+      {detalle && <DetalleTarjeta detalle={detalle} alCambiar={(indice) => setDetalle((d) => ({ ...d, indice }))} alCerrar={() => setDetalle(null)} />}
       <ChatAsistente
         modo="publico"
         titulo="Asistente SIGMA"

@@ -4,6 +4,7 @@ namespace App\Http\Requests\Usuario;
 
 use App\Models\Rol;
 use App\Models\Usuario;
+use App\Support\Telefono;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -29,6 +30,11 @@ class GuardarUsuarioRequest extends FormRequest
         if (is_string($this->input('correo'))) {
             $this->merge(['correo' => strtolower(trim($this->input('correo')))]);
         }
+
+        // El celular se guarda con 10 dígitos; si no es válido queda tal cual para que la validación lo rechace.
+        if (is_string($this->input('telefono'))) {
+            $this->merge(['telefono' => trim($this->input('telefono')) === '' ? null : (Telefono::normalizar($this->input('telefono')) ?? $this->input('telefono'))]);
+        }
     }
 
     public function rules(): array
@@ -43,6 +49,8 @@ class GuardarUsuarioRequest extends FormRequest
             'rol_id' => [...$requerido, 'integer', 'exists:roles,id'],
             'cliente_id' => ['nullable', 'integer', Rule::exists('clientes', 'id')->whereNull('deleted_at')],
             'activo' => ['nullable', 'boolean'],
+            'telefono' => ['nullable', 'string', 'regex:/^3\d{9}$/', Rule::unique('usuarios', 'telefono')->ignore($actual?->id)],
+            'doble_factor' => ['nullable', 'boolean'],
         ];
     }
 
@@ -75,12 +83,19 @@ class GuardarUsuarioRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return ['telefono.regex' => 'Escriba un celular colombiano de 10 dígitos (ej. 300 123 4567).'];
+    }
+
     public function attributes(): array
     {
         return [
             'password' => 'contraseña',
             'rol_id' => 'rol',
             'cliente_id' => 'cliente',
+            'telefono' => 'celular',
+            'doble_factor' => 'verificación en dos pasos',
         ];
     }
 }

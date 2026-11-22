@@ -1,0 +1,66 @@
+# App de SIGMA para iPhone (iOS).
+# Compilar para iOS exige una Mac: GitHub presta una máquina macOS (gratis en repositorios públicos), corre las
+# pruebas de la app y deja el archivo SIGMA-ios-sin-firmar.ipa como artefacto descargable durante 30 días
+# (Actions → «App iOS» → la ejecución → Artifacts). Para instalarlo en un iPhone hay que firmarlo con una
+# cuenta de Apple: gratis con Sideloadly o AltStore (la firma dura 7 días) o, con la cuenta de desarrollador
+# (USD 99 al año), por TestFlight o la App Store. Se ejecuta a mano (Run workflow) o al cambiar la app en main.
+name: App iOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'app/flutter_application_1/**'
+      - '.github/workflows/app-ios.yml'
+
+concurrency:
+  group: app-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    name: Compilar IPA para iPhone (sin firmar)
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: app/flutter_application_1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.6'
+          cache: true
+
+      - name: Dependencias
+        run: flutter pub get
+
+      - name: Pruebas
+        run: flutter test
+
+      # La versión sale de pubspec.yaml (la misma del APK). La app apunta al servidor de producción.
+      - name: Compilar para iPhone
+        run: |
+          flutter build ios --release --no-codesign \
+            --obfuscate --split-debug-info=build/simbolos \
+            --dart-define=API_URL=https://sigma.proyectoscampus.top/api/v1
+
+      - name: Empaquetar el IPA
+        run: |
+          rm -rf Payload && mkdir Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -qry SIGMA-ios-sin-firmar.ipa Payload
+          ls -lh SIGMA-ios-sin-firmar.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SIGMA-ios
+          path: app/flutter_application_1/SIGMA-ios-sin-firmar.ipa
+          retention-days: 30
+          if-no-files-found: error

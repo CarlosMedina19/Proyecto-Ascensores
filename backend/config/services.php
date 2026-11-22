@@ -46,6 +46,26 @@ return [
         ],
     ],
 
+    // Mensajes de texto (recuperación de la contraseña con el número de teléfono).
+    //   log       → solo queda en el registro de Laravel (desarrollo).
+    //   twilio    → SMS real con Twilio (TWILIO_SID, TWILIO_TOKEN, TWILIO_NUMERO). Su cuenta de prueba es gratis
+    //               y envía a los números verificados en Twilio.
+    //   n8n       → un flujo de n8n recibe {telefono, mensaje} y lo envía por el canal que tenga (SMS, WhatsApp…).
+    //   simulado  → modo de demostración sin operador: el código se muestra en pantalla (nunca para administradores
+    //               ni cuentas con verificación en dos pasos).
+    'sms' => [
+        'driver' => env('SIGMA_SMS', 'log'),
+        'twilio' => [
+            'sid' => env('TWILIO_SID'),
+            'token' => env('TWILIO_TOKEN'),
+            'numero' => env('TWILIO_NUMERO'),
+        ],
+        'n8n' => [
+            'url' => env('SIGMA_SMS_N8N_URL'),
+            'clave' => env('SIGMA_SMS_N8N_CLAVE', env('ASISTENTE_N8N_CLAVE')),
+        ],
+    ],
+
     'analitica' => [
         'url' => env('ANALITICA_URL', 'http://sigma_analitica:8001'),
         'clave' => env('ANALITICA_CLAVE'),

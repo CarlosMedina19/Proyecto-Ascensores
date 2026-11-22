@@ -35,8 +35,7 @@ export function ProveedorAutenticacion({ children }) {
   }, []);
 
   /** `antesDeEntrar` corre con las credenciales ya validadas y antes de mostrar el panel (transición). */
-  const iniciarSesion = useCallback(async (correo, password, { antesDeEntrar } = {}) => {
-    const respuesta = await autenticacion.iniciarSesion(correo, password);
+  const entrar = useCallback(async (respuesta, antesDeEntrar) => {
     guardarToken(respuesta.token_acceso);
     if (antesDeEntrar) await antesDeEntrar();
     const minutos = respuesta.minutos_inactividad || MINUTOS_INACTIVIDAD_POR_DEFECTO;
@@ -46,6 +45,24 @@ export function ProveedorAutenticacion({ children }) {
     setUsuario(respuesta.usuario);
     return respuesta.usuario;
   }, []);
+
+  /**
+   * Con la verificación en dos pasos activa devuelve { requiere_verificacion, desafio, destino… } sin entrar;
+   * el ingreso se completa con verificarCodigo().
+   */
+  const iniciarSesion = useCallback(
+    async (correo, password, { antesDeEntrar } = {}) => {
+      const respuesta = await autenticacion.iniciarSesion(correo, password);
+      if (respuesta.requiere_verificacion) return respuesta;
+      return entrar(respuesta, antesDeEntrar);
+    },
+    [entrar],
+  );
+
+  const verificarCodigo = useCallback(
+    async (desafio, codigo, { antesDeEntrar } = {}) => entrar(await autenticacion.verificarInicioSesion(desafio, codigo), antesDeEntrar),
+    [entrar],
+  );
 
   const cerrarSesion = useCallback(async (motivo = '') => {
     try {
@@ -72,13 +89,14 @@ export function ProveedorAutenticacion({ children }) {
       motivoCierre,
       minutosInactividad,
       iniciarSesion,
+      verificarCodigo,
       cerrarSesion,
       recargarPerfil,
       tienePermiso: (permiso) => permisos.has(permiso),
       esCliente: usuario?.rol?.nombre === 'cliente',
       esTecnico: usuario?.rol?.nombre === 'tecnico',
     };
-  }, [usuario, cargando, motivoCierre, minutosInactividad, iniciarSesion, cerrarSesion, recargarPerfil]);
+  }, [usuario, cargando, motivoCierre, minutosInactividad, iniciarSesion, verificarCodigo, cerrarSesion, recargarPerfil]);
 
   return <AutenticacionContexto.Provider value={valor}>{children}</AutenticacionContexto.Provider>;
 }

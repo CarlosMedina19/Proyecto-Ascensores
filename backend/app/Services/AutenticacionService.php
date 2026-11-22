@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\CodigoVerificacion;
 use App\Models\Usuario;
 use App\Notifications\AlertaSeguridadNotification;
+use App\Support\Telefono;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -19,8 +21,13 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class AutenticacionService
 {
+    public function __construct(private readonly VerificacionService $verificacion) {}
+
     /**
-     * @return array{usuario: Usuario, token: string}
+     * Con la verificación en dos pasos activa no entrega el token: envía un código al correo y devuelve el
+     * desafío para completar el ingreso en verificarInicioSesion().
+     *
+     * @return array{usuario: Usuario, token?: string, verificacion?: array}
      */
     public function iniciarSesion(string $correo, string $password, ?string $dispositivo = null): array
     {
@@ -44,6 +51,31 @@ class AutenticacionService
             throw new HttpException(403, 'El usuario está inactivo. Comuníquese con el administrador.');
         }
 
+        if ($usuario->doble_factor) {
+            $usuario->forceFill(['intentos_fallidos' => 0, 'bloqueado_hasta' => null])->save();
+
+            return ['usuario' => $usuario, 'verificacion' => $this->verificacion->iniciar($usuario, CodigoVerificacion::INICIO_SESION, 'correo')];
+        }
+
+        return $this->completarInicioSesion($usuario, $dispositivo);
+    }
+
+    /** Segundo paso: el código que llegó al correo. */
+    public function verificarInicioSesion(string $desafio, string $codigo, ?string $dispositivo = null): array
+    {
+        $usuario = $this->verificacion->verificar($desafio, $codigo, CodigoVerificacion::INICIO_SESION);
+
+        return $this->completarInicioSesion($usuario, $dispositivo, ['doble_factor' => true]);
+    }
+
+    public function reenviarCodigoInicioSesion(string $desafio): array
+    {
+        return $this->verificacion->reenviar($desafio, CodigoVerificacion::INICIO_SESION);
+    }
+
+    /** @return array{usuario: Usuario, token: string} */
+    private function completarInicioSesion(Usuario $usuario, ?string $dispositivo, array $detalle = []): array
+    {
         $usuario->forceFill([
             'intentos_fallidos' => 0,
             'bloqueado_hasta' => null,
@@ -52,9 +84,58 @@ class AutenticacionService
 
         $token = $usuario->createToken($dispositivo ?: 'api')->plainTextToken;
 
-        RegistroAuditoriaService::registrar('inicio_sesion', $usuario, [], $usuario->id, 'autenticacion');
+        RegistroAuditoriaService::registrar('inicio_sesion', $usuario, $detalle, $usuario->id, 'autenticacion');
 
         return ['usuario' => $usuario, 'token' => $token];
+    }
+
+    /** Activa o desactiva la verificación en dos pasos de la propia cuenta (pide la contraseña actual). */
+    public function cambiarDobleFactor(Usuario $usuario, bool $activo, string $password): void
+    {
+        if (! Hash::check($password, $usuario->password)) {
+            throw ValidationException::withMessages(['password' => 'La contraseña no es correcta.']);
+        }
+
+        $usuario->forceFill(['doble_factor' => $activo])->save();
+        RegistroAuditoriaService::registrar($activo ? 'doble_factor_activado' : 'doble_factor_desactivado', $usuario, [], $usuario->id, 'autenticacion');
+    }
+
+    /**
+     * Recuperación con el número de teléfono: envía un código por SMS. La respuesta tiene la misma forma
+     * aunque el número no esté registrado, para no revelar qué números existen.
+     */
+    public function enviarCodigoTelefono(string $telefono): array
+    {
+        $numero = Telefono::normalizar($telefono);
+        $usuario = $numero ? Usuario::where('telefono', $numero)->where('activo', true)->orderBy('id')->first() : null;
+
+        if (! $usuario) {
+            return $this->verificacion->desafioFicticio('sms', Telefono::enmascarar($numero));
+        }
+
+        return $this->verificacion->iniciar($usuario, CodigoVerificacion::RECUPERACION, 'sms');
+    }
+
+    public function reenviarCodigoTelefono(string $desafio): array
+    {
+        return $this->verificacion->reenviar($desafio, CodigoVerificacion::RECUPERACION);
+    }
+
+    public function restablecerConTelefono(string $desafio, string $codigo, string $nueva): void
+    {
+        $usuario = $this->verificacion->verificar($desafio, $codigo, CodigoVerificacion::RECUPERACION);
+
+        DB::transaction(function () use ($usuario, $nueva) {
+            $usuario->forceFill([
+                'password' => $nueva,
+                'intentos_fallidos' => 0,
+                'bloqueado_hasta' => null,
+            ])->save();
+            $usuario->tokens()->delete();
+
+            RegistroAuditoriaService::registrar('contrasena_restablecida', $usuario, ['canal' => 'sms'], $usuario->id, 'autenticacion');
+            event(new PasswordReset($usuario));
+        });
     }
 
     public function cerrarSesion(Usuario $usuario): void

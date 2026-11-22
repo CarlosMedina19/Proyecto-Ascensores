@@ -9,14 +9,44 @@ class Repositorio {
   final ClienteApi api;
 
   // RF-001 Autenticación
-  Future<({Usuario usuario, String token, int minutosInactividad})> iniciarSesion(String correo, String password) async {
+  /// Con la verificación en dos pasos activa no llega el token: llega el desafío para pedir el código.
+  Future<({Usuario? usuario, String? token, int minutosInactividad, DesafioVerificacion? verificacion})> iniciarSesion(String correo, String password) async {
     final respuesta = await api.crear('/iniciar-sesion', {'correo': correo, 'password': password, 'dispositivo': 'app-movil'});
-    return (
-      usuario: Usuario.desdeJson(respuesta['usuario'] as Map<String, dynamic>),
-      token: respuesta['token_acceso'] as String,
-      minutosInactividad: (respuesta['minutos_inactividad'] as num?)?.toInt() ?? 10,
-    );
+    if (respuesta['requiere_verificacion'] == true) {
+      return (usuario: null, token: null, minutosInactividad: 10, verificacion: DesafioVerificacion.desdeJson(respuesta));
+    }
+    return _sesionDesde(respuesta);
   }
+
+  /// Segundo paso del ingreso: el código de 6 dígitos que llegó al correo.
+  Future<({Usuario? usuario, String? token, int minutosInactividad, DesafioVerificacion? verificacion})> verificarInicioSesion(String desafio, String codigo) async =>
+      _sesionDesde(await api.crear('/iniciar-sesion/verificar', {'desafio': desafio, 'codigo': codigo, 'dispositivo': 'app-movil'}));
+
+  ({Usuario? usuario, String? token, int minutosInactividad, DesafioVerificacion? verificacion}) _sesionDesde(Map<String, dynamic> respuesta) => (
+    usuario: Usuario.desdeJson(respuesta['usuario'] as Map<String, dynamic>),
+    token: respuesta['token_acceso'] as String,
+    minutosInactividad: (respuesta['minutos_inactividad'] as num?)?.toInt() ?? 10,
+    verificacion: null,
+  );
+
+  /// Reenvía el código (correo del ingreso o SMS de la recuperación); el servidor exige 60 s entre envíos.
+  Future<DesafioVerificacion> reenviarCodigo(String desafio, {String proposito = 'inicio_sesion'}) async =>
+      DesafioVerificacion.desdeJson(await api.crear('/codigo-verificacion/reenviar', {'desafio': desafio, 'proposito': proposito}));
+
+  /// Recuperación con el celular, paso 1: envía el código por SMS.
+  Future<DesafioVerificacion> recuperarConTelefono(String telefono) async =>
+      DesafioVerificacion.desdeJson(await api.crear('/recuperar-contrasena/telefono', {'telefono': telefono}));
+
+  /// Recuperación con el celular, paso 2: código del SMS y contraseña nueva.
+  Future<String> restablecerConTelefono({required String desafio, required String codigo, required String nueva, required String confirmacion}) async =>
+      (await api.crear('/restablecer-contrasena/telefono', {
+            'desafio': desafio,
+            'codigo': codigo,
+            'password': nueva,
+            'password_confirmation': confirmacion,
+          }))['mensaje']
+          as String? ??
+      '';
 
   Future<void> cerrarSesion() => api.crear('/cerrar-sesion');
 

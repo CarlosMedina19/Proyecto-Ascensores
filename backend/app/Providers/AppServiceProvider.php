@@ -116,6 +116,13 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Códigos de verificación (segundo paso y recuperación por teléfono): 10 por minuto por dirección.
+        RateLimiter::for('verificar-codigo', function (Request $solicitud) {
+            return Limit::perMinute(10)->by('codigo|'.$solicitud->ip())->response(
+                fn () => response()->json(['mensaje' => 'Demasiados intentos con el código. Espere un minuto.'], 429)
+            );
+        });
+
         RateLimiter::for('restablecer-contrasena', function (Request $solicitud) {
             return Limit::perMinute(5)->by($solicitud->ip())->response(
                 fn () => response()->json(['mensaje' => 'Demasiadas solicitudes. Espere un minuto.'], 429)

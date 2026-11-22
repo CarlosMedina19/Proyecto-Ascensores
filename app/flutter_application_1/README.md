@@ -58,6 +58,19 @@ instalar en usuarios. El tamaño se logra con R8 (código y recursos sin uso eli
 comprimidas y los símbolos de depuración guardados aparte en `build/simbolos`, que sirven para leer los
 errores con `flutter symbolize`.
 
+### App para iPhone (iOS)
+
+Compilar para iOS exige una Mac, así que la compila **GitHub Actions** en una máquina macOS
+(`.github/workflows/app-ios.yml`, gratis en repositorios públicos): corre las pruebas, compila con
+`flutter build ios --release --no-codesign` apuntando a producción y deja `SIGMA-ios-sin-firmar.ipa` como
+artefacto durante 30 días. Se lanza en GitHub → Actions → **App iOS** → *Run workflow*, y solo al cambiar la app en
+`main`.
+
+El IPA va **sin firmar**: Apple solo instala apps firmadas. Para probarlo en un iPhone, fírmelo con su Apple ID
+usando **Sideloadly** o **AltStore** desde Windows (gratis; la firma dura 7 días y luego se vuelve a firmar). Para
+TestFlight o la App Store se necesita la cuenta de desarrollador de Apple (USD 99 al año) y agregar la firma al
+flujo. Identificador: `co.proyectoscampus.sigma`; iOS 15 o superior; versión tomada de `pubspec.yaml`.
+
 ### Versión web
 
 ```sh
