@@ -1,8 +1,8 @@
-fastapi==0.163.1
+fastapi==0.165.0
 # Dependencia de FastAPI fijada para no instalar versiones con vulnerabilidades conocidas.
 starlette==1.10.0
 uvicorn[standard]==0.54.0
-pydantic==2.10.4
+pydantic==2.14.4
 pandas==2.2.3
-numpy==2.2.1
-scikit-learn==1.6.0
+numpy==2.5.5
+scikit-learn==1.9.1
