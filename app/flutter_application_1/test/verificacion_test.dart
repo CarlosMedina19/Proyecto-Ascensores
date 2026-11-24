@@ -85,7 +85,7 @@ void main() {
     await _asentar(tester);
 
     await tester.enterText(find.byKey(const Key('campo-correo')), 'sigma3172409@gmail.com');
-    await tester.enterText(find.byKey(const Key('campo-password')), 'AdminSigma123');
+    await tester.enterText(find.byKey(const Key('campo-password')), 'Clave-ficticia-2026');
     await tester.ensureVisible(find.byKey(const Key('boton-ingresar')));
     await tester.tap(find.byKey(const Key('boton-ingresar')));
     await _asentar(tester);
@@ -111,7 +111,7 @@ void main() {
     await _asentar(tester);
 
     // El celular quedó como dispositivo de confianza: el siguiente ingreso envía su llave.
-    await sesion.iniciarSesion('sigma3172409@gmail.com', 'AdminSigma123');
+    await sesion.iniciarSesion('sigma3172409@gmail.com', 'Clave-ficticia-2026');
     expect(llamadas.lastWhere((l) => l['ruta'] == '/iniciar-sesion')['dispositivo_confianza'], 'llave-celular');
   });
 

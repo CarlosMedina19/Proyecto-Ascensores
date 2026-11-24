@@ -60,16 +60,34 @@ errores con `flutter symbolize`.
 
 ### App para iPhone (iOS)
 
-Compilar para iOS exige una Mac, así que la compila **GitHub Actions** en una máquina macOS
-(`.github/workflows/app-ios.yml`, gratis en repositorios públicos): corre las pruebas, compila con
-`flutter build ios --release --no-codesign` apuntando a producción y deja `SIGMA-ios-sin-firmar.ipa` como
-artefacto durante 30 días. Se lanza en GitHub → Actions → **App iOS** → *Run workflow*, y solo al cambiar la app en
-`main`.
+Compilar para iOS exige una Mac, así que la compila **GitHub Actions** en una máquina macOS 15 con Xcode
+(`.github/workflows/app-ios.yml`, gratis en repositorios públicos). Flutter genera el proyecto de Xcode, así que no
+hace falta XcodeGen. El flujo verifica macOS, Xcode y Flutter, corre las pruebas, compila para el **simulador** y
+para **iPhone** (release, sin firma, apuntando a producción) y publica tres artefactos durante 30 días:
 
-El IPA va **sin firmar**: Apple solo instala apps firmadas. Para probarlo en un iPhone, fírmelo con su Apple ID
-usando **Sideloadly** o **AltStore** desde Windows (gratis; la firma dura 7 días y luego se vuelve a firmar). Para
-TestFlight o la App Store se necesita la cuenta de desarrollador de Apple (USD 99 al año) y agregar la firma al
-flujo. Identificador: `co.proyectoscampus.sigma`; iOS 15 o superior; versión tomada de `pubspec.yaml`.
+| Artefacto | Qué es |
+|---|---|
+| `SIGMA-iOS-IPA` | `SIGMA-ios-sin-firmar.ipa` (Payload/Runner.app): el paquete para firmar e instalar |
+| `SIGMA-iOS-Simulador` | `Runner.app` para el simulador de iOS de una Mac (no instala en un iPhone) |
+| `SIGMA-iOS-Dispositivo` | `Runner.app` compilado para iPhone, sin firma |
+
+Se lanza en GitHub → Actions → **App iOS** → *Run workflow* (o solo, al cambiar la app en `main`). Para descargar:
+abra la ejecución más reciente, sección **Artifacts** (con la sesión de GitHub iniciada); GitHub entrega un ZIP
+que hay que descomprimir.
+
+**Instalar en un iPhone desde Windows (gratis, 7 días):**
+
+1. Instale **Apple Devices** (o iTunes) y **Sideloadly** en Windows; conecte el iPhone por cable y confíe en el equipo.
+2. Arrastre `SIGMA-ios-sin-firmar.ipa` a Sideloadly, escriba su Apple ID y pulse *Start*: Sideloadly firma e instala.
+3. En el iPhone: *Ajustes → General → VPN y gestión de dispositivos* → confíe en su perfil; en iOS 16 o superior
+   active *Ajustes → Privacidad y seguridad → Modo de desarrollador* y reinicie.
+4. La firma gratuita vence a los 7 días: se repite el paso 2.
+
+La app ya apunta a `https://sigma.proyectoscampus.top/api/v1` (HTTPS, sin excepciones de ATS); para otro servidor se
+cambia `API_URL` en el flujo o desde «Servidor» en el inicio de sesión. Para TestFlight o la App Store se necesita la
+cuenta de desarrollador de Apple (USD 99 al año) y guardar el certificado y el perfil de aprovisionamiento como
+secretos del repositorio para firmar en el flujo. Identificador: `co.proyectoscampus.sigma`; iOS 15 o superior;
+versión tomada de `pubspec.yaml`.
 
 ### Versión web
 

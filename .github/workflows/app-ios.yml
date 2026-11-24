@@ -1,9 +1,14 @@
-# App de SIGMA para iPhone (iOS).
-# Compilar para iOS exige una Mac: GitHub presta una máquina macOS (gratis en repositorios públicos), corre las
-# pruebas de la app y deja el archivo SIGMA-ios-sin-firmar.ipa como artefacto descargable durante 30 días
-# (Actions → «App iOS» → la ejecución → Artifacts). Para instalarlo en un iPhone hay que firmarlo con una
-# cuenta de Apple: gratis con Sideloadly o AltStore (la firma dura 7 días) o, con la cuenta de desarrollador
-# (USD 99 al año), por TestFlight o la App Store. Se ejecuta a mano (Run workflow) o al cambiar la app en main.
+# App de SIGMA para iPhone (iOS), hecha en Flutter.
+# Compilar para iOS exige una Mac: GitHub presta una máquina macOS 15 con Xcode (gratis en repositorios
+# públicos). Flutter genera el proyecto de Xcode (no hace falta XcodeGen) y el flujo:
+#   1. verifica macOS, Xcode y Flutter;
+#   2. corre las pruebas de la app;
+#   3. compila para el simulador de iOS (Runner.app de simulador);
+#   4. compila para iPhone sin firma (Runner.app de dispositivo) y lo empaqueta como IPA (Payload/Runner.app);
+#   5. publica tres artefactos por 30 días: SIGMA-iOS-IPA, SIGMA-iOS-Simulador y SIGMA-iOS-Dispositivo.
+# El IPA va SIN FIRMA: Apple solo instala apps firmadas. Se firma con Sideloadly o AltStore (Apple ID
+# gratuito, 7 días) o, con la cuenta de desarrollador (USD 99 al año), por TestFlight o la App Store.
+# Se ejecuta a mano (Actions → App iOS → Run workflow) o al cambiar la app en main.
 name: App iOS
 
 on:
@@ -23,14 +28,19 @@ permissions:
 
 jobs:
   ios:
-    name: Compilar IPA para iPhone (sin firmar)
+    name: Compilar SIGMA para iPhone (Flutter)
     runs-on: macos-15
-    timeout-minutes: 45
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: app/flutter_application_1
     steps:
       - uses: actions/checkout@v4
+
+      - name: Verificar macOS y Xcode
+        run: |
+          sw_vers
+          xcodebuild -version
 
       - uses: subosito/flutter-action@v2
         with:
@@ -39,28 +49,62 @@ jobs:
           cache: true
 
       - name: Dependencias
-        run: flutter pub get
+        run: |
+          flutter --version
+          flutter pub get
 
       - name: Pruebas
         run: flutter test
 
-      # La versión sale de pubspec.yaml (la misma del APK). La app apunta al servidor de producción.
-      - name: Compilar para iPhone
+      # Para el simulador de iOS (no sirve para un iPhone físico). El simulador solo acepta compilación de depuración.
+      - name: Compilar para el simulador de iOS
+        run: flutter build ios --simulator --debug --dart-define=API_URL=https://sigma.proyectoscampus.top/api/v1
+
+      # Para iPhone, en modo release y sin firma. La versión sale de pubspec.yaml (la misma del APK).
+      - name: Compilar para iPhone (sin firma)
         run: |
           flutter build ios --release --no-codesign \
             --obfuscate --split-debug-info=build/simbolos \
             --dart-define=API_URL=https://sigma.proyectoscampus.top/api/v1
 
-      - name: Empaquetar el IPA
+      - name: Verificar las aplicaciones compiladas
+        run: |
+          for APP in build/ios/iphonesimulator/Runner.app build/ios/iphoneos/Runner.app; do
+            if [ ! -d "$APP" ]; then
+              echo "ERROR: no se encontró $APP"
+              exit 1
+            fi
+            echo "OK: $APP"
+            /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' -c 'Print :CFBundleShortVersionString' -c 'Print :CFBundleVersion' "$APP/Info.plist"
+          done
+
+      - name: Empaquetar el IPA sin firma
         run: |
           rm -rf Payload && mkdir Payload
           cp -R build/ios/iphoneos/Runner.app Payload/
           zip -qry SIGMA-ios-sin-firmar.ipa Payload
           ls -lh SIGMA-ios-sin-firmar.ipa
 
-      - uses: actions/upload-artifact@v4
+      - name: Publicar el IPA
+        uses: actions/upload-artifact@v4
         with:
-          name: SIGMA-ios
+          name: SIGMA-iOS-IPA
           path: app/flutter_application_1/SIGMA-ios-sin-firmar.ipa
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Publicar la app del simulador
+        uses: actions/upload-artifact@v4
+        with:
+          name: SIGMA-iOS-Simulador
+          path: app/flutter_application_1/build/ios/iphonesimulator/Runner.app
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Publicar la app de dispositivo
+        uses: actions/upload-artifact@v4
+        with:
+          name: SIGMA-iOS-Dispositivo
+          path: app/flutter_application_1/build/ios/iphoneos/Runner.app
           retention-days: 30
           if-no-files-found: error

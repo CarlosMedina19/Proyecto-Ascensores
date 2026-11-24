@@ -70,7 +70,7 @@ describe('verificación en dos pasos', () => {
     montar(<IniciarSesion />, '/iniciar-sesion-2fa');
 
     await userEvent.type(screen.getByLabelText(/Correo electrónico/), 'sigma3172409@gmail.com');
-    await userEvent.type(screen.getByLabelText(/^Contraseña/), 'AdminSigma123');
+    await userEvent.type(screen.getByLabelText(/^Contraseña/), 'Clave-ficticia-2026');
     await userEvent.click(screen.getByRole('button', { name: /Ingresar/ }));
 
     expect(await screen.findByRole('heading', { name: 'Verificación en dos pasos' })).toBeInTheDocument();
@@ -89,7 +89,7 @@ describe('verificación en dos pasos', () => {
 
     // Este navegador quedó como dispositivo de confianza: el próximo ingreso envía su llave.
     expect(JSON.parse(localStorage.getItem('sigma.dispositivos-confianza'))).toEqual({ 'sigma3172409@gmail.com': 'llave-dispositivo' });
-    await autenticacion.iniciarSesion('Sigma3172409@gmail.com', 'AdminSigma123');
+    await autenticacion.iniciarSesion('Sigma3172409@gmail.com', 'Clave-ficticia-2026');
     expect(llamadas.at(-1).cuerpo).toMatchObject({ dispositivo_confianza: 'llave-dispositivo' });
   });
 });
