@@ -2,6 +2,10 @@ import 'cliente_api.dart';
 import '../estado/visitas.dart';
 import 'modelos.dart';
 
+/// Resultado de un ingreso: la sesión, o el desafío del código de dos pasos. `confianza` es la llave de
+/// este celular como dispositivo de confianza (llega al verificar el código).
+typedef ResultadoIngreso = ({Usuario? usuario, String? token, int minutosInactividad, DesafioVerificacion? verificacion, String? confianza});
+
 /// Acceso a los recursos de la API usados por la app móvil.
 class Repositorio {
   Repositorio(this.api);
@@ -10,23 +14,30 @@ class Repositorio {
 
   // RF-001 Autenticación
   /// Con la verificación en dos pasos activa no llega el token: llega el desafío para pedir el código.
-  Future<({Usuario? usuario, String? token, int minutosInactividad, DesafioVerificacion? verificacion})> iniciarSesion(String correo, String password) async {
-    final respuesta = await api.crear('/iniciar-sesion', {'correo': correo, 'password': password, 'dispositivo': 'app-movil'});
+  /// `confianza`: la llave guardada si este celular ya verificó el código; así no lo vuelve a pedir.
+  Future<ResultadoIngreso> iniciarSesion(String correo, String password, {String? confianza}) async {
+    final respuesta = await api.crear('/iniciar-sesion', {
+      'correo': correo,
+      'password': password,
+      'dispositivo': 'app-movil',
+      'dispositivo_confianza': ?confianza,
+    });
     if (respuesta['requiere_verificacion'] == true) {
-      return (usuario: null, token: null, minutosInactividad: 10, verificacion: DesafioVerificacion.desdeJson(respuesta));
+      return (usuario: null, token: null, minutosInactividad: 10, verificacion: DesafioVerificacion.desdeJson(respuesta), confianza: null);
     }
     return _sesionDesde(respuesta);
   }
 
   /// Segundo paso del ingreso: el código de 6 dígitos que llegó al correo.
-  Future<({Usuario? usuario, String? token, int minutosInactividad, DesafioVerificacion? verificacion})> verificarInicioSesion(String desafio, String codigo) async =>
+  Future<ResultadoIngreso> verificarInicioSesion(String desafio, String codigo) async =>
       _sesionDesde(await api.crear('/iniciar-sesion/verificar', {'desafio': desafio, 'codigo': codigo, 'dispositivo': 'app-movil'}));
 
-  ({Usuario? usuario, String? token, int minutosInactividad, DesafioVerificacion? verificacion}) _sesionDesde(Map<String, dynamic> respuesta) => (
+  ResultadoIngreso _sesionDesde(Map<String, dynamic> respuesta) => (
     usuario: Usuario.desdeJson(respuesta['usuario'] as Map<String, dynamic>),
     token: respuesta['token_acceso'] as String,
     minutosInactividad: (respuesta['minutos_inactividad'] as num?)?.toInt() ?? 10,
     verificacion: null,
+    confianza: respuesta['dispositivo_confianza'] as String?,
   );
 
   /// Reenvía el código (correo del ingreso o SMS de la recuperación); el servidor exige 60 s entre envíos.

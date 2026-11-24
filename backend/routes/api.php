@@ -68,6 +68,7 @@ Route::middleware(['auth:sanctum', LimitarTokenAsistente::class])->group(functio
     Route::put('/perfil/contrasena', [AutenticacionController::class, 'cambiarContrasena']);
     Route::patch('/perfil', [AutenticacionController::class, 'actualizarPerfil']);
     Route::put('/perfil/doble-factor', [AutenticacionController::class, 'cambiarDobleFactor'])->middleware('throttle:10,1');
+    Route::delete('/perfil/dispositivos-confianza', [AutenticacionController::class, 'olvidarDispositivos'])->middleware('throttle:10,1');
     Route::get('/resumen', [ResumenController::class, 'index']);
     Route::get('/panel', PanelController::class);
     Route::get('/buscar', BusquedaController::class)->middleware('throttle:60,1');
@@ -177,6 +178,7 @@ Route::middleware(['auth:sanctum', LimitarTokenAsistente::class])->group(functio
     Route::patch('/ordenes/{orden}/prioridad', [OrdenTrabajoController::class, 'prioridad']);
     Route::patch('/ordenes/{orden}/estado', [OrdenTrabajoController::class, 'estado']);
     Route::patch('/ordenes/{orden}/cancelar', [OrdenTrabajoController::class, 'cancelar']);
+    Route::patch('/ordenes/{orden}/cerrar', [OrdenTrabajoController::class, 'cerrar']);
     Route::apiResource('ordenes', OrdenTrabajoController::class)
         ->only(['index', 'store', 'show'])
         ->parameters(['ordenes' => 'orden']);

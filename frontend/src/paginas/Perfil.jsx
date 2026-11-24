@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { KeyRound, ShieldCheck, Smartphone } from "lucide-react";
 import { autenticacion } from "../api/servicios";
+import { olvidarConfianza } from "../api/confianza";
 import { useAutenticacion } from "../contexto/AutenticacionContexto";
 import { useNotificar } from "../contexto/NotificacionesContexto";
 import { useFormulario } from "../hooks/useFormulario";
@@ -155,6 +156,20 @@ function TarjetaSeguridad() {
     }
   }
 
+  async function olvidarDispositivos() {
+    setGuardando(true);
+    try {
+      const respuesta = await autenticacion.olvidarDispositivos();
+      olvidarConfianza(usuario.correo);
+      await recargarPerfil();
+      notificar(respuesta.mensaje);
+    } catch (e) {
+      notificar(e.message, "error");
+    } finally {
+      setGuardando(false);
+    }
+  }
+
   async function cambiarDobleFactor() {
     setGuardando(true);
     setErrorClave("");
@@ -202,6 +217,19 @@ function TarjetaSeguridad() {
           <ShieldCheck size={16} /> {usuario.doble_factor ? "Desactivar" : "Activar"}
         </button>
       </div>
+      {usuario.doble_factor && (
+        <div className="perfil__doble-factor">
+          <div>
+            <b>Dispositivos de confianza: {usuario.dispositivos_confianza ?? 0}</b>
+            <p className="campo__ayuda">
+              El código solo se pide la primera vez en cada navegador o celular. Si perdió un dispositivo o usó uno ajeno, olvídelos todos: cada uno volverá a pedir el código.
+            </p>
+          </div>
+          <button type="button" className="boton boton--secundario" onClick={olvidarDispositivos} disabled={guardando || !usuario.dispositivos_confianza}>
+            Olvidar dispositivos
+          </button>
+        </div>
+      )}
       <Modal
         abierto={confirmar}
         titulo={usuario.doble_factor ? "Desactivar la verificación en dos pasos" : "Activar la verificación en dos pasos"}

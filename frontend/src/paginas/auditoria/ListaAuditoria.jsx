@@ -1,9 +1,12 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { Eye, History, MapPin, Radio, Search, X } from 'lucide-react';
-import { auditoria } from '../../api/servicios';
+import { CheckCircle2, Eye, History, MapPin, Radio, Search, X } from 'lucide-react';
+import { auditoria, ordenes } from '../../api/servicios';
 import { escuchar, tiempoRealDisponible } from '../../api/tiempoReal';
 import { filasSegunPantalla, useListado } from '../../hooks/useListado';
+import { useAutenticacion } from '../../contexto/AutenticacionContexto';
+import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Modal, Paginacion, Tabla, Tarjeta } from '../../componentes/Basicos';
+import { CampoArea } from '../../componentes/Campos';
 import { ACCIONES_AUDITORIA, fechaHora, humanizar } from '../../utilidades/formato';
 
 const MapaTecnicos = lazy(() => import('./MapaTecnicos'));
@@ -27,8 +30,104 @@ function haceCuanto(valor) {
   return fechaHora(valor);
 }
 
+/**
+ * Técnicos en mantenimiento: se consultan cada minuto (cada 5 con WebSocket, que además los mueve en vivo).
+ * Lo usa la auditoría completa del administrador y la vista del coordinador.
+ */
+function useTecnicosEnVivo(conTiempoReal) {
+  const [tecnicos, setTecnicos] = useState([]);
+  const [error, setError] = useState('');
+  const [enVivo, setEnVivo] = useState(false);
+
+  const cargar = useCallback(() => {
+    auditoria
+      .enVivo()
+      .then((r) => {
+        setTecnicos(r.datos || []);
+        setError('');
+      })
+      .catch((e) => setError(e.message));
+  }, []);
+
+  useEffect(() => {
+    cargar();
+    const temporizador = setInterval(cargar, (conTiempoReal && tiempoRealDisponible() ? 5 : 1) * 60 * 1000);
+    return () => clearInterval(temporizador);
+  }, [cargar, conTiempoReal]);
+
+  return { tecnicos, setTecnicos, error, enVivo, setEnVivo, cargar };
+}
+
+/**
+ * Cierre administrativo de una orden que quedó abierta (el técnico no la finalizó en la app).
+ * No exige firmas ni la planilla completa; el motivo queda en el informe, la trazabilidad y la auditoría.
+ */
+function ModalCerrarOrden({ objetivo, alCerrar, alListo }) {
+  const notificar = useNotificar();
+  const [motivo, setMotivo] = useState('');
+  const [error, setError] = useState('');
+  const [enviando, setEnviando] = useState(false);
+
+  useEffect(() => {
+    setMotivo('');
+    setError('');
+  }, [objetivo]);
+
+  async function confirmar() {
+    setEnviando(true);
+    setError('');
+    try {
+      await ordenes.cerrar(objetivo.orden.id, motivo.trim());
+      notificar(`Orden ${objetivo.orden.numero} finalizada.`);
+      alListo();
+    } catch (e) {
+      setError(e.errores?.motivo?.[0] || e.message);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <Modal
+      abierto={Boolean(objetivo)}
+      titulo={objetivo ? `Finalizar la orden ${objetivo.orden.numero}` : ''}
+      alCerrar={() => !enviando && alCerrar()}
+      pie={
+        <>
+          <button type="button" className="boton boton--secundario" onClick={alCerrar} disabled={enviando}>
+            Cancelar
+          </button>
+          <button type="button" className="boton" onClick={confirmar} disabled={enviando || motivo.trim().length < 5}>
+            <CheckCircle2 size={16} /> {enviando ? 'Finalizando…' : 'Finalizar orden'}
+          </button>
+        </>
+      }
+    >
+      {objetivo && (
+        <div className="formulario">
+          <p style={{ margin: 0 }}>
+            {objetivo.tecnico} · {objetivo.equipo}
+            {objetivo.edificio ? ` · ${objetivo.edificio}` : ''}. La orden queda finalizada sin exigir las firmas ni la planilla completa, y deja de aparecer en el mapa.
+          </p>
+          <Alerta>{error}</Alerta>
+          <CampoArea
+            etiqueta="Motivo del cierre"
+            obligatorio
+            valor={motivo}
+            alCambiar={setMotivo}
+            rows={3}
+            maxLength={1000}
+            placeholder="Ej.: el técnico terminó el trabajo pero no cerró la orden en la app."
+            ayuda="Queda en el informe de la orden, en su trazabilidad y en la auditoría."
+          />
+        </div>
+      )}
+    </Modal>
+  );
+}
+
 /** Técnicos haciendo un mantenimiento ahora: mapa y lista. */
-function TecnicosEnVivo({ tecnicos, error, enVivo }) {
+function TecnicosEnVivo({ tecnicos, error, enVivo, puedeCerrar, alCerrar }) {
   const [seleccionado, setSeleccionado] = useState(null);
   const conPosicion = tecnicos.filter((t) => t.latitud != null);
 
@@ -60,7 +159,7 @@ function TecnicosEnVivo({ tecnicos, error, enVivo }) {
             {tecnicos.map((t) => {
               const clave = `${t.orden?.id}-${t.tecnico_id}`;
               return (
-                <li key={clave}>
+                <li key={clave} className="auditoria-vivo__fila">
                   <button
                     type="button"
                     className={`auditoria-vivo__tecnico${seleccionado === clave ? ' auditoria-vivo__tecnico--activo' : ''}`}
@@ -76,6 +175,11 @@ function TecnicosEnVivo({ tecnicos, error, enVivo }) {
                       Orden {t.orden?.numero} · {haceCuanto(t.registrada_en)}
                     </span>
                   </button>
+                  {puedeCerrar && (
+                    <button type="button" className="boton boton--secundario boton--pequeno auditoria-vivo__cerrar" onClick={() => alCerrar(t)} aria-label={`Finalizar la orden ${t.orden?.numero}`}>
+                      <CheckCircle2 size={15} /> Finalizar
+                    </button>
+                  )}
                 </li>
               );
             })}
@@ -86,14 +190,49 @@ function TecnicosEnVivo({ tecnicos, error, enVivo }) {
   );
 }
 
+/** La tarjeta de técnicos en mantenimiento con el cierre de órdenes para quien tiene el permiso. */
+function SeccionTecnicos({ vivo }) {
+  const { tienePermiso } = useAutenticacion();
+  const [cerrando, setCerrando] = useState(null);
+
+  return (
+    <>
+      <TecnicosEnVivo tecnicos={vivo.tecnicos} error={vivo.error} enVivo={vivo.enVivo} puedeCerrar={tienePermiso('ordenes.cerrar')} alCerrar={setCerrando} />
+      <ModalCerrarOrden
+        objetivo={cerrando}
+        alCerrar={() => setCerrando(null)}
+        alListo={() => {
+          setCerrando(null);
+          vivo.cargar();
+        }}
+      />
+    </>
+  );
+}
+
+/** El administrador ve la auditoría completa; el coordinador, solo los técnicos en mantenimiento. */
 export default function ListaAuditoria() {
+  const { tienePermiso } = useAutenticacion();
+  return tienePermiso('registros_auditoria.ver') ? <AuditoriaCompleta /> : <SoloTecnicos />;
+}
+
+function SoloTecnicos() {
+  const vivo = useTecnicosEnVivo(false);
+  return (
+    <>
+      <EncabezadoPagina titulo="Técnicos en mantenimiento" descripcion={['Órdenes en proceso y ubicación de los técnicos', 'Finalice las órdenes que quedaron abiertas']} />
+      <SeccionTecnicos vivo={vivo} />
+    </>
+  );
+}
+
+function AuditoriaCompleta() {
   const [modulos, setModulos] = useState([]);
   const [detalle, setDetalle] = useState(null);
   const [historial, setHistorial] = useState(false);
-  const [tecnicos, setTecnicos] = useState([]);
-  const [errorVivo, setErrorVivo] = useState('');
-  const [enVivo, setEnVivo] = useState(false);
   const [nuevos, setNuevos] = useState(() => new Set());
+  const vivo = useTecnicosEnVivo(true);
+  const { setTecnicos, setEnVivo, cargar: cargarEnVivo } = vivo;
 
   const consultar = useCallback(
     (f) => auditoria.listar(historial ? f : { ...f, recientes_horas: HORAS_RECIENTES, modulo: '', accion: '', fecha_desde: '', fecha_hasta: '', busqueda: '' }),
@@ -101,29 +240,12 @@ export default function ListaAuditoria() {
   );
   const { filas, metadatos, cargando, error, filtros, cambiarFiltro, setPagina, recargar } = useListado(consultar, FILTROS_HISTORIAL, filasSegunPantalla(42));
 
-  const cargarEnVivo = useCallback(() => {
-    auditoria
-      .enVivo()
-      .then((r) => {
-        setTecnicos(r.datos || []);
-        setErrorVivo('');
-      })
-      .catch((e) => setErrorVivo(e.message));
-  }, []);
-
   useEffect(() => {
     auditoria
       .modulos()
       .then((r) => setModulos(r.datos))
       .catch(() => {});
   }, []);
-
-  // Sin WebSocket la vista se actualiza cada minuto; con él, solo como respaldo cada 5 minutos.
-  useEffect(() => {
-    cargarEnVivo();
-    const temporizador = setInterval(cargarEnVivo, (tiempoRealDisponible() ? 5 : 1) * 60 * 1000);
-    return () => clearInterval(temporizador);
-  }, [cargarEnVivo]);
 
   // Tiempo real: registros nuevos y posiciones de los técnicos.
   const recargarRef = useRef(recargar);
@@ -157,7 +279,7 @@ export default function ListaAuditoria() {
       clearTimeout(espera);
       dejar();
     };
-  }, [cargarEnVivo]);
+  }, [cargarEnVivo, setEnVivo, setTecnicos]);
 
   function alternarHistorial() {
     setHistorial((valor) => !valor);
@@ -172,7 +294,7 @@ export default function ListaAuditoria() {
         descripcion={['Mantenimientos en curso y ubicación de los técnicos', `Movimientos de las últimas ${HORAS_RECIENTES} horas`, 'Los registros no se editan ni se eliminan']}
       />
 
-      <TecnicosEnVivo tecnicos={tecnicos} error={errorVivo} enVivo={enVivo} />
+      <SeccionTecnicos vivo={vivo} />
 
       <Tarjeta sinRelleno>
         <div className="auditoria-cabecera">

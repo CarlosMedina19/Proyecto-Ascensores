@@ -49,6 +49,12 @@ class OrdenTrabajoPolicy
         return $usuario->tienePermiso('ordenes.cancelar');
     }
 
+    /** Cierre administrativo de una orden que quedó abierta (administrador y coordinador). */
+    public function cerrar(Usuario $usuario, OrdenTrabajo $orden): bool
+    {
+        return $usuario->tienePermiso('ordenes.cerrar');
+    }
+
     /** RF-038: el correctivo derivado lo crea el técnico asignado o quien gestiona órdenes. */
     public function crearCorrectivo(Usuario $usuario, OrdenTrabajo $orden): bool
     {

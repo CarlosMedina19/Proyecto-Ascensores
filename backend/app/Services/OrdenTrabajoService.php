@@ -414,6 +414,34 @@ class OrdenTrabajoService
         });
     }
 
+    /**
+     * Cierre administrativo: el administrador o el coordinador finalizan una orden que quedó abierta
+     * (el técnico no la cerró en la app). No exige firmas ni la planilla completa; el motivo queda en el
+     * informe, la trazabilidad y la auditoría. Como no se conoce la duración real, no se registra.
+     */
+    public function cerrarAdministrativamente(OrdenTrabajo $orden, string $motivo): OrdenTrabajo
+    {
+        if (! in_array($orden->estado, ['en_camino', 'en_proceso', 'pendiente'], true)) {
+            throw new ReglaNegocioException('Solo se cierran órdenes en camino, en proceso o pendientes. Las que aún no empiezan se cancelan.');
+        }
+
+        return DB::transaction(function () use ($orden, $motivo) {
+            $nota = 'Cierre administrativo por '.(Auth::user()?->nombre ?? 'el administrador').": {$motivo}";
+            $orden->update([
+                'inicio_en' => $orden->inicio_en ?? now(),
+                'fin_en' => now(),
+                'duracion_minutos' => null,
+                'informe' => filled($orden->informe) ? "{$orden->informe}\n\n{$nota}" : $nota,
+            ]);
+            $this->cambiar($orden, 'finalizada', $nota);
+            $this->trazar($orden, 'cierre_administrativo', null, null, null, $nota);
+            RegistroAuditoriaService::registrar('cierre_administrativo', $orden, ['motivo' => $motivo]);
+            $this->alFinalizar($orden);
+
+            return $this->detalle($orden);
+        });
+    }
+
     public function detalle(OrdenTrabajo $orden): OrdenTrabajo
     {
         return $orden->fresh([
@@ -478,7 +506,7 @@ class OrdenTrabajoService
         $orden->equipo?->historial()->create([
             'usuario_id' => Auth::id(),
             'evento' => $orden->servicio === 'correctivo' ? 'reparacion' : 'mantenimiento',
-            'descripcion' => "Orden {$orden->numero} finalizada ({$orden->duracion_minutos} min). {$orden->informe}",
+            'descripcion' => "Orden {$orden->numero} finalizada".($orden->duracion_minutos !== null ? " ({$orden->duracion_minutos} min)" : '').". {$orden->informe}",
         ]);
 
         $mantenimiento = $orden->mantenimiento;

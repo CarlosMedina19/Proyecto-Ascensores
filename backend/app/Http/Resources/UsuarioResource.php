@@ -15,6 +15,7 @@ class UsuarioResource extends RecursoApi
             'activo' => (bool) $this->activo,
             'telefono' => $this->telefono,
             'doble_factor' => (bool) $this->doble_factor,
+            'dispositivos_confianza' => $this->whenCounted('dispositivosConfianza'),
             'rol_id' => $this->rol_id,
             'rol' => new RolResource($this->whenLoaded('rol')),
             'cliente_id' => $this->cliente_id,

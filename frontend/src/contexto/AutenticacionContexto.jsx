@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { guardarToken, obtenerToken } from '../api/cliente';
 import { autenticacion } from '../api/servicios';
+import { guardarConfianza } from '../api/confianza';
 
 const AutenticacionContexto = createContext(null);
 
@@ -37,6 +38,8 @@ export function ProveedorAutenticacion({ children }) {
   /** `antesDeEntrar` corre con las credenciales ya validadas y antes de mostrar el panel (transición). */
   const entrar = useCallback(async (respuesta, antesDeEntrar) => {
     guardarToken(respuesta.token_acceso);
+    // Después de verificar el código, este navegador queda como dispositivo de confianza.
+    if (respuesta.dispositivo_confianza) guardarConfianza(respuesta.usuario?.correo, respuesta.dispositivo_confianza);
     if (antesDeEntrar) await antesDeEntrar();
     const minutos = respuesta.minutos_inactividad || MINUTOS_INACTIVIDAD_POR_DEFECTO;
     sessionStorage.setItem('sigma.minutos', String(minutos));
@@ -92,7 +95,8 @@ export function ProveedorAutenticacion({ children }) {
       verificarCodigo,
       cerrarSesion,
       recargarPerfil,
-      tienePermiso: (permiso) => permisos.has(permiso),
+      // Un permiso o una lista (basta con tener uno).
+      tienePermiso: (permiso) => (Array.isArray(permiso) ? permiso.some((p) => permisos.has(p)) : permisos.has(permiso)),
       esCliente: usuario?.rol?.nombre === 'cliente',
       esTecnico: usuario?.rol?.nombre === 'tecnico',
     };

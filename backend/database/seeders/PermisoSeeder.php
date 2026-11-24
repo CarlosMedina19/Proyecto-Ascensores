@@ -59,6 +59,7 @@ class PermisoSeeder extends Seeder
         'ordenes.editar' => 'Reprogramar órdenes y cambiar su prioridad',
         'ordenes.asignar' => 'Asignar técnicos a las órdenes',
         'ordenes.cancelar' => 'Cancelar órdenes con motivo',
+        'ordenes.cerrar' => 'Finalizar órdenes que quedaron abiertas (cierre administrativo con motivo)',
         'ordenes.ejecutar' => 'Avanzar los estados de las órdenes asignadas (en camino, en proceso, pendiente, finalizada)',
         // Cartera (facturas y pagos) y carga de datos desde Excel.
         'cartera.ver' => 'Consultar facturas, pagos y saldos de cartera',
@@ -106,7 +107,7 @@ class PermisoSeeder extends Seeder
             'mantenimientos.ver', 'mantenimientos.gestionar',
             'contratos.ver', 'contratos.crear', 'contratos.editar', 'contratos.renovacion',
             'tecnicos.ver', 'tecnicos.editar',
-            'ordenes.ver', 'ordenes.crear', 'ordenes.editar', 'ordenes.asignar', 'ordenes.cancelar',
+            'ordenes.ver', 'ordenes.crear', 'ordenes.editar', 'ordenes.asignar', 'ordenes.cancelar', 'ordenes.cerrar',
         ];
 
         $permisosPorRol = [

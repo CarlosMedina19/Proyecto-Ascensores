@@ -25,11 +25,12 @@ class AutenticacionService
 
     /**
      * Con la verificación en dos pasos activa no entrega el token: envía un código al correo y devuelve el
-     * desafío para completar el ingreso en verificarInicioSesion().
+     * desafío para completar el ingreso en verificarInicioSesion(). Desde un dispositivo de confianza
+     * (donde ya se verificó el código) entra sin pedirlo.
      *
      * @return array{usuario: Usuario, token?: string, verificacion?: array}
      */
-    public function iniciarSesion(string $correo, string $password, ?string $dispositivo = null): array
+    public function iniciarSesion(string $correo, string $password, ?string $dispositivo = null, ?string $confianza = null): array
     {
         $usuario = Usuario::where('correo', Str::lower($correo))->first();
 
@@ -51,6 +52,10 @@ class AutenticacionService
             throw new HttpException(403, 'El usuario está inactivo. Comuníquese con el administrador.');
         }
 
+        if ($usuario->doble_factor && $this->esDispositivoDeConfianza($usuario, $confianza)) {
+            return $this->completarInicioSesion($usuario, $dispositivo, ['doble_factor' => 'dispositivo_de_confianza']);
+        }
+
         if ($usuario->doble_factor) {
             $usuario->forceFill(['intentos_fallidos' => 0, 'bloqueado_hasta' => null])->save();
 
@@ -60,12 +65,63 @@ class AutenticacionService
         return $this->completarInicioSesion($usuario, $dispositivo);
     }
 
-    /** Segundo paso: el código que llegó al correo. */
+    /**
+     * Segundo paso: el código que llegó al correo. El dispositivo queda como de confianza y recibe su llave
+     * (`confianza`), que debe enviar en los próximos ingresos para no volver a pedir el código.
+     */
     public function verificarInicioSesion(string $desafio, string $codigo, ?string $dispositivo = null): array
     {
         $usuario = $this->verificacion->verificar($desafio, $codigo, CodigoVerificacion::INICIO_SESION);
+        $sesion = $this->completarInicioSesion($usuario, $dispositivo, ['doble_factor' => true]);
 
-        return $this->completarInicioSesion($usuario, $dispositivo, ['doble_factor' => true]);
+        return $sesion + ['confianza' => $this->confiarEnDispositivo($usuario, $dispositivo)];
+    }
+
+    /** Olvida todos los dispositivos de confianza: el próximo ingreso en cada uno vuelve a pedir el código. */
+    public function olvidarDispositivos(Usuario $usuario): int
+    {
+        $borrados = $usuario->dispositivosConfianza()->delete();
+        if ($borrados) {
+            RegistroAuditoriaService::registrar('dispositivos_olvidados', $usuario, ['dispositivos' => $borrados], $usuario->id, 'autenticacion');
+        }
+
+        return $borrados;
+    }
+
+    private function confiarEnDispositivo(Usuario $usuario, ?string $dispositivo): string
+    {
+        $llave = Str::random(64);
+        $agente = (string) request()?->userAgent();
+        $usuario->dispositivosConfianza()->create([
+            'huella' => $this->huellaDispositivo($llave),
+            'nombre' => Str::limit(trim(($dispositivo ?: 'api').' · '.$agente, ' ·'), 155, '…'),
+            'ip' => request()?->ip(),
+            'ultimo_uso_en' => now(),
+            'expira_en' => now()->addDays((int) config('sigma.sesion.dias_dispositivo_confianza', 180)),
+        ]);
+        // Se guardan como máximo 10 por cuenta: los más viejos se olvidan.
+        $sobrantes = $usuario->dispositivosConfianza()->orderByDesc('ultimo_uso_en')->skip(10)->take(100)->pluck('id');
+        if ($sobrantes->isNotEmpty()) {
+            $usuario->dispositivosConfianza()->whereIn('id', $sobrantes)->delete();
+        }
+
+        return $llave;
+    }
+
+    private function esDispositivoDeConfianza(Usuario $usuario, ?string $llave): bool
+    {
+        if (blank($llave)) {
+            return false;
+        }
+        $registro = $usuario->dispositivosConfianza()->where('huella', $this->huellaDispositivo($llave))->where('expira_en', '>', now())->first();
+        $registro?->forceFill(['ultimo_uso_en' => now(), 'ip' => request()?->ip()])->save();
+
+        return $registro !== null;
+    }
+
+    private function huellaDispositivo(string $llave): string
+    {
+        return hash_hmac('sha256', 'dispositivo|'.$llave, (string) config('app.key'));
     }
 
     public function reenviarCodigoInicioSesion(string $desafio): array
@@ -97,6 +153,7 @@ class AutenticacionService
         }
 
         $usuario->forceFill(['doble_factor' => $activo])->save();
+        $usuario->dispositivosConfianza()->delete();
         RegistroAuditoriaService::registrar($activo ? 'doble_factor_activado' : 'doble_factor_desactivado', $usuario, [], $usuario->id, 'autenticacion');
     }
 
@@ -132,6 +189,7 @@ class AutenticacionService
                 'bloqueado_hasta' => null,
             ])->save();
             $usuario->tokens()->delete();
+            $usuario->dispositivosConfianza()->delete();
 
             RegistroAuditoriaService::registrar('contrasena_restablecida', $usuario, ['canal' => 'sms'], $usuario->id, 'autenticacion');
             event(new PasswordReset($usuario));
@@ -187,6 +245,7 @@ class AutenticacionService
                 ])->save();
 
                 $usuario->tokens()->delete();
+                $usuario->dispositivosConfianza()->delete();
 
                 RegistroAuditoriaService::registrar('contrasena_restablecida', $usuario, [], $usuario->id, 'autenticacion');
 

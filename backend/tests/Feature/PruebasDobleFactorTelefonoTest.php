@@ -160,6 +160,72 @@ class PruebasDobleFactorTelefonoTest extends TestCase
             ->assertJsonMissingPath('codigo_demo')->assertJsonStructure(['nota']);
     }
 
+    /** Verifica el código en un dispositivo y devuelve su llave de confianza. */
+    private function verificarEnDispositivoNuevo(Usuario $usuario): string
+    {
+        $desafio = $this->iniciar($usuario)->assertJsonPath('requiere_verificacion', true)->json('desafio');
+        $codigo = null;
+        Notification::assertSentTo($usuario, CodigoVerificacionNotification::class, function ($n) use (&$codigo) {
+            $codigo = $n->codigo;
+
+            return true;
+        });
+
+        return $this->postJson('/api/v1/iniciar-sesion/verificar', ['desafio' => $desafio, 'codigo' => $codigo, 'dispositivo' => 'web'])
+            ->assertOk()->assertJsonStructure(['token_acceso', 'dispositivo_confianza'])->json('dispositivo_confianza');
+    }
+
+    public function test_en_un_dispositivo_ya_verificado_no_vuelve_a_pedir_el_codigo(): void
+    {
+        $usuario = $this->usuario(datos: ['doble_factor' => true]);
+        $llave = $this->verificarEnDispositivoNuevo($usuario);
+
+        // Mismo dispositivo: entra directo y no se envía otro código.
+        $this->postJson('/api/v1/iniciar-sesion', ['correo' => $usuario->correo, 'password' => self::CLAVE, 'dispositivo_confianza' => $llave])
+            ->assertOk()->assertJsonStructure(['token_acceso'])->assertJsonMissingPath('requiere_verificacion');
+        Notification::assertSentToTimes($usuario, CodigoVerificacionNotification::class, 1);
+        $this->assertDatabaseHas('registros_auditoria', ['accion' => 'inicio_sesion', 'usuario_id' => $usuario->id]);
+
+        // La contraseña sigue siendo obligatoria.
+        $this->postJson('/api/v1/iniciar-sesion', ['correo' => $usuario->correo, 'password' => 'otra-clave-1', 'dispositivo_confianza' => $llave])->assertStatus(401);
+
+        // Otro dispositivo, o la llave de otra cuenta, vuelve a pedir el código.
+        $this->postJson('/api/v1/iniciar-sesion', ['correo' => $usuario->correo, 'password' => self::CLAVE, 'dispositivo_confianza' => str_repeat('x', 64)])
+            ->assertJsonPath('requiere_verificacion', true);
+        $otro = $this->usuario(datos: ['doble_factor' => true]);
+        $this->postJson('/api/v1/iniciar-sesion', ['correo' => $otro->correo, 'password' => self::CLAVE, 'dispositivo_confianza' => $llave])
+            ->assertJsonPath('requiere_verificacion', true);
+
+        // La confianza vence a los 180 días.
+        $this->travel(181)->days();
+        $this->postJson('/api/v1/iniciar-sesion', ['correo' => $usuario->correo, 'password' => self::CLAVE, 'dispositivo_confianza' => $llave])
+            ->assertJsonPath('requiere_verificacion', true);
+    }
+
+    public function test_olvidar_los_dispositivos_o_restablecer_la_contrasena_vuelve_a_pedir_el_codigo(): void
+    {
+        $usuario = $this->usuario('coordinador', ['doble_factor' => true, 'telefono' => '3001234567']);
+        $llave = $this->verificarEnDispositivoNuevo($usuario);
+        $token = $this->postJson('/api/v1/iniciar-sesion', ['correo' => $usuario->correo, 'password' => self::CLAVE, 'dispositivo_confianza' => $llave])->json('token_acceso');
+
+        $this->withToken($token)->getJson('/api/v1/perfil')->assertJsonPath('datos.dispositivos_confianza', 1);
+        $this->withToken($token)->deleteJson('/api/v1/perfil/dispositivos-confianza')->assertOk();
+        $this->assertDatabaseHas('registros_auditoria', ['accion' => 'dispositivos_olvidados', 'usuario_id' => $usuario->id]);
+        $this->app['auth']->forgetGuards();
+        $this->postJson('/api/v1/iniciar-sesion', ['correo' => $usuario->correo, 'password' => self::CLAVE, 'dispositivo_confianza' => $llave])
+            ->assertJsonPath('requiere_verificacion', true);
+
+        // Una contraseña restablecida también olvida los dispositivos.
+        $usuario->dispositivosConfianza()->create(['huella' => hash_hmac('sha256', 'dispositivo|otra-llave', (string) config('app.key')), 'expira_en' => now()->addDays(30)]);
+        config(['services.sms.driver' => 'simulado']);
+        $solicitud = $this->postJson('/api/v1/recuperar-contrasena/telefono', ['telefono' => '3001234567'])->json();
+        $this->assertArrayNotHasKey('codigo_demo', $solicitud, 'cuenta con dos pasos: el código no se muestra');
+        $usuario->forceFill(['doble_factor' => false])->save();
+        $solicitud = $this->postJson('/api/v1/recuperar-contrasena/telefono', ['telefono' => '3001234567'])->json();
+        $this->postJson('/api/v1/restablecer-contrasena/telefono', ['desafio' => $solicitud['desafio'], 'codigo' => $solicitud['codigo_demo'], 'password' => 'NuevaClave2026', 'password_confirmation' => 'NuevaClave2026'])->assertOk();
+        $this->assertSame(0, $usuario->dispositivosConfianza()->count());
+    }
+
     public function test_el_celular_del_perfil_se_valida_y_no_se_repite(): void
     {
         $this->usuario('coordinador', ['telefono' => '3015550000']);

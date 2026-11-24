@@ -9,6 +9,7 @@ import IniciarSesion from '../paginas/autenticacion/IniciarSesion';
 import RecuperarContrasena from '../paginas/autenticacion/RecuperarContrasena';
 import ChatAsistente from '../componentes/ChatAsistente';
 import Landing from '../paginas/publico/Landing';
+import { autenticacion } from '../api/servicios';
 
 /** Simula la API y guarda cada llamada (el cuerpo puede ser JSON o FormData). */
 function simularApi(rutas) {
@@ -54,6 +55,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   guardarToken(null);
+  localStorage.clear();
 });
 
 describe('verificación en dos pasos', () => {
@@ -62,7 +64,7 @@ describe('verificación en dos pasos', () => {
       'POST /iniciar-sesion': { requiere_verificacion: true, desafio: 'desafio-1', canal: 'correo', destino: 'si***09@gmail.com', minutos: 10, mensaje: 'Enviamos un código de 6 dígitos a si***09@gmail.com.' },
       'POST /iniciar-sesion/verificar': (cuerpo) =>
         cuerpo.codigo === '123456'
-          ? { usuario, token_acceso: 'token-2fa', minutos_inactividad: 10 }
+          ? { usuario, token_acceso: 'token-2fa', minutos_inactividad: 10, dispositivo_confianza: 'llave-dispositivo' }
           : { __estado: 422, mensaje: 'Datos inválidos.', errores: { codigo: ['El código no es correcto. Le quedan 4 intento(s).'] } },
     });
     montar(<IniciarSesion />, '/iniciar-sesion-2fa');
@@ -84,6 +86,11 @@ describe('verificación en dos pasos', () => {
     await userEvent.click(screen.getByRole('button', { name: /Verificar e ingresar/ }));
     expect(await screen.findByText('Panel de inicio')).toBeInTheDocument();
     expect(llamadas.filter((l) => l.ruta === '/iniciar-sesion/verificar').at(-1).cuerpo).toMatchObject({ desafio: 'desafio-1', codigo: '123456' });
+
+    // Este navegador quedó como dispositivo de confianza: el próximo ingreso envía su llave.
+    expect(JSON.parse(localStorage.getItem('sigma.dispositivos-confianza'))).toEqual({ 'sigma3172409@gmail.com': 'llave-dispositivo' });
+    await autenticacion.iniciarSesion('Sigma3172409@gmail.com', 'AdminSigma123');
+    expect(llamadas.at(-1).cuerpo).toMatchObject({ dispositivo_confianza: 'llave-dispositivo' });
   });
 });
 

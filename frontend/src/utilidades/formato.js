@@ -179,6 +179,11 @@ export const ACCIONES_AUDITORIA = {
   prioridad_cambiada: 'Cambio de prioridad',
   fotos_agregadas: 'Fotos agregadas',
   foto_eliminada: 'Foto eliminada',
+  cierre_administrativo: 'Cierre administrativo',
+  doble_factor_activado: 'Dos pasos activados',
+  doble_factor_desactivado: 'Dos pasos desactivados',
+  dispositivos_olvidados: 'Dispositivos olvidados',
+  verificacion_fallida: 'Código de verificación fallido',
 };
 
 // ---------- Fase 2: planes, mantenimientos y contratos ----------

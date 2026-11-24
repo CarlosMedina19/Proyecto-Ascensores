@@ -74,6 +74,44 @@ describe('auditoría en vivo', () => {
   });
 });
 
+describe('cierre administrativo de órdenes abiertas', () => {
+  it('el coordinador ve solo los técnicos en mantenimiento y finaliza una orden con su motivo', async () => {
+    const llamadas = [];
+    let abiertas = [{ tecnico_id: 3, tecnico: 'Técnico SIGMA', orden: { id: 13, numero: 'OT-2026-00013' }, equipo: 'ASC-106', edificio: 'Torre A', latitud: 4.4, longitud: -75.2, registrada_en: new Date().toISOString() }];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url, opciones = {}) => {
+        const ruta = new URL(url).pathname.replace('/api/v1', '');
+        const metodo = opciones.method || 'GET';
+        llamadas.push({ ruta, metodo, cuerpo: opciones.body ? JSON.parse(opciones.body) : null });
+        let cuerpo = { datos: [] };
+        if (ruta === '/perfil') cuerpo = { datos: { id: 2, nombre: 'Coordinador', rol: { nombre: 'coordinador', permisos: ['ordenes.ver', 'ordenes.cerrar'] } } };
+        if (ruta === '/auditoria/en-vivo') cuerpo = { datos: abiertas };
+        if (ruta === '/ordenes/13/cerrar') {
+          abiertas = [];
+          cuerpo = { datos: { id: 13, estado: 'finalizada' } };
+        }
+        return respuestaJson(cuerpo);
+      }),
+    );
+    montar(<ListaAuditoria />, 'coordinador');
+
+    expect(await screen.findByRole('heading', { name: 'Técnicos en mantenimiento' })).toBeInTheDocument();
+    expect(await screen.findByText('Técnico SIGMA')).toBeInTheDocument();
+    expect(screen.queryByText('Movimientos recientes')).not.toBeInTheDocument();
+    expect(llamadas.some((l) => l.ruta === '/registros-auditoria')).toBe(false);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Finalizar la orden OT-2026-00013' }));
+    const confirmar = screen.getByRole('button', { name: /Finalizar orden/ });
+    expect(confirmar).toBeDisabled();
+    await userEvent.type(screen.getByLabelText(/Motivo del cierre/), 'El técnico no cerró la orden en la app.');
+    await userEvent.click(confirmar);
+
+    await waitFor(() => expect(screen.queryByText('Técnico SIGMA')).not.toBeInTheDocument());
+    expect(llamadas.find((l) => l.ruta === '/ordenes/13/cerrar')).toMatchObject({ metodo: 'PATCH', cuerpo: { motivo: 'El técnico no cerró la orden en la app.' } });
+  });
+});
+
 describe('credenciales en roles y permisos', () => {
   const rutas = (rol) => ({
     '/perfil': perfil(rol),

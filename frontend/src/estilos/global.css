@@ -7060,6 +7060,23 @@ textarea.campo__control[rows='2'] {
   opacity: 0.75;
 }
 
+/* Cierre administrativo de la orden junto a cada técnico */
+.auditoria-vivo__fila {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.auditoria-vivo__fila .auditoria-vivo__tecnico {
+  flex: 1;
+  min-width: 0;
+}
+
+.auditoria-vivo__cerrar {
+  align-self: center;
+  flex: none;
+}
+
 .mapa-tecnico {
   background: none;
   border: none;

@@ -115,7 +115,7 @@ export default function App() {
               <Route path="/roles" element={conPermiso('roles.ver', <ListaRoles />)} />
               <Route path="/roles/:id" element={conPermiso('roles.ver', <DetalleRol />)} />
 
-              <Route path="/auditoria" element={conPermiso('registros_auditoria.ver', <ListaAuditoria />)} />
+              <Route path="/auditoria" element={conPermiso(['registros_auditoria.ver', 'ordenes.cerrar'], <ListaAuditoria />)} />
 
               {/* Fase 2: planes, precios, mantenimientos programados y contratos (RF-010 a RF-021). */}
               <Route path="/calendario" element={conPermiso('mantenimientos.ver', <Calendario />)} />

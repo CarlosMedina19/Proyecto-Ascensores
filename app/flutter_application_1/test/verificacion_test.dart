@@ -38,7 +38,7 @@ MockClient _api(List<Map<String, dynamic>> llamadas) => MockClient((solicitud) a
     }),
     '/iniciar-sesion/verificar' =>
       cuerpo['codigo'] == '123456'
-          ? _json({'usuario': _usuario, 'token_acceso': 'token-2fa', 'minutos_inactividad': 10})
+          ? _json({'usuario': _usuario, 'token_acceso': 'token-2fa', 'minutos_inactividad': 10, 'dispositivo_confianza': 'llave-celular'})
           : _json({
               'mensaje': 'Datos inválidos.',
               'errores': {
@@ -109,6 +109,10 @@ void main() {
 
     await sesion.cerrarSesion();
     await _asentar(tester);
+
+    // El celular quedó como dispositivo de confianza: el siguiente ingreso envía su llave.
+    await sesion.iniciarSesion('sigma3172409@gmail.com', 'AdminSigma123');
+    expect(llamadas.lastWhere((l) => l['ruta'] == '/iniciar-sesion')['dispositivo_confianza'], 'llave-celular');
   });
 
   testWidgets('recupera la contraseña con el código del SMS', (tester) async {

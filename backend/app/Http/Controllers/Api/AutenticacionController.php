@@ -32,7 +32,8 @@ class AutenticacionController extends Controller
         $resultado = $this->servicioAutenticacion->iniciarSesion(
             $solicitud->validated('correo'),
             $solicitud->validated('password'),
-            $solicitud->validated('dispositivo')
+            $solicitud->validated('dispositivo'),
+            $solicitud->validated('dispositivo_confianza'),
         );
 
         if (isset($resultado['verificacion'])) {
@@ -75,7 +76,18 @@ class AutenticacionController extends Controller
             'token_acceso' => $resultado['token'],
             'tipo_token' => 'Bearer',
             'minutos_inactividad' => config('sigma.sesion.minutos_inactividad'),
+            // Llave de este dispositivo: se envía en los próximos ingresos para no pedir de nuevo el código.
+            ...(isset($resultado['confianza']) ? ['dispositivo_confianza' => $resultado['confianza']] : []),
         ]);
+    }
+
+    public function olvidarDispositivos(Request $solicitud): JsonResponse
+    {
+        $borrados = $this->servicioAutenticacion->olvidarDispositivos($solicitud->user());
+
+        return response()->json(['mensaje' => $borrados
+            ? 'Listo: en el próximo ingreso cada dispositivo volverá a pedir el código.'
+            : 'No había dispositivos de confianza guardados.']);
     }
 
     public function cerrarSesion(Request $solicitud): JsonResponse
@@ -87,7 +99,7 @@ class AutenticacionController extends Controller
 
     public function perfil(Request $solicitud): UsuarioResource
     {
-        return new UsuarioResource($solicitud->user()->load(['rol.permisos', 'cliente']));
+        return new UsuarioResource($solicitud->user()->load(['rol.permisos', 'cliente'])->loadCount(['dispositivosConfianza' => fn ($c) => $c->where('expira_en', '>', now())]));
     }
 
     public function cambiarContrasena(CambiarContrasenaRequest $solicitud): JsonResponse

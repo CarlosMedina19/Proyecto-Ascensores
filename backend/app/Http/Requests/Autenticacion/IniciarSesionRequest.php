@@ -17,6 +17,7 @@ class IniciarSesionRequest extends FormRequest
             'correo' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'max:255'],
             'dispositivo' => ['nullable', 'string', 'max:100'],
+            'dispositivo_confianza' => ['nullable', 'string', 'max:128'],
         ];
     }
 

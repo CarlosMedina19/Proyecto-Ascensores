@@ -9,6 +9,7 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -96,6 +97,12 @@ class Usuario extends Authenticatable implements CanResetPassword
     public function cliente(): BelongsTo
     {
         return $this->belongsTo(Cliente::class, 'cliente_id');
+    }
+
+    /** Navegadores y celulares donde ya verificó el código de dos pasos. */
+    public function dispositivosConfianza(): HasMany
+    {
+        return $this->hasMany(DispositivoConfianza::class, 'usuario_id');
     }
 
     /** RF-022: perfil de técnico (solo los usuarios de rol técnico lo tienen). */

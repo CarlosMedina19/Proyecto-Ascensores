@@ -45,7 +45,7 @@ import RecorridoGuiado, { abrirRecorrido, recorridoVisto } from './RecorridoGuia
 import { useDemostracion } from '../hooks/useDemostracion';
 
 /** Opciones del menú lateral y el permiso que requiere cada una (RF-002). */
-function opcionesMenu(esCliente, esTecnico) {
+function opcionesMenu(esCliente, esTecnico, verAuditoria) {
   return [
     { grupo: 'Operación' },
     { ruta: '/inicio', texto: 'Panel', icono: LayoutDashboard },
@@ -75,7 +75,8 @@ function opcionesMenu(esCliente, esTecnico) {
     { grupo: 'Administración' },
     { ruta: '/usuarios', texto: 'Usuarios', icono: Users, permiso: 'usuarios.ver' },
     { ruta: '/roles', texto: 'Roles y permisos', icono: ShieldCheck, permiso: 'roles.ver' },
-    { ruta: '/auditoria', texto: 'Auditoría', icono: ScrollText, permiso: 'registros_auditoria.ver' },
+    // El coordinador no ve la auditoría (exclusiva del administrador), pero sí los técnicos en mantenimiento.
+    { ruta: '/auditoria', texto: verAuditoria ? 'Auditoría' : 'Técnicos en vivo', icono: ScrollText, permiso: ['registros_auditoria.ver', 'ordenes.cerrar'] },
     { ruta: '/configuracion', texto: 'Configuración', icono: Settings, permiso: 'configuracion.editar' },
     { ruta: '/configuracion/planilla', texto: 'Planilla técnica', icono: ListChecks, permiso: 'configuracion.editar' },
     { grupo: 'Cuenta' },
@@ -138,7 +139,7 @@ export default function Estructura() {
   const { segundosRestantes, mantenerSesion } = useInactividad({ minutos: minutosInactividad, alPing, alExpirar });
 
   // Oculta los grupos que quedan vacíos por falta de permisos.
-  const visibles = opcionesMenu(esCliente, esTecnico).filter((o) => o.grupo || !o.permiso || tienePermiso(o.permiso));
+  const visibles = opcionesMenu(esCliente, esTecnico, tienePermiso('registros_auditoria.ver')).filter((o) => o.grupo || !o.permiso || tienePermiso(o.permiso));
   const menu = visibles.filter((o, i) => !o.grupo || (visibles[i + 1] && !visibles[i + 1].grupo));
   const ruta = ubicacion.pathname;
   const hijoActual = menu.flatMap((o) => o.hijos || []).find((h) => ruta.startsWith(h.ruta));

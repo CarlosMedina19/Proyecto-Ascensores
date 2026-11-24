@@ -109,4 +109,12 @@ class OrdenTrabajoController extends Controller
 
         return new OrdenTrabajoResource($this->servicioOrdenes->cancelar($orden, $solicitud->validated('motivo')));
     }
+
+    /** Cierre administrativo de una orden que quedó abierta (desde Auditoría · Técnicos en mantenimiento). */
+    public function cerrar(MotivoRequest $solicitud, OrdenTrabajo $orden): OrdenTrabajoResource
+    {
+        $this->authorize('cerrar', $orden);
+
+        return new OrdenTrabajoResource($this->servicioOrdenes->cerrarAdministrativamente($orden, $solicitud->validated('motivo')));
+    }
 }

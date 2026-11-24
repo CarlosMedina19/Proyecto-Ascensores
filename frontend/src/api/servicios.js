@@ -1,9 +1,11 @@
 import { api, descargarArchivo } from './cliente';
+import { leerConfianza } from './confianza';
 
 // RF-001 Autenticación
 export const autenticacion = {
+  // Si este navegador ya verificó el código de dos pasos, envía su llave para no pedirlo de nuevo.
   iniciarSesion: (correo, password) =>
-    api.crear('/iniciar-sesion', { correo, password, dispositivo: 'web' }),
+    api.crear('/iniciar-sesion', { correo, password, dispositivo: 'web', dispositivo_confianza: leerConfianza(correo) || undefined }),
   cerrarSesion: () => api.crear('/cerrar-sesion'),
   perfil: () => api.obtener('/perfil'),
   cambiarContrasena: (datos) => api.reemplazar('/perfil/contrasena', datos),
@@ -17,6 +19,7 @@ export const autenticacion = {
   restablecerConTelefono: (datos) => api.crear('/restablecer-contrasena/telefono', datos),
   actualizarPerfil: (datos) => api.actualizar('/perfil', datos),
   cambiarDobleFactor: (activo, password) => api.reemplazar('/perfil/doble-factor', { activo, password }),
+  olvidarDispositivos: () => api.eliminar('/perfil/dispositivos-confianza'),
 };
 
 export const resumen = {
@@ -220,6 +223,8 @@ export const ordenes = {
   cambiarEstado: (id, datos) => api.actualizar(`/ordenes/${id}/estado`, datos),
   enviarUbicacion: (id, datos) => api.crear(`/ordenes/${id}/ubicacion`, datos),
   cancelar: (id, motivo) => api.actualizar(`/ordenes/${id}/cancelar`, { motivo }),
+  // Cierre administrativo de una orden que quedó abierta (administrador y coordinador).
+  cerrar: (id, motivo) => api.actualizar(`/ordenes/${id}/cerrar`, { motivo }),
 };
 
 // Fase 4 (RF-030 a RF-039): planilla, fotos, firmas, correctivo derivado e informe PDF

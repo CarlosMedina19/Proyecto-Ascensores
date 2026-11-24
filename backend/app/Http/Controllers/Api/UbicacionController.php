@@ -53,7 +53,8 @@ class UbicacionController extends Controller
     /** Técnicos con una orden en proceso y su última posición conocida. */
     public function enVivo(Request $solicitud): JsonResponse
     {
-        abort_unless($solicitud->user()->tienePermiso('registros_auditoria.ver'), 403, 'Su rol no puede ver la auditoría.');
+        $usuario = $solicitud->user();
+        abort_unless($usuario->tienePermiso('registros_auditoria.ver') || $usuario->tienePermiso('ordenes.cerrar'), 403, 'Su rol no puede ver los técnicos en mantenimiento.');
 
         $ordenes = OrdenTrabajo::with(['equipo', 'edificio', 'tecnicos.usuario'])->where('estado', 'en_proceso')->orderBy('inicio_en')->get();
         $ids = $ordenes->pluck('id');

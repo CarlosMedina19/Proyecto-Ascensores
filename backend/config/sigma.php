@@ -12,6 +12,8 @@ return [
         // RF-001: 5 intentos fallidos consecutivos bloquean la cuenta 15 minutos.
         'intentos_maximos' => (int) env('SIGMA_INTENTOS_MAXIMOS', 5),
         'minutos_bloqueo' => (int) env('SIGMA_MINUTOS_BLOQUEO', 15),
+        // Verificación en dos pasos: días que un dispositivo ya verificado no vuelve a pedir el código.
+        'dias_dispositivo_confianza' => (int) env('SIGMA_DIAS_DISPOSITIVO_CONFIANZA', 180),
     ],
 
     // Respaldos fuera del servidor: los volcados diarios (carpeta montada desde sigma_respaldos) se suben

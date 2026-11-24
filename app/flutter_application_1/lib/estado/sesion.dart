@@ -13,6 +13,10 @@ abstract class AlmacenToken {
   Future<String?> leer();
   Future<void> guardar(String token);
   Future<void> borrar();
+
+  /// Llave de dispositivo de confianza de una cuenta (verificación en dos pasos ya hecha en este celular).
+  Future<String?> leerConfianza(String correo);
+  Future<void> guardarConfianza(String correo, String llave);
 }
 
 class AlmacenTokenSeguro implements AlmacenToken {
@@ -48,6 +52,26 @@ class AlmacenTokenSeguro implements AlmacenToken {
       await _almacen.delete(key: _clave);
     } catch (_) {}
   }
+
+  static String _claveConfianza(String correo) => 'sigma.confianza.${correo.trim().toLowerCase()}';
+
+  @override
+  Future<String?> leerConfianza(String correo) async {
+    try {
+      return await _almacen.read(key: _claveConfianza(correo)).timeout(const Duration(seconds: 5));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> guardarConfianza(String correo, String llave) async {
+    try {
+      await _almacen.write(key: _claveConfianza(correo), value: llave);
+    } catch (_) {
+      // Sin almacenamiento cifrado se volverá a pedir el código, nada más.
+    }
+  }
 }
 
 class AlmacenTokenMemoria implements AlmacenToken {
@@ -61,6 +85,14 @@ class AlmacenTokenMemoria implements AlmacenToken {
 
   @override
   Future<void> borrar() async => _token = null;
+
+  final _confianza = <String, String>{};
+
+  @override
+  Future<String?> leerConfianza(String correo) async => _confianza[correo.trim().toLowerCase()];
+
+  @override
+  Future<void> guardarConfianza(String correo, String llave) async => _confianza[correo.trim().toLowerCase()] = llave;
 }
 
 /// Estado de la sesión del usuario (RF-001, RF-002).
@@ -113,7 +145,7 @@ class Sesion extends ChangeNotifier {
   /// `antesDeEntrar` corre con las credenciales ya validadas y antes de mostrar la app (transición).
   /// Con la verificación en dos pasos activa no entra: devuelve el desafío para pedir el código del correo.
   Future<DesafioVerificacion?> iniciarSesion(String correo, String password, {Future<void> Function()? antesDeEntrar}) async {
-    final resultado = await repositorio.iniciarSesion(correo.trim(), password);
+    final resultado = await repositorio.iniciarSesion(correo.trim(), password, confianza: await _almacen.leerConfianza(correo));
     if (resultado.verificacion != null) return resultado.verificacion;
     await _entrar(resultado.token!, resultado.usuario!, resultado.minutosInactividad, antesDeEntrar);
     return null;
@@ -122,6 +154,8 @@ class Sesion extends ChangeNotifier {
   /// Segundo paso del ingreso con el código que llegó al correo.
   Future<void> verificarCodigo(String desafio, String codigo, {Future<void> Function()? antesDeEntrar}) async {
     final resultado = await repositorio.verificarInicioSesion(desafio, codigo);
+    // Este celular queda como dispositivo de confianza: el próximo ingreso no pedirá el código.
+    if (resultado.confianza != null) await _almacen.guardarConfianza(resultado.usuario!.correo, resultado.confianza!);
     await _entrar(resultado.token!, resultado.usuario!, resultado.minutosInactividad, antesDeEntrar);
   }
 

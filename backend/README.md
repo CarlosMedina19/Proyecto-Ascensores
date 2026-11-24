@@ -158,6 +158,11 @@ si el mensaje trae un código de ascensor, agrega su estado. La foto no se guard
   10 minutos, admite 5 intentos y se puede pedir otro cada 60 s (`POST /codigo-verificacion/reenviar`). En la base
   solo queda la huella (HMAC) del código y del desafío. Cada usuario la activa en **Mi perfil** (pide su
   contraseña) y el administrador puede activarla al editar un usuario. Actívela solo en cuentas con correo real.
+- **Dispositivo de confianza**: el código solo se pide la primera vez en cada navegador o celular. Al verificarlo,
+  la respuesta trae `dispositivo_confianza` (una llave que el panel guarda en localStorage y la app en su almacén
+  cifrado); en los siguientes ingresos se envía con el correo y la contraseña y entra sin código. Vence a los 180
+  días (`SIGMA_DIAS_DISPOSITIVO_CONFIANZA`) y se olvidan todos al restablecer la contraseña, al activar o desactivar
+  los dos pasos o desde Mi perfil (`DELETE /perfil/dispositivos-confianza`). La contraseña se pide siempre.
 - **Recuperar con el celular (SMS)**: `POST /recuperar-contrasena/telefono` (`telefono`) envía el código y
   `POST /restablecer-contrasena/telefono` (`desafio`, `codigo`, `password`, `password_confirmation`) cambia la
   contraseña y cierra las sesiones. La respuesta es igual exista o no el número. El celular (10 dígitos, sin +57) se
@@ -188,6 +193,11 @@ Los clientes llevan en `observaciones` la marca `EntornoSimuladoSeeder::MARCA`.
 - Mientras una orden está **en proceso**, la app (y el navegador del técnico) envía su posición cada 30 s a
   `POST /api/v1/ordenes/{id}/ubicacion`. Auditoría muestra el mapa (OpenStreetMap) con
   `GET /api/v1/auditoria/en-vivo`, los movimientos de las últimas 24 horas y el historial con filtros.
+- **Cierre administrativo**: si un técnico no cerró su orden en la app, el administrador o el coordinador
+  (permiso `ordenes.cerrar`) la finalizan desde «Técnicos en mantenimiento» con un motivo
+  (`PATCH /api/v1/ordenes/{id}/cerrar`). No exige firmas ni la planilla completa, no registra duración y deja
+  el motivo en el informe, la trazabilidad y la auditoría. El coordinador ve solo esa sección de Auditoría
+  (el registro de cambios sigue siendo exclusivo del administrador).
 - **Credenciales por rol**: solo el administrador ve en *Roles y permisos* el correo y la contraseña de la
   cuenta principal de cada rol. La contraseña se guarda además cifrada con `APP_KEY` (el inicio de sesión
   sigue usando el hash), se pide al tocar el ojo y cada consulta queda en auditoría.
