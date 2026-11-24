@@ -35,7 +35,7 @@ jobs:
       run:
         working-directory: app/flutter_application_1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Verificar macOS y Xcode
         run: |
@@ -86,7 +86,7 @@ jobs:
           ls -lh SIGMA-ios-sin-firmar.ipa
 
       - name: Publicar el IPA
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SIGMA-iOS-IPA
           path: app/flutter_application_1/SIGMA-ios-sin-firmar.ipa
@@ -94,7 +94,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publicar la app del simulador
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SIGMA-iOS-Simulador
           path: app/flutter_application_1/build/ios/iphonesimulator/Runner.app
@@ -102,7 +102,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publicar la app de dispositivo
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SIGMA-iOS-Dispositivo
           path: app/flutter_application_1/build/ios/iphoneos/Runner.app
