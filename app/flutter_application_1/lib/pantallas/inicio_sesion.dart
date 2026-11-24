@@ -220,37 +220,41 @@ class _Presentacion extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(center: Alignment(1, -1), radius: 1.5, colors: [Color(0x40A58BFF), Color(0x00A58BFF)]),
-          color: SigmaColores.tinta,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const MarcaSigma(tamanoLogo: 40, sobreOscuro: true),
-              const SizedBox(height: 22),
-              Text.rich(
-                TextSpan(
-                  children: [
-                    const TextSpan(text: 'Cada ascensor, '),
-                    const TextSpan(
-                      text: 'cada piso',
-                      style: TextStyle(color: SigmaColores.lima),
-                    ),
-                    const TextSpan(text: ', bajo control.'),
-                  ],
+      // El fondo tinta va aparte del resplandor: en un BoxDecoration con degradado Flutter ignora el color,
+      // y en el tema claro el texto blanco quedaba sobre el fondo claro de la pantalla.
+      child: ColoredBox(
+        color: SigmaColores.tinta,
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: RadialGradient(center: Alignment(1, -1), radius: 1.5, colors: [Color(0x40A58BFF), Color(0x00A58BFF)]),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const MarcaSigma(tamanoLogo: 40, sobreOscuro: true),
+                const SizedBox(height: 22),
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      const TextSpan(text: 'Cada ascensor, '),
+                      const TextSpan(
+                        text: 'cada piso',
+                        style: TextStyle(color: SigmaColores.lima),
+                      ),
+                      const TextSpan(text: ', bajo control.'),
+                    ],
+                  ),
+                  style: _estiloLema,
                 ),
-                style: _estiloLema,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Programación de mantenimientos, checklist digital en campo e informes firmados en PDF.',
-                style: TextStyle(color: SigmaColores.escenaTextoSuave, fontSize: 13.5),
-              ),
-            ],
+                const SizedBox(height: 10),
+                const Text(
+                  'Programación de mantenimientos, checklist digital en campo e informes firmados en PDF.',
+                  style: TextStyle(color: SigmaColores.escenaTextoSuave, fontSize: 13.5),
+                ),
+              ],
+            ),
           ),
         ),
       ),
