@@ -244,6 +244,9 @@ class PruebasPlanillaArchivosAsistenteTest extends TestCase
         $temporal = $this->administrador->createToken('asistente-n8n', ['asistente'], now()->addMinutes(10))->plainTextToken;
         $this->app['auth']->forgetGuards();
         $this->withToken($temporal)->postJson('/api/v1/asistente/herramienta', ['accion' => 'pdf_indicadores'])->assertOk()->assertJsonPath('datos.acciones.0.ruta', '/indicadores/servicio/pdf');
+        // Así llama n8n: con todos los parámetros, vacíos o con valor.
+        $this->withToken($temporal)->postJson('/api/v1/asistente/herramienta', ['accion' => 'ordenes_activas', 'parametros' => ['texto' => '', 'codigo' => '', 'numero' => '', 'dias' => 7]])->assertOk();
+        $this->withToken($temporal)->postJson('/api/v1/asistente/herramienta', ['accion' => 'buscar', 'parametros' => ['texto' => ['no', 'texto']]])->assertStatus(422);
         $this->app['auth']->forgetGuards();
         $this->withToken($temporal)->getJson('/api/v1/usuarios')->assertForbidden();
 

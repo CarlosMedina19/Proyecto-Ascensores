@@ -41,7 +41,12 @@ class AsistenteController extends Controller
         $datos = $solicitud->validate([
             'accion' => ['required', 'string', Rule::in(array_keys(HerramientasAsistente::ACCIONES))],
             'parametros' => ['nullable', 'array'],
-            'parametros.*' => ['nullable', 'scalar', 'max:200'],
+            // Texto o número corto por parámetro (el agente envía texto, codigo, numero y dias).
+            'parametros.*' => ['nullable', function (string $atributo, mixed $valor, \Closure $fallo) {
+                if (! is_scalar($valor) || mb_strlen((string) $valor) > 200) {
+                    $fallo('Cada parámetro debe ser un texto o un número corto.');
+                }
+            }],
         ]);
 
         return response()->json(['datos' => $this->asistente->herramienta($solicitud->user(), $token->id, $datos['accion'], $datos['parametros'] ?? [])]);
