@@ -55,6 +55,9 @@ return [
     //               ni cuentas con verificación en dos pasos).
     'sms' => [
         'driver' => env('SIGMA_SMS', 'log'),
+        // Solo para una presentación controlada: en producción el modo simulado no muestra el código salvo que
+        // esto sea true. Mostrarlo permite que cualquiera que conozca un celular tome esa cuenta.
+        'demo_en_produccion' => (bool) env('SIGMA_SMS_DEMO_EN_PRODUCCION', false),
         'twilio' => [
             'sid' => env('TWILIO_SID'),
             'token' => env('TWILIO_TOKEN'),

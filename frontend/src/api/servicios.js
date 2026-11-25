@@ -17,6 +17,8 @@ export const autenticacion = {
   // Recuperación con el número de celular: el código llega por SMS.
   recuperarConTelefono: (telefono) => api.crear('/recuperar-contrasena/telefono', { telefono }),
   restablecerConTelefono: (datos) => api.crear('/restablecer-contrasena/telefono', datos),
+  // Opciones públicas de acceso: si hay operador de SMS para recuperar con el celular.
+  opcionesAcceso: () => api.obtener('/publico/acceso'),
   actualizarPerfil: (datos) => api.actualizar('/perfil', datos),
   cambiarDobleFactor: (activo, password) => api.reemplazar('/perfil/doble-factor', { activo, password }),
   olvidarDispositivos: () => api.eliminar('/perfil/dispositivos-confianza'),

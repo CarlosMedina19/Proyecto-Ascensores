@@ -171,6 +171,10 @@ si el mensaje trae un código de ascensor, agrega su estado. La foto no se guard
   `TWILIO_NUMERO`; la cuenta de prueba es gratis y envía a números verificados), `n8n` (`SIGMA_SMS_N8N_URL`: un flujo
   recibe `{telefono, mensaje}` y lo envía por el canal que tenga) o `simulado` (demostración sin operador: el código
   se muestra en pantalla, nunca para administradores ni cuentas con dos pasos).
+- **En producción** (`APP_ENV=production`) el modo `simulado` nunca muestra el código (mostrarlo permitiría tomar la
+  cuenta de quien tenga ese celular), salvo `SIGMA_SMS_DEMO_EN_PRODUCCION=true` para una presentación controlada. Sin
+  operador real (`log` o `simulado`) la recuperación por celular responde 503 y el panel oculta la pestaña «Por
+  celular» (`GET /api/v1/publico/acceso` → `sms_disponible`); queda la recuperación por correo.
 
 ## Entorno simulado (datos inventados)
 
@@ -197,7 +201,7 @@ Los clientes llevan en `observaciones` la marca `EntornoSimuladoSeeder::MARCA`.
   (en producción, `GOOGLE_MAPS_KEY` en `backend/.env`; luego reconstruir `sigma_frontend`). Es una clave de navegador:
   en Google Cloud se activa «Maps JavaScript API» y se restringe a `sigma.proyectoscampus.top/*` (y
   `localhost:5173/*` en desarrollo). Sin clave, o si Google la rechaza, el panel usa un mapa oscuro de respaldo
-  (OpenStreetMap oscurecido con un filtro, sin clave). El estilo oscuro va en `frontend/src/paginas/auditoria/mapa/estiloOscuro.js`.
+  (teselas vectoriales de OpenFreeMap, sin clave, dibujadas con MapLibre). Los dos usan la paleta «SIGMA noche» de `frontend/src/paginas/auditoria/mapa/paleta.js`.
 - **Cierre administrativo**: si un técnico no cerró su orden en la app, el administrador o el coordinador
   (permiso `ordenes.cerrar`) la finalizan desde «Técnicos en mantenimiento» con un motivo
   (`PATCH /api/v1/ordenes/{id}/cerrar`). No exige firmas ni la planilla completa, no registra duración y deja
@@ -260,9 +264,13 @@ con los mismos conteos que producción.
 
 ## Operación y emergencias (runbook)
 
-**Alertas.** `sigma:vigilar` corre cada 5 minutos y avisa a los administradores en la campana (una vez por hora y
-por problema) y en el registro: trabajos fallidos, cola detenida, analítica u Object Storage sin respuesta,
-respaldo remoto atrasado (más de 30 h) o con error, y disco con menos del 10 % libre.
+**Alertas.** `sigma:vigilar` corre cada 5 minutos y avisa a los administradores en la campana y **por correo** a
+`SIGMA_CORREO_ALERTAS` (por defecto `ADMIN_EMAIL`; se envía en el acto, sin la cola), una vez por hora y por
+problema, y en el registro: trabajos fallidos, cola detenida, analítica u Object Storage sin respuesta, respaldo
+remoto atrasado (más de 30 h) o con error, y disco con menos del 10 % libre. Además, el flujo **Monitor** de GitHub
+Actions (`.github/workflows/monitor.yml`) revisa cada 15 minutos desde fuera que el sitio y `/up` respondan; si
+fallan, GitHub avisa por correo al dueño del repositorio. El Object Storage reintenta hasta 4 veces cada operación
+(`config/filesystems.php`) antes de dar error.
 
 ```sh
 docker exec sigma_backend php artisan sigma:vigilar --sin-avisos   # estado actual, sin avisar

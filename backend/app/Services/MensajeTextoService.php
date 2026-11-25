@@ -24,6 +24,25 @@ class MensajeTextoService
         return $this->operador() === 'simulado';
     }
 
+    /**
+     * ¿Se puede mostrar el código en pantalla? Solo en modo simulado y nunca en producción, salvo que se permita
+     * de forma explícita (SIGMA_SMS_DEMO_EN_PRODUCCION=true) para una presentación.
+     */
+    public function muestraCodigo(): bool
+    {
+        return $this->esSimulado() && (! app()->isProduction() || (bool) config('services.sms.demo_en_produccion'));
+    }
+
+    /**
+     * ¿Hay cómo entregar el código? Con un operador real (Twilio o n8n) siempre; sin operador, solo fuera de
+     * producción o en la demostración permitida. En producción con «log» o «simulado» la recuperación por
+     * celular se desactiva y se usa el correo.
+     */
+    public function disponible(): bool
+    {
+        return in_array($this->operador(), ['twilio', 'n8n'], true) || ! app()->isProduction() || $this->muestraCodigo();
+    }
+
     public function enviar(string $telefono, string $mensaje): void
     {
         $destino = Telefono::internacional($telefono);

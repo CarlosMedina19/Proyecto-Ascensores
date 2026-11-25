@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../datos/modelos.dart';
 import '../estado/sesion.dart';
+import 'asistente.dart';
 import 'edificios.dart';
 import 'equipos.dart';
 import 'inicio.dart';
@@ -61,6 +62,15 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
         children: [
           Scaffold(
             body: IndexedStack(index: indice, children: [for (final p in pestanas) p.pantalla]),
+            // Asistente SIGMA para todos los roles (responde según los permisos). Va a la izquierda porque algunas
+            // pestañas ya tienen su botón flotante a la derecha.
+            floatingActionButton: FloatingActionButton(
+              heroTag: 'asistente-sigma',
+              tooltip: 'Asistente SIGMA',
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PantallaAsistente())),
+              child: const Icon(Icons.smart_toy_outlined),
+            ),
+            floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
             bottomNavigationBar: NavigationBar(
               selectedIndex: indice,
               onDestinationSelected: (i) => setState(() => _indice = i),

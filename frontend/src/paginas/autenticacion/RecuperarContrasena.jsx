@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, MessageSquareText, Smartphone } from 'lucide-react';
 import { autenticacion } from '../../api/servicios';
@@ -160,19 +160,39 @@ function PorCelular() {
 
 export default function RecuperarContrasena() {
   const [metodo, setMetodo] = useState('correo');
+  // Sin operador de SMS (producción sin Twilio ni n8n) solo queda la recuperación por correo.
+  const [conCelular, setConCelular] = useState(true);
+
+  useEffect(() => {
+    let vigente = true;
+    autenticacion
+      .opcionesAcceso()
+      .then((r) => {
+        if (vigente && r?.datos?.sms_disponible === false) {
+          setConCelular(false);
+          setMetodo('correo');
+        }
+      })
+      .catch(() => {});
+    return () => {
+      vigente = false;
+    };
+  }, []);
 
   return (
     <DisenoAcceso>
       <h2>Recuperar contraseña</h2>
-      <div className="acceso__pestanas" role="tablist" aria-label="Cómo recuperar la contraseña">
-        <button type="button" role="tab" aria-selected={metodo === 'correo'} onClick={() => setMetodo('correo')}>
-          <Mail size={15} aria-hidden="true" /> Por correo
-        </button>
-        <button type="button" role="tab" aria-selected={metodo === 'celular'} onClick={() => setMetodo('celular')}>
-          <Smartphone size={15} aria-hidden="true" /> Por celular
-        </button>
-      </div>
-      {metodo === 'correo' ? <PorCorreo /> : <PorCelular />}
+      {conCelular && (
+        <div className="acceso__pestanas" role="tablist" aria-label="Cómo recuperar la contraseña">
+          <button type="button" role="tab" aria-selected={metodo === 'correo'} onClick={() => setMetodo('correo')}>
+            <Mail size={15} aria-hidden="true" /> Por correo
+          </button>
+          <button type="button" role="tab" aria-selected={metodo === 'celular'} onClick={() => setMetodo('celular')}>
+            <Smartphone size={15} aria-hidden="true" /> Por celular
+          </button>
+        </div>
+      )}
+      {metodo === 'celular' && conCelular ? <PorCelular /> : <PorCorreo />}
       <div style={{ textAlign: 'center', marginTop: 12 }} className="texto-pequeno">
         <Link to="/iniciar-sesion">Volver al inicio de sesión</Link>
       </div>

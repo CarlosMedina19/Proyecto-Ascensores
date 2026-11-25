@@ -133,103 +133,115 @@ export default function FormularioOrden() {
       <form className="formulario" onSubmit={guardar} noValidate>
         <Alerta>{mensajeError}</Alerta>
 
-        <Tarjeta titulo="Servicio y ascensor">
-          {visita ? (
-            <>
-              <Alerta tipo="info">Orden preventiva para la visita programada del plan. Al finalizarla, la visita queda ejecutada y se recalcula la siguiente.</Alerta>
-              <Datos
-                elementos={[
-                  ['Ascensor', visita.equipo?.codigo],
-                  ['Edificio', visita.equipo?.edificio?.nombre],
-                  ['Cliente', visita.equipo?.edificio?.cliente?.nombre],
-                  ['Frecuencia', periodicidad(visita.periodicidad?.meses)],
-                  ['Visita programada', `${fecha(visita.fecha_programada)} · ${visita.hora ?? ''}`],
-                ]}
-              />
-            </>
-          ) : (
-            <div className="formulario">
-              <CampoSelector
-                etiqueta="Servicio"
-                obligatorio
-                vacio={null}
-                valor={datos.servicio}
-                alCambiar={cambiar('servicio')}
-                error={error('servicio')}
-                opciones={Object.entries(SERVICIOS_ORDEN).map(([valor, { texto }]) => ({ valor, texto }))}
-                ayuda={datos.servicio === 'preventivo' ? 'Para las visitas del plan, cree la orden desde el calendario.' : undefined}
-              />
-              <div className="formulario__fila formulario__fila--3">
-                <CampoSelector
-                  etiqueta="Cliente"
-                  obligatorio
-                  valor={datos.cliente_id}
-                  alCambiar={(v) => setDatos((a) => ({ ...a, cliente_id: v, edificio_id: '', equipo_id: '' }))}
-                  error={error('cliente_id')}
-                  opciones={listaClientes.map((c) => ({ valor: String(c.id), texto: c.nombre }))}
-                />
-                <CampoSelector
-                  etiqueta="Edificio"
-                  obligatorio
-                  valor={datos.edificio_id}
-                  alCambiar={(v) => setDatos((a) => ({ ...a, edificio_id: v, equipo_id: '' }))}
-                  error={error('edificio_id')}
-                  disabled={!datos.cliente_id}
-                  opciones={listaEdificios.map((e) => ({ valor: String(e.id), texto: e.nombre }))}
-                />
-                <CampoSelector
-                  etiqueta="Ascensor"
-                  obligatorio
-                  valor={datos.equipo_id}
-                  alCambiar={cambiar('equipo_id')}
-                  error={error('equipo_id')}
-                  disabled={!datos.edificio_id}
-                  opciones={listaEquipos.map((e) => ({ valor: String(e.id), texto: `${e.codigo}${e.ubicacion ? ` · ${e.ubicacion}` : ''}` }))}
-                />
-              </div>
+        {/* Dos columnas independientes: las tarjetas bajas no dejan huecos junto a las altas. */}
+        <div className="formulario__columnas">
+          <div className="formulario__columna">
+            <div className="formulario__bloque" style={{ order: 1 }}>
+              <Tarjeta titulo="Servicio y ascensor">
+                {visita ? (
+                  <>
+                    <Alerta tipo="info">Orden preventiva para la visita programada del plan. Al finalizarla, la visita queda ejecutada y se recalcula la siguiente.</Alerta>
+                    <Datos
+                      elementos={[
+                        ['Ascensor', visita.equipo?.codigo],
+                        ['Edificio', visita.equipo?.edificio?.nombre],
+                        ['Cliente', visita.equipo?.edificio?.cliente?.nombre],
+                        ['Frecuencia', periodicidad(visita.periodicidad?.meses)],
+                        ['Visita programada', `${fecha(visita.fecha_programada)} · ${visita.hora ?? ''}`],
+                      ]}
+                    />
+                  </>
+                ) : (
+                  <div className="formulario">
+                    <CampoSelector
+                      etiqueta="Servicio"
+                      obligatorio
+                      vacio={null}
+                      valor={datos.servicio}
+                      alCambiar={cambiar('servicio')}
+                      error={error('servicio')}
+                      opciones={Object.entries(SERVICIOS_ORDEN).map(([valor, { texto }]) => ({ valor, texto }))}
+                      ayuda={datos.servicio === 'preventivo' ? 'Para las visitas del plan, cree la orden desde el calendario.' : undefined}
+                    />
+                    <div className="formulario__fila formulario__fila--3">
+                      <CampoSelector
+                        etiqueta="Cliente"
+                        obligatorio
+                        valor={datos.cliente_id}
+                        alCambiar={(v) => setDatos((a) => ({ ...a, cliente_id: v, edificio_id: '', equipo_id: '' }))}
+                        error={error('cliente_id')}
+                        opciones={listaClientes.map((c) => ({ valor: String(c.id), texto: c.nombre }))}
+                      />
+                      <CampoSelector
+                        etiqueta="Edificio"
+                        obligatorio
+                        valor={datos.edificio_id}
+                        alCambiar={(v) => setDatos((a) => ({ ...a, edificio_id: v, equipo_id: '' }))}
+                        error={error('edificio_id')}
+                        disabled={!datos.cliente_id}
+                        opciones={listaEdificios.map((e) => ({ valor: String(e.id), texto: e.nombre }))}
+                      />
+                      <CampoSelector
+                        etiqueta="Ascensor"
+                        obligatorio
+                        valor={datos.equipo_id}
+                        alCambiar={cambiar('equipo_id')}
+                        error={error('equipo_id')}
+                        disabled={!datos.edificio_id}
+                        opciones={listaEquipos.map((e) => ({ valor: String(e.id), texto: `${e.codigo}${e.ubicacion ? ` · ${e.ubicacion}` : ''}` }))}
+                      />
+                    </div>
+                  </div>
+                )}
+              </Tarjeta>
             </div>
-          )}
-        </Tarjeta>
-
-        <Tarjeta titulo="Fecha y prioridad">
-          <div className="formulario__fila formulario__fila--3">
-            <CampoTexto etiqueta="Fecha" tipo="date" obligatorio min={fechaIso()} valor={datos.fecha} alCambiar={cambiar('fecha')} error={error('fecha')} />
-            <CampoTexto etiqueta="Hora" tipo="time" obligatorio step="900" valor={datos.hora} alCambiar={cambiar('hora')} error={error('hora')} />
-            <CampoSelector etiqueta="Duración estimada" vacio={null} valor={datos.duracion_estimada} alCambiar={cambiar('duracion_estimada')} error={error('duracion_estimada')} opciones={DURACIONES} />
+            <div className="formulario__bloque" style={{ order: 3 }}>
+              <Tarjeta titulo="Descripción">
+                <div className="formulario">
+                  <CampoArea etiqueta="Trabajo a realizar" valor={datos.descripcion} alCambiar={cambiar('descripcion')} error={error('descripcion')} rows={3} placeholder="Falla reportada, solicitud del cliente…" />
+                  <CampoArea etiqueta="Observaciones" valor={datos.observaciones} alCambiar={cambiar('observaciones')} error={error('observaciones')} rows={2} />
+                </div>
+              </Tarjeta>
+            </div>
           </div>
-          <CampoSelector
-            etiqueta="Prioridad"
-            vacio={null}
-            valor={datos.prioridad}
-            alCambiar={cambiar('prioridad')}
-            error={error('prioridad')}
-            opciones={Object.entries(PRIORIDADES_ORDEN).map(([valor, { texto }]) => ({ valor, texto }))}
-            ayuda={datos.prioridad === 'critica' ? 'Una orden crítica avisa de inmediato a los coordinadores.' : undefined}
-          />
-        </Tarjeta>
-
-        <Tarjeta titulo="Descripción">
-          <div className="formulario">
-            <CampoArea etiqueta="Trabajo a realizar" valor={datos.descripcion} alCambiar={cambiar('descripcion')} error={error('descripcion')} rows={3} placeholder="Falla reportada, solicitud del cliente…" />
-            <CampoArea etiqueta="Observaciones" valor={datos.observaciones} alCambiar={cambiar('observaciones')} error={error('observaciones')} rows={2} />
+          <div className="formulario__columna">
+            <div className="formulario__bloque" style={{ order: 2 }}>
+              <Tarjeta titulo="Fecha y prioridad">
+                <div className="formulario__fila formulario__fila--3">
+                  <CampoTexto etiqueta="Fecha" tipo="date" obligatorio min={fechaIso()} valor={datos.fecha} alCambiar={cambiar('fecha')} error={error('fecha')} />
+                  <CampoTexto etiqueta="Hora" tipo="time" obligatorio step="900" valor={datos.hora} alCambiar={cambiar('hora')} error={error('hora')} />
+                  <CampoSelector etiqueta="Duración estimada" vacio={null} valor={datos.duracion_estimada} alCambiar={cambiar('duracion_estimada')} error={error('duracion_estimada')} opciones={DURACIONES} />
+                </div>
+                <CampoSelector
+                  etiqueta="Prioridad"
+                  vacio={null}
+                  valor={datos.prioridad}
+                  alCambiar={cambiar('prioridad')}
+                  error={error('prioridad')}
+                  opciones={Object.entries(PRIORIDADES_ORDEN).map(([valor, { texto }]) => ({ valor, texto }))}
+                  ayuda={datos.prioridad === 'critica' ? 'Una orden crítica avisa de inmediato a los coordinadores.' : undefined}
+                />
+              </Tarjeta>
+            </div>
+            <div className="formulario__bloque" style={{ order: 4 }}>
+              {tienePermiso('ordenes.asignar') && (
+                <Tarjeta titulo={`Técnicos (${datos.tecnicos.length})`}>
+                  <p className="texto-pequeno texto-suave" style={{ marginTop: 0 }}>
+                    Opcional. Sin técnicos la orden queda <b>programada</b>; con al menos uno pasa a <b>asignada</b> y se le avisa.
+                  </p>
+                  {error('tecnicos') && <Alerta>{error('tecnicos')}</Alerta>}
+                  <SelectorTecnicos
+                    fecha={datos.fecha}
+                    hora={datos.hora}
+                    duracion={datos.duracion_estimada}
+                    seleccion={datos.tecnicos}
+                    alCambiar={(lista) => setDatos((a) => ({ ...a, tecnicos: lista }))}
+                  />
+                </Tarjeta>
+              )}
+            </div>
           </div>
-        </Tarjeta>
-
-        {tienePermiso('ordenes.asignar') && (
-          <Tarjeta titulo={`Técnicos (${datos.tecnicos.length})`}>
-            <p className="texto-pequeno texto-suave" style={{ marginTop: 0 }}>
-              Opcional. Sin técnicos la orden queda <b>programada</b>; con al menos uno pasa a <b>asignada</b> y se le avisa.
-            </p>
-            {error('tecnicos') && <Alerta>{error('tecnicos')}</Alerta>}
-            <SelectorTecnicos
-              fecha={datos.fecha}
-              hora={datos.hora}
-              duracion={datos.duracion_estimada}
-              seleccion={datos.tecnicos}
-              alCambiar={(lista) => setDatos((a) => ({ ...a, tecnicos: lista }))}
-            />
-          </Tarjeta>
-        )}
+        </div>
 
         <div className="formulario__acciones">
           <button type="button" className="boton boton--secundario" onClick={() => navegar(-1)}>

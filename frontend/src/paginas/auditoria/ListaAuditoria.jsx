@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import LimiteErrores from '../../componentes/LimiteErrores';
 import { CheckCircle2, Eye, History, MapPin, Radio, Search, X } from 'lucide-react';
 import { auditoria, ordenes } from '../../api/servicios';
 import { escuchar, tiempoRealDisponible } from '../../api/tiempoReal';
@@ -146,9 +147,11 @@ function TecnicosEnVivo({ tecnicos, error, enVivo, puedeCerrar, alCerrar }) {
     >
       <Alerta>{error}</Alerta>
       <div className="auditoria-vivo">
-        <Suspense fallback={<div className="mapa-auditoria mapa-auditoria--oscuro mapa-auditoria--cargando">Cargando mapa…</div>}>
-          <MapaTecnicos tecnicos={tecnicos} seleccionado={seleccionado} />
-        </Suspense>
+        <LimiteErrores alternativa={<div className="mapa-auditoria mapa-auditoria--oscuro mapa-auditoria--cargando">No se pudo cargar el mapa. Recargue la página.</div>}>
+          <Suspense fallback={<div className="mapa-auditoria mapa-auditoria--oscuro mapa-auditoria--cargando">Cargando mapa…</div>}>
+            <MapaTecnicos tecnicos={tecnicos} seleccionado={seleccionado} />
+          </Suspense>
+        </LimiteErrores>
         <div className="auditoria-vivo__lista">
           <p className="texto-pequeno texto-suave">
             {tecnicos.length

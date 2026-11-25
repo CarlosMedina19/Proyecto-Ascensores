@@ -158,6 +158,16 @@ class PruebasPlanillaArchivosAsistenteTest extends TestCase
         $this->getJson("/api/v1/equipos/{$this->equipo->id}/visitas")->assertOk()->assertJsonPath('datos.0.numero', '12901');
         $this->get("/api/v1/visitas/{$visita->id}/pdf")->assertOk()->assertHeader('Content-Type', 'application/pdf');
 
+        // Pestaña Visitas de la app: cada quien ve las planillas que le corresponden.
+        $this->getJson('/api/v1/visitas')->assertOk()->assertJsonCount(1, 'datos')
+            ->assertJsonPath('datos.0.equipo.codigo', $this->equipo->codigo)->assertJsonPath('datos.0.ruta_pdf', "/visitas/{$visita->id}/pdf");
+        $this->actingAs($this->tecnico, 'sanctum');
+        $this->getJson('/api/v1/visitas')->assertOk()->assertJsonCount(1, 'datos');
+        $otroCliente = Usuario::factory()->create(['rol_id' => Rol::where('nombre', 'cliente')->value('id'), 'activo' => true, 'cliente_id' => Cliente::factory()->create()->id]);
+        $this->actingAs($otroCliente, 'sanctum');
+        $this->getJson('/api/v1/visitas')->assertOk()->assertJsonCount(0, 'datos');
+        $this->actingAs($this->usuarioCliente, 'sanctum');
+
         // Editar la plantilla después no cambia la planilla ya diligenciada.
         ChecklistItem::where('codigo', 'CB-01')->update(['nombre' => 'Otro nombre']);
         $this->assertSame('Verificación de cabina (falso techo, iluminación, espejo y piso).', collect($visita->fresh()->secciones[1]['items'])->firstWhere('codigo', 'CB-01')['nombre']);

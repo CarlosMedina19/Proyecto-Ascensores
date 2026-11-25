@@ -10,7 +10,7 @@ ENV VITE_API_URL=$VITE_API_URL
 # Clave pública de Reverb (WebSocket). Sin ella el panel funciona igual, con recargas periódicas.
 ARG VITE_REVERB_KEY=
 ENV VITE_REVERB_KEY=$VITE_REVERB_KEY
-# Clave de Google Maps (navegador) para el mapa de Auditoría. Sin ella se usa el mapa oscuro de respaldo (OpenStreetMap).
+# Clave de Google Maps (navegador) para el mapa de Auditoría. Sin ella se usa el mapa oscuro de respaldo (OpenFreeMap).
 ARG VITE_GOOGLE_MAPS_KEY=
 ENV VITE_GOOGLE_MAPS_KEY=$VITE_GOOGLE_MAPS_KEY
 RUN npm run build

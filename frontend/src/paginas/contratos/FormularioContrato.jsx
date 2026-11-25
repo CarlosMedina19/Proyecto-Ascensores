@@ -181,163 +181,174 @@ export default function FormularioContrato() {
       <EncabezadoPagina titulo={editando ? 'Editar contrato' : 'Nuevo contrato'} migas={<Link to="/contratos">Contratos</Link>} />
       <form className="formulario" onSubmit={guardar} noValidate>
         <Alerta>{mensajeError}</Alerta>
-        <Tarjeta titulo="Datos del contrato">
-          <div className="formulario">
-            <CampoBuscador
-              etiqueta="Cliente"
-              obligatorio
-              valor={datos.cliente_id}
-              alCambiar={(valor) => setDatos((actual) => ({ ...actual, cliente_id: valor, equipos: [] }))}
-              error={error('cliente_id')}
-              opciones={listaClientes.map((c) => ({ valor: String(c.id), texto: c.nombre, detalle: c.nit || c.numero_documento }))}
-              placeholder="Busque el cliente por nombre o NIT"
-              disabled={editando}
-              ayuda={editando ? 'El cliente de un contrato no se cambia.' : undefined}
-            />
-            <div className="formulario__fila">
-              <CampoTexto etiqueta="Fecha inicial" tipo="date" obligatorio valor={datos.fecha_inicio} alCambiar={cambiar('fecha_inicio')} error={error('fecha_inicio')} />
-              <CampoTexto etiqueta="Fecha final" tipo="date" obligatorio valor={datos.fecha_fin} alCambiar={cambiar('fecha_fin')} error={error('fecha_fin')} />
-            </div>
-          </div>
-        </Tarjeta>
-
-        <Tarjeta titulo="Plan de alquiler del software">
-          <div className="formulario">
-            <p className="texto-pequeno texto-suave" style={{ margin: 0 }}>
-              Elija el tiempo de alquiler y ajústelo para este cliente: el precio pactado y los servicios incluidos. La vigencia es la del contrato.
-            </p>
-            <div className="formulario__fila formulario__fila--3">
-              <CampoSelector
-                etiqueta="Plan"
-                valor={datos.plan_id}
-                alCambiar={elegirPlan}
-                error={error('plan_id')}
-                vacio="Sin plan (valor libre)"
-                opciones={listaPlanes.map((p) => ({ valor: String(p.id), texto: p.nombre }))}
-              />
-              <CampoSelector
-                etiqueta="Tiempo de alquiler"
-                obligatorio={Boolean(plan)}
-                valor={datos.periodicidad_id}
-                alCambiar={elegirPeriodicidad}
-                error={error('periodicidad_id')}
-                disabled={!plan}
-                opciones={precios.map((p) => ({ valor: String(p.periodicidad_id ?? p.periodicidad.id), texto: `${p.periodicidad.meses} ${p.periodicidad.meses === 1 ? 'mes' : 'meses'} · ${dinero(p.precio)}` }))}
-              />
-              <CampoTexto
-                etiqueta="Precio pactado por periodo"
-                tipo="number"
-                min="0"
-                step="1000"
-                valor={datos.precio_periodo}
-                alCambiar={cambiar('precio_periodo')}
-                error={error('precio_periodo')}
-                disabled={!plan}
-                ayuda={precioCatalogo !== null ? (ajustado ? `Ajustado. Catálogo: ${dinero(precioCatalogo)}` : 'Precio del catálogo; puede ajustarlo.') : undefined}
-              />
-            </div>
-
-            {plan && (
-              <div className="campo">
-                <span className="campo__etiqueta">Servicios incluidos ({datos.servicios_pactados.length})</span>
-                <div className="lista-seleccion">
-                  {serviciosPlan.map((s) => (
-                    <Casilla key={s} etiqueta={s} valor={datos.servicios_pactados.includes(s)} alCambiar={(m) => alternarServicio(s, m)} />
-                  ))}
-                  {serviciosPropios.map((s) => (
-                    <span key={s} className="servicio-propio">
-                      {s}
-                      <button type="button" onClick={() => alternarServicio(s, false)} aria-label={`Quitar ${s}`}>
-                        <X size={13} />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-                <div className="catalogo__nuevo" style={{ marginTop: 8 }}>
-                  <input
-                    className="campo__control"
-                    value={servicioNuevo}
-                    onChange={(e) => setServicioNuevo(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), agregarServicio())}
-                    placeholder="Agregar un servicio pactado solo para este cliente"
-                    aria-label="Nuevo servicio pactado"
-                    maxLength={200}
+        {/* Dos columnas independientes: las tarjetas bajas no dejan huecos junto a las altas. */}
+        <div className="formulario__columnas">
+          <div className="formulario__columna">
+            <div className="formulario__bloque" style={{ order: 1 }}>
+              <Tarjeta titulo="Datos del contrato">
+                <div className="formulario">
+                  <CampoBuscador
+                    etiqueta="Cliente"
+                    obligatorio
+                    valor={datos.cliente_id}
+                    alCambiar={(valor) => setDatos((actual) => ({ ...actual, cliente_id: valor, equipos: [] }))}
+                    error={error('cliente_id')}
+                    opciones={listaClientes.map((c) => ({ valor: String(c.id), texto: c.nombre, detalle: c.nit || c.numero_documento }))}
+                    placeholder="Busque el cliente por nombre o NIT"
+                    disabled={editando}
+                    ayuda={editando ? 'El cliente de un contrato no se cambia.' : undefined}
                   />
-                  <button type="button" className="boton boton--secundario" onClick={agregarServicio} disabled={!servicioNuevo.trim()}>
-                    <Plus size={16} aria-hidden="true" /> Agregar
-                  </button>
+                  <div className="formulario__fila">
+                    <CampoTexto etiqueta="Fecha inicial" tipo="date" obligatorio valor={datos.fecha_inicio} alCambiar={cambiar('fecha_inicio')} error={error('fecha_inicio')} />
+                    <CampoTexto etiqueta="Fecha final" tipo="date" obligatorio valor={datos.fecha_fin} alCambiar={cambiar('fecha_fin')} error={error('fecha_fin')} />
+                  </div>
                 </div>
-                {Object.entries(errores).find(([c]) => c.startsWith('servicios_pactados'))?.[1]?.[0] && (
-                  <span className="campo__error">{Object.entries(errores).find(([c]) => c.startsWith('servicios_pactados'))[1][0]}</span>
+              </Tarjeta>
+            </div>
+            <div className="formulario__bloque" style={{ order: 3 }}>
+              <Tarjeta titulo={`Ascensores incluidos (${datos.equipos.length})`}>
+                {error('equipos') && <Alerta>{error('equipos')}</Alerta>}
+                {equiposCliente === null ? (
+                  <p className="texto-suave" style={{ margin: 0 }}>
+                    Seleccione el cliente para ver sus ascensores.
+                  </p>
+                ) : equiposCliente === undefined ? (
+                  <Cargando />
+                ) : equiposCliente.length ? (
+                  <div className="lista-seleccion">
+                    {equiposCliente.map((equipo) => (
+                      <Casilla
+                        key={equipo.id}
+                        valor={datos.equipos.includes(equipo.id)}
+                        alCambiar={(marcado) => alternarEquipo(equipo.id, marcado)}
+                        etiqueta={
+                          <span>
+                            <strong>{equipo.codigo}</strong> · {equipo.edificio?.nombre}
+                            {equipo.estado !== 'activo' && (
+                              <>
+                                {' '}
+                                <Insignia tipo={ESTADOS_EQUIPO[equipo.estado]?.tipo}>{ESTADOS_EQUIPO[equipo.estado]?.texto}</Insignia>
+                              </>
+                            )}
+                          </span>
+                        }
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EstadoVacio titulo="El cliente no tiene ascensores registrados" />
                 )}
-              </div>
-            )}
-
-            <div className="formulario__fila">
-              <CampoTexto
-                etiqueta="Valor total del contrato"
-                tipo="number"
-                min="0"
-                step="1000"
-                obligatorio={!plan}
-                valor={datos.valor}
-                alCambiar={(v) => {
-                  setValorManual(true);
-                  cambiar('valor')(v);
-                }}
-                error={error('valor')}
-                ayuda={
-                  periodos
-                    ? `${periodos} ${periodos === 1 ? 'periodo' : 'periodos'} × ${dinero(datos.precio_periodo || 0)} = ${dinero(valorCalculado ?? 0)}${valorManual && valorCalculado !== null && Number(datos.valor) !== valorCalculado ? ' (valor escrito a mano)' : ''}`
-                    : undefined
-                }
-              />
-              {valorManual && valorCalculado !== null && Number(datos.valor) !== valorCalculado && (
-                <div className="campo" style={{ justifyContent: 'flex-end' }}>
-                  <button type="button" className="boton boton--fantasma" onClick={() => setValorManual(false)}>
-                    Usar el valor calculado
-                  </button>
-                </div>
-              )}
+              </Tarjeta>
             </div>
-            <CampoArea etiqueta="Alcance de los servicios" valor={datos.servicios} alCambiar={cambiar('servicios')} error={error('servicios')} rows={2} />
-            <CampoArea etiqueta="Condiciones" valor={datos.condiciones} alCambiar={cambiar('condiciones')} error={error('condiciones')} rows={3} />
           </div>
-        </Tarjeta>
+          <div className="formulario__columna">
+            <div className="formulario__bloque" style={{ order: 2 }}>
+              <Tarjeta titulo="Plan de alquiler del software">
+                <div className="formulario">
+                  <p className="texto-pequeno texto-suave" style={{ margin: 0 }}>
+                    Elija el tiempo de alquiler y ajústelo para este cliente: el precio pactado y los servicios incluidos. La vigencia es la del contrato.
+                  </p>
+                  <div className="formulario__fila formulario__fila--3">
+                    <CampoSelector
+                      etiqueta="Plan"
+                      valor={datos.plan_id}
+                      alCambiar={elegirPlan}
+                      error={error('plan_id')}
+                      vacio="Sin plan (valor libre)"
+                      opciones={listaPlanes.map((p) => ({ valor: String(p.id), texto: p.nombre }))}
+                    />
+                    <CampoSelector
+                      etiqueta="Tiempo de alquiler"
+                      obligatorio={Boolean(plan)}
+                      valor={datos.periodicidad_id}
+                      alCambiar={elegirPeriodicidad}
+                      error={error('periodicidad_id')}
+                      disabled={!plan}
+                      opciones={precios.map((p) => ({ valor: String(p.periodicidad_id ?? p.periodicidad.id), texto: `${p.periodicidad.meses} ${p.periodicidad.meses === 1 ? 'mes' : 'meses'} · ${dinero(p.precio)}` }))}
+                    />
+                    <CampoTexto
+                      etiqueta="Precio pactado por periodo"
+                      tipo="number"
+                      min="0"
+                      step="1000"
+                      valor={datos.precio_periodo}
+                      alCambiar={cambiar('precio_periodo')}
+                      error={error('precio_periodo')}
+                      disabled={!plan}
+                      ayuda={precioCatalogo !== null ? (ajustado ? `Ajustado. Catálogo: ${dinero(precioCatalogo)}` : 'Precio del catálogo; puede ajustarlo.') : undefined}
+                    />
+                  </div>
 
-        <Tarjeta titulo={`Ascensores incluidos (${datos.equipos.length})`}>
-          {error('equipos') && <Alerta>{error('equipos')}</Alerta>}
-          {equiposCliente === null ? (
-            <p className="texto-suave" style={{ margin: 0 }}>
-              Seleccione el cliente para ver sus ascensores.
-            </p>
-          ) : equiposCliente === undefined ? (
-            <Cargando />
-          ) : equiposCliente.length ? (
-            <div className="lista-seleccion">
-              {equiposCliente.map((equipo) => (
-                <Casilla
-                  key={equipo.id}
-                  valor={datos.equipos.includes(equipo.id)}
-                  alCambiar={(marcado) => alternarEquipo(equipo.id, marcado)}
-                  etiqueta={
-                    <span>
-                      <strong>{equipo.codigo}</strong> · {equipo.edificio?.nombre}
-                      {equipo.estado !== 'activo' && (
-                        <>
-                          {' '}
-                          <Insignia tipo={ESTADOS_EQUIPO[equipo.estado]?.tipo}>{ESTADOS_EQUIPO[equipo.estado]?.texto}</Insignia>
-                        </>
+                  {plan && (
+                    <div className="campo">
+                      <span className="campo__etiqueta">Servicios incluidos ({datos.servicios_pactados.length})</span>
+                      <div className="lista-seleccion">
+                        {serviciosPlan.map((s) => (
+                          <Casilla key={s} etiqueta={s} valor={datos.servicios_pactados.includes(s)} alCambiar={(m) => alternarServicio(s, m)} />
+                        ))}
+                        {serviciosPropios.map((s) => (
+                          <span key={s} className="servicio-propio">
+                            {s}
+                            <button type="button" onClick={() => alternarServicio(s, false)} aria-label={`Quitar ${s}`}>
+                              <X size={13} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                      <div className="catalogo__nuevo" style={{ marginTop: 8 }}>
+                        <input
+                          className="campo__control"
+                          value={servicioNuevo}
+                          onChange={(e) => setServicioNuevo(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), agregarServicio())}
+                          placeholder="Agregar un servicio pactado solo para este cliente"
+                          aria-label="Nuevo servicio pactado"
+                          maxLength={200}
+                        />
+                        <button type="button" className="boton boton--secundario" onClick={agregarServicio} disabled={!servicioNuevo.trim()}>
+                          <Plus size={16} aria-hidden="true" /> Agregar
+                        </button>
+                      </div>
+                      {Object.entries(errores).find(([c]) => c.startsWith('servicios_pactados'))?.[1]?.[0] && (
+                        <span className="campo__error">{Object.entries(errores).find(([c]) => c.startsWith('servicios_pactados'))[1][0]}</span>
                       )}
-                    </span>
-                  }
-                />
-              ))}
+                    </div>
+                  )}
+
+                  <div className="formulario__fila">
+                    <CampoTexto
+                      etiqueta="Valor total del contrato"
+                      tipo="number"
+                      min="0"
+                      step="1000"
+                      obligatorio={!plan}
+                      valor={datos.valor}
+                      alCambiar={(v) => {
+                        setValorManual(true);
+                        cambiar('valor')(v);
+                      }}
+                      error={error('valor')}
+                      ayuda={
+                        periodos
+                          ? `${periodos} ${periodos === 1 ? 'periodo' : 'periodos'} × ${dinero(datos.precio_periodo || 0)} = ${dinero(valorCalculado ?? 0)}${valorManual && valorCalculado !== null && Number(datos.valor) !== valorCalculado ? ' (valor escrito a mano)' : ''}`
+                          : undefined
+                      }
+                    />
+                    {valorManual && valorCalculado !== null && Number(datos.valor) !== valorCalculado && (
+                      <div className="campo" style={{ justifyContent: 'flex-end' }}>
+                        <button type="button" className="boton boton--fantasma" onClick={() => setValorManual(false)}>
+                          Usar el valor calculado
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <CampoArea etiqueta="Alcance de los servicios" valor={datos.servicios} alCambiar={cambiar('servicios')} error={error('servicios')} rows={2} />
+                  <CampoArea etiqueta="Condiciones" valor={datos.condiciones} alCambiar={cambiar('condiciones')} error={error('condiciones')} rows={3} />
+                </div>
+              </Tarjeta>
             </div>
-          ) : (
-            <EstadoVacio titulo="El cliente no tiene ascensores registrados" />
-          )}
-        </Tarjeta>
+          </div>
+        </div>
 
         <div className="formulario__acciones">
           <Link to={editando ? `/contratos/${id}` : '/contratos'} className="boton boton--secundario">

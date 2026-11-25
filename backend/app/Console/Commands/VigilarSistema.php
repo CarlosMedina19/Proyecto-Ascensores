@@ -11,11 +11,13 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Throwable;
 
 /**
  * Vigilancia de la operación (cada 5 minutos). Revisa lo que falla en silencio y avisa a los
- * administradores en la campana del panel y en el registro de errores, una vez por hora y por problema:
+ * administradores en la campana del panel, por correo (SIGMA_CORREO_ALERTAS, por defecto ADMIN_EMAIL) y en el
+ * registro de errores, una vez por hora y por problema:
  *
  * - Trabajos de la cola que fallaron en la última hora.
  * - Cola atascada: trabajos esperando más de 10 minutos (el procesador de la cola no corre).
@@ -56,6 +58,7 @@ class VigilarSistema extends Command
                 } catch (Throwable $e) {
                     Log::error('Vigilancia: no se pudo avisar a los administradores', ['error' => $e->getMessage()]);
                 }
+                $this->avisarPorCorreo($titulo, $detalle);
             }
         }
 
@@ -64,6 +67,23 @@ class VigilarSistema extends Command
         }
 
         return $problemas ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * La campana solo se ve con el panel abierto: las alertas también salen por correo. Se envían en el acto
+     * (sin la cola) para que lleguen aunque el problema sea justamente la cola.
+     */
+    private function avisarPorCorreo(string $titulo, string $detalle): void
+    {
+        $correo = config('sigma.vigilancia.correo_alertas');
+        if (blank($correo)) {
+            return;
+        }
+        try {
+            Notification::route('mail', $correo)->notifyNow((new AlertaOperacionNotification($titulo, $detalle))->porCanal('mail'));
+        } catch (Throwable $e) {
+            Log::error('Vigilancia: no se pudo enviar la alerta por correo', ['error' => $e->getMessage()]);
+        }
     }
 
     private function trabajosFallidos(): ?array

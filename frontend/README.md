@@ -15,7 +15,7 @@ La API debe estar corriendo (ver `../backend`). Para producción: `npm run build
 
 El mapa de técnicos de Auditoría es de Google Maps, en modo oscuro, cuando `.env` tiene `VITE_GOOGLE_MAPS_KEY` (clave de
 navegador restringida por dominio). Sin ella, o si Google la rechaza, se usa el mapa oscuro de respaldo
-(OpenStreetMap oscurecido).
+(OpenFreeMap con la misma paleta, `src/paginas/auditoria/mapa/paleta.js`).
 
 ## Pruebas
 

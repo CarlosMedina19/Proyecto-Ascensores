@@ -154,6 +154,35 @@ class Repositorio {
       .map((s) => SeccionPlanilla.desdeJson(s as Map<String, dynamic>))
       .toList();
 
+  /// ¿El servidor puede enviar SMS? Sin operador real la recuperación por celular no se ofrece. Ante cualquier
+  /// error se asume que sí (el servidor responde con un aviso claro si no lo está).
+  Future<bool> smsDisponible() async {
+    try {
+      final datos = (await api.obtener('/publico/acceso'))['datos'];
+      return !(datos is Map && datos['sms_disponible'] == false);
+    } catch (_) {
+      return true;
+    }
+  }
+
+  /// Planillas ya enviadas que el usuario puede ver: el técnico, las suyas.
+  Future<List<VisitaEnviada>> visitasRecientes() async =>
+      [for (final v in (await api.obtener('/visitas'))['datos'] as List) VisitaEnviada.desdeJson(v as Map<String, dynamic>)];
+
+  /// Pregunta al asistente de SIGMA, con o sin foto. El servidor responde según los permisos del rol.
+  Future<RespuestaAsistente> preguntarAsistente(String mensaje, {required String sesion, List<int>? foto, String? nombreFoto}) async {
+    final respuesta = foto == null
+        ? await api.crear('/asistente', {'mensaje': mensaje, 'sesion': sesion})
+        : await api.subirArchivo(
+            '/asistente',
+            campo: 'imagen',
+            bytes: foto,
+            nombreArchivo: nombreFoto ?? 'foto.jpg',
+            campos: {'sesion': sesion, if (mensaje.isNotEmpty) 'mensaje': mensaje},
+          );
+    return RespuestaAsistente.desdeJson(respuesta['datos'] as Map<String, dynamic>);
+  }
+
   /// Envía la planilla diligenciada; el servidor genera el PDF y devuelve el número de la planilla.
   Future<Map<String, dynamic>> registrarVisita(int equipoId, Map<String, Object?> datos) async =>
       (await api.crear('/equipos/$equipoId/visitas', datos))['datos'] as Map<String, dynamic>;

@@ -10,6 +10,7 @@ use Database\Seeders\ConfiguracionSeeder;
 use Database\Seeders\PermisoSeeder;
 use Database\Seeders\RolSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -96,6 +97,25 @@ class PruebasOperacionTest extends TestCase
         // La siguiente revisión (5 minutos después) no repite los avisos.
         $this->artisan('sigma:vigilar')->assertFailed();
         $this->assertSame($avisos, Notification::sent($administrador, AlertaOperacionNotification::class)->count());
+    }
+
+    public function test_las_alertas_tambien_llegan_por_correo_una_vez_por_hora(): void
+    {
+        config(['sigma.vigilancia.correo_alertas' => 'alertas@sigma.test']);
+        Vigilancia::registrarExito('respaldo_remoto');
+        $this->travel(31)->hours();
+
+        $this->artisan('sigma:vigilar')->assertFailed();
+        Notification::assertSentOnDemand(AlertaOperacionNotification::class, function ($n, array $canales, $destino) {
+            return $n->problema === 'Respaldo remoto atrasado' && $canales === ['mail'] && $destino->routes['mail'] === 'alertas@sigma.test';
+        });
+        $this->artisan('sigma:vigilar')->assertFailed();
+        Notification::assertSentOnDemandTimes(AlertaOperacionNotification::class, 1);
+
+        // El correo se arma aunque el destino no sea un usuario de SIGMA.
+        $correo = (new AlertaOperacionNotification('Disco casi lleno', 'Queda 5 % libre.'))->toMail(new AnonymousNotifiable);
+        $this->assertSame('Hola, equipo de SIGMA', $correo->greeting);
+        $this->assertStringContainsString('Disco casi lleno', $correo->subject);
     }
 
     public function test_la_vigilancia_avisa_si_el_respaldo_remoto_esta_atrasado(): void

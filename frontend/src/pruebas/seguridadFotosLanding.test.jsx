@@ -118,6 +118,16 @@ describe('recuperar la contraseña con el celular', () => {
   });
 });
 
+describe('recuperación sin operador de SMS', () => {
+  it('si el servidor no tiene operador de SMS solo ofrece el correo', async () => {
+    simularApi({ 'GET /publico/acceso': { datos: { sms_disponible: false } } });
+    montar(<RecuperarContrasena />, '/recuperar-contrasena');
+
+    await waitFor(() => expect(screen.queryByRole('tab', { name: /Por celular/ })).not.toBeInTheDocument());
+    expect(screen.getByLabelText(/Correo electrónico/)).toBeInTheDocument();
+  });
+});
+
 describe('chat del panel con fotos', () => {
   it('adjunta una foto de la galería y la envía al asistente como formulario', async () => {
     guardarToken('token');

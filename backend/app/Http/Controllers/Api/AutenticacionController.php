@@ -10,6 +10,7 @@ use App\Http\Requests\Autenticacion\RestablecerContrasenaRequest;
 use App\Http\Resources\UsuarioResource;
 use App\Models\Usuario;
 use App\Services\AutenticacionService;
+use App\Services\MensajeTextoService;
 use App\Services\RegistroAuditoriaService;
 use App\Support\Telefono;
 use Illuminate\Http\JsonResponse;
@@ -122,9 +123,17 @@ class AutenticacionController extends Controller
         ]);
     }
 
+    /** Opciones de acceso para las pantallas públicas: si la recuperación por celular está disponible. */
+    public function accesoPublico(MensajeTextoService $sms): JsonResponse
+    {
+        return response()->json(['datos' => ['sms_disponible' => $sms->disponible()]]);
+    }
+
     /** Recuperación con el número de teléfono (paso 1): envía un código por SMS. */
     public function recuperarConTelefono(Request $solicitud): JsonResponse
     {
+        // Sin operador de SMS en producción no se envía nada (la respuesta es la misma para cualquier número).
+        abort_unless(app(MensajeTextoService::class)->disponible(), 503, 'La recuperación por celular no está disponible. Recupere la contraseña por correo.');
         $datos = $solicitud->validate(['telefono' => ['required', 'string', 'max:20']], [], ['telefono' => 'número de celular']);
         if (Telefono::normalizar($datos['telefono']) === null) {
             throw ValidationException::withMessages(['telefono' => 'Escriba un celular colombiano de 10 dígitos (ej. 300 123 4567).']);

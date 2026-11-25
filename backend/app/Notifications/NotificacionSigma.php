@@ -50,7 +50,7 @@ abstract class NotificacionSigma extends Notification
     {
         $correo = (new MailMessage)
             ->subject('SIGMA — '.$this->titulo())
-            ->greeting('Hola, '.$notificable->nombre)
+            ->greeting('Hola, '.($notificable->nombre ?? 'equipo de SIGMA'))
             ->line($this->mensaje())
             ->salutation('Equipo SIGMA');
 

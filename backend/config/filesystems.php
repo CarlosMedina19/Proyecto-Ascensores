@@ -68,6 +68,8 @@ return [
             'throw' => true,
             'report' => true,
             'http' => ['connect_timeout' => 10, 'timeout' => 60],
+            // Microcortes del proveedor: el cliente S3 reintenta con espera creciente antes de fallar.
+            'retries' => ['mode' => 'standard', 'max_attempts' => 4],
         ],
 
         's3' => [

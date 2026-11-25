@@ -4,9 +4,11 @@ import userEvent from '@testing-library/user-event';
 import MapaTecnicos from '../paginas/auditoria/MapaTecnicos';
 import { cargarGoogleMaps } from '../paginas/auditoria/mapa/cargarGoogleMaps';
 import { ESTILO_OSCURO } from '../paginas/auditoria/mapa/estiloOscuro';
+import { pintarOscuro } from '../paginas/auditoria/mapa/estiloRespaldo';
+import { PALETA } from '../paginas/auditoria/mapa/paleta';
 
-// Leaflet necesita un navegador real: el respaldo se reemplaza por un marcador simple.
-vi.mock('../paginas/auditoria/MapaLeaflet', () => ({
+// MapLibre necesita WebGL: en las pruebas el respaldo se reemplaza por un marcador simple.
+vi.mock('../paginas/auditoria/MapaRespaldo', () => ({
   default: ({ tecnicos }) => <div data-testid="mapa-respaldo">{tecnicos.length} técnicos</div>,
 }));
 vi.mock('../paginas/auditoria/mapa/cargarGoogleMaps', () => ({ cargarGoogleMaps: vi.fn(), EVENTO_ERROR: 'sigma:google-maps-error' }));
@@ -112,5 +114,36 @@ describe('mapa de técnicos en Auditoría', () => {
     await screen.findAllByRole('button', { name: /^Ver a / });
     window.dispatchEvent(new Event('sigma:google-maps-error'));
     expect(await screen.findByTestId('mapa-respaldo')).toBeInTheDocument();
+  });
+});
+
+describe('paleta oscura del mapa de respaldo', () => {
+  it('vuelve a pintar el estilo claro con la paleta de SIGMA y oculta los escudos', () => {
+    const base = {
+      version: 8,
+      layers: [
+        { id: 'background', type: 'background', paint: { 'background-color': 'rgb(242,243,240)' } },
+        { id: 'water', type: 'fill', paint: { 'fill-color': 'rgb(194, 200, 202)', 'fill-opacity': 1 } },
+        { id: 'highway_motorway_inner', type: 'line', paint: { 'line-color': '#fff', 'line-width': 2 } },
+        { id: 'label_city', type: 'symbol', layout: { 'text-field': ['coalesce', ['get', 'name_en'], ['get', 'name']] }, paint: { 'text-color': '#000', 'text-halo-color': '#fff' } },
+        { id: 'highway-shield-non-us', type: 'symbol', layout: { 'icon-image': 'escudo' } },
+        { id: 'capa_nueva', type: 'fill', paint: { 'fill-color': '#eee' } },
+      ],
+    };
+    const [fondo, agua, autopista, ciudad, escudo, nueva] = pintarOscuro(base).layers;
+    expect(fondo.paint['background-color']).toBe(PALETA.fondo);
+    expect(agua.paint).toEqual({ 'fill-color': PALETA.agua, 'fill-opacity': 1 });
+    expect(autopista.paint).toEqual({ 'line-color': PALETA.autopista, 'line-width': 2 });
+    expect(ciudad.paint).toEqual({ 'text-color': PALETA.textoCiudad, 'text-halo-color': PALETA.halo });
+    expect(ciudad.layout['text-field']).toEqual(['coalesce', ['get', 'name:es'], ['get', 'name'], ['get', 'name:latin']]);
+    expect(escudo.layout['text-field']).toBeUndefined();
+    expect(escudo.layout.visibility).toBe('none');
+    expect(nueva.paint['fill-color']).toBe(PALETA.residencial);
+    expect(base.layers[0].paint['background-color']).toBe('rgb(242,243,240)');
+  });
+
+  it('Google Maps usa la misma paleta', () => {
+    expect(ESTILO_OSCURO[0].stylers[0].color).toBe(PALETA.fondo);
+    expect(ESTILO_OSCURO.find((r) => r.featureType === 'water').stylers[0].color).toBe(PALETA.agua);
   });
 });

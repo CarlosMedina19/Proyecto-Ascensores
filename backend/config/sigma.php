@@ -32,6 +32,8 @@ return [
     // Vigilancia: porcentaje mínimo de disco libre antes de avisar a los administradores.
     'vigilancia' => [
         'disco_minimo' => (float) env('SIGMA_DISCO_MINIMO_LIBRE', 10),
+        // Correo que recibe las alertas (además de la campana del panel). Por defecto, el del administrador.
+        'correo_alertas' => env('SIGMA_CORREO_ALERTAS', env('ADMIN_EMAIL')),
     ],
 
     // Límite general de solicitudes a la API por usuario (o por IP sin sesión) y por minuto.

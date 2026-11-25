@@ -63,7 +63,10 @@ class _PantallaEmergenciasState extends State<PantallaEmergencias> {
   }
 
   void _cargar() {
-    setState(() => _emergencias = context.read<Sesion>().repositorio.emergencias(abiertas: _abiertas));
+    final emergencias = context.read<Sesion>().repositorio.emergencias(abiertas: _abiertas);
+    setState(() {
+      _emergencias = emergencias;
+    });
   }
 
   Future<void> _reportar() async {

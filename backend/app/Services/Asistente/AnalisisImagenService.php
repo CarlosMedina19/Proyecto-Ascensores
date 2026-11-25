@@ -4,6 +4,7 @@ namespace App\Services\Asistente;
 
 use App\Models\ChecklistItem;
 use App\Models\ChecklistSeccion;
+use App\Models\Repuesto;
 use Illuminate\Support\Str;
 
 /**
@@ -174,6 +175,49 @@ class AnalisisImagenService
         }
 
         return [$alerta ? 'revisar' : ($calidad ? 'repetir' : 'bien'), $hallazgos];
+    }
+
+    /** Palabras de repuestos típicos de cada zona, para buscarlos en el inventario. */
+    private const REPUESTOS_ZONA = [
+        'puertas' => ['puerta', 'operador', 'zapata', 'rodachin', 'contacto', 'cerradura', 'leva', 'correa', 'fotocelda', 'cortina'],
+        'cabina' => ['boton', 'pulsador', 'botonera', 'lampara', 'luminaria', 'ventilador', 'espejo', 'cortina', 'fotocelda', 'display'],
+        'cuarto_maquinas' => ['motor', 'freno', 'aceite', 'contactor', 'rele', 'variador', 'tarjeta', 'escobilla', 'limitador', 'polea', 'rodamiento', 'fusible'],
+        'hueco' => ['cable', 'guaya', 'riel', 'guia', 'deslizadera', 'final de carrera', 'bracket', 'lubricante'],
+        'foso' => ['amortiguador', 'buffer', 'tensora', 'polea', 'aceite'],
+        'contrapeso' => ['contrapeso', 'deslizadera', 'guia', 'lubricante'],
+    ];
+
+    /**
+     * Repuestos activos del inventario relacionados con la zona de la foto o con lo que dice el mensaje
+     * (nombre, referencia y stock), para que el técnico sepa qué hay disponible.
+     *
+     * @return list<string>
+     */
+    public function repuestosRelacionados(?string $zona, string $mensaje = ''): array
+    {
+        $palabras = self::REPUESTOS_ZONA[$zona] ?? [];
+        foreach (preg_split('/\s+/', mb_strtolower(Str::ascii($mensaje))) as $palabra) {
+            if (mb_strlen($palabra) >= 5 && ! in_array($palabra, ['repuesto', 'repuestos', 'revisa', 'revisar', 'tengo', 'necesito', 'cambiar'], true)) {
+                $palabras[] = $palabra;
+            }
+        }
+        if (! $palabras) {
+            return [];
+        }
+
+        return Repuesto::where('activo', true)
+            ->where(function ($q) use ($palabras) {
+                foreach (array_unique($palabras) as $palabra) {
+                    $q->orWhereRaw('LOWER(nombre) LIKE ?', ['%'.$palabra.'%'])->orWhereRaw("LOWER(COALESCE(referencia, '')) LIKE ?", ['%'.$palabra.'%']);
+                }
+            })
+            ->orderBy('nombre')->limit(5)->get()
+            ->map(function (Repuesto $r) {
+                $stock = rtrim(rtrim(number_format((float) $r->stock, 2, ',', '.'), '0'), ',');
+                $alerta = (float) $r->stock <= (float) $r->stock_minimo ? ' · stock bajo' : '';
+
+                return trim("{$r->codigo} {$r->nombre}").($r->referencia ? " (ref. {$r->referencia})" : '')." · {$stock} {$r->unidad} disponibles{$alerta}";
+            })->all();
     }
 
     private function zona(string $mensaje): ?string

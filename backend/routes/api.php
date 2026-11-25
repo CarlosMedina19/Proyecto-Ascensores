@@ -43,6 +43,7 @@ Route::post('/restablecer-contrasena', [AutenticacionController::class, 'restabl
 // Verificación en dos pasos (código al correo) y recuperación con el número de teléfono (código por SMS).
 Route::post('/iniciar-sesion/verificar', [AutenticacionController::class, 'verificarInicioSesion'])->middleware('throttle:verificar-codigo');
 Route::post('/codigo-verificacion/reenviar', [AutenticacionController::class, 'reenviarCodigo'])->middleware('throttle:recuperar-contrasena');
+Route::get('/publico/acceso', [AutenticacionController::class, 'accesoPublico'])->middleware('throttle:60,1');
 Route::post('/recuperar-contrasena/telefono', [AutenticacionController::class, 'recuperarConTelefono'])->middleware('throttle:recuperar-contrasena');
 Route::post('/restablecer-contrasena/telefono', [AutenticacionController::class, 'restablecerConTelefono'])->middleware('throttle:verificar-codigo');
 Route::get('/verificar-correo/{usuario}/{hash}', [AutenticacionController::class, 'verificarCorreo'])
@@ -248,6 +249,7 @@ Route::middleware(['auth:sanctum', LimitarTokenAsistente::class])->group(functio
     Route::post('/planilla/restablecer', [PlantillaPlanillaController::class, 'restablecer']);
     Route::get('/equipos/{equipo}/visitas', [VisitaTecnicaController::class, 'index']);
     Route::post('/equipos/{equipo}/visitas', [VisitaTecnicaController::class, 'store'])->middleware('throttle:20,1');
+    Route::get('/visitas', [VisitaTecnicaController::class, 'recientes']);
     Route::get('/visitas/{visita}/pdf', [VisitaTecnicaController::class, 'pdf']);
     Route::get('/ordenes/{orden}/planilla', [PlanillaController::class, 'show']);
     Route::put('/ordenes/{orden}/planilla', [PlanillaController::class, 'guardar']);

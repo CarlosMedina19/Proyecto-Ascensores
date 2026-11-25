@@ -483,11 +483,26 @@ class _PantallaRecuperarContrasenaState extends State<PantallaRecuperarContrasen
   final _nueva = TextEditingController();
   final _confirmacion = TextEditingController();
   String _metodo = 'correo';
+  // Sin operador de SMS en el servidor (producción sin Twilio ni n8n) solo se ofrece el correo.
+  bool _conCelular = true;
   DesafioVerificacion? _solicitud;
   String? _mensaje;
   String? _error;
   Map<String, String> _erroresCampo = {};
   bool _enviando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<Sesion>().repositorio.smsDisponible().then((disponible) {
+      if (mounted && !disponible) {
+        setState(() {
+          _conCelular = false;
+          _metodo = 'correo';
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -567,7 +582,8 @@ class _PantallaRecuperarContrasenaState extends State<PantallaRecuperarContrasen
             _Aviso(texto: _mensaje!, color: esquema.primary),
             OutlinedButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Volver al inicio de sesión')),
           ] else ...[
-            SegmentedButton<String>(
+            if (_conCelular)
+              SegmentedButton<String>(
               segments: const [
                 ButtonSegment(value: 'correo', label: Text('Por correo'), icon: Icon(Icons.mail_outline)),
                 ButtonSegment(value: 'celular', label: Text('Por celular'), icon: Icon(Icons.smartphone)),

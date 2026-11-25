@@ -109,57 +109,70 @@ export default function FormularioTecnico() {
       <form className="formulario" onSubmit={guardar} noValidate>
         <Alerta>{mensajeError}</Alerta>
 
-        {!editando && (
-          <Tarjeta titulo="Cuenta de acceso">
-            <div className="formulario__fila formulario__fila--3">
-              <CampoTexto etiqueta="Nombre completo" obligatorio valor={datos.nombre} alCambiar={cambiar('nombre')} error={error('nombre')} />
-              <CampoTexto etiqueta="Correo" tipo="email" obligatorio valor={datos.correo} alCambiar={cambiar('correo')} error={error('correo')} />
-              <CampoContrasena obligatorio valor={datos.password} alCambiar={cambiar('password')} error={error('password')} ayuda="Mínimo 8 caracteres con letras y números." />
+        {/* Dos columnas independientes: las tarjetas bajas no dejan huecos junto a las altas. */}
+        <div className="formulario__columnas">
+          <div className="formulario__columna">
+            <div className="formulario__bloque" style={{ order: 1 }}>
+              {!editando && (
+                <Tarjeta titulo="Cuenta de acceso">
+                  <div className="formulario__fila formulario__fila--3">
+                    <CampoTexto etiqueta="Nombre completo" obligatorio valor={datos.nombre} alCambiar={cambiar('nombre')} error={error('nombre')} />
+                    <CampoTexto etiqueta="Correo" tipo="email" obligatorio valor={datos.correo} alCambiar={cambiar('correo')} error={error('correo')} />
+                    <CampoContrasena obligatorio valor={datos.password} alCambiar={cambiar('password')} error={error('password')} ayuda="Mínimo 8 caracteres con letras y números." />
+                  </div>
+                </Tarjeta>
+              )}
             </div>
-          </Tarjeta>
-        )}
-
-        <Tarjeta titulo="Datos personales">
-          <div className="formulario__fila formulario__fila--3">
-            <CampoSelector etiqueta="Tipo de documento" obligatorio vacio={null} valor={datos.tipo_documento} alCambiar={cambiar('tipo_documento')} error={error('tipo_documento')} opciones={TIPOS_DOCUMENTO} />
-            <CampoTexto etiqueta="Número de documento" obligatorio valor={datos.numero_documento} alCambiar={cambiar('numero_documento')} error={error('numero_documento')} />
-            <CampoTexto etiqueta="Teléfono" tipo="tel" valor={datos.telefono} alCambiar={cambiar('telefono')} error={error('telefono')} />
+            <div className="formulario__bloque" style={{ order: 2 }}>
+              <Tarjeta titulo="Datos personales">
+                <div className="formulario__fila formulario__fila--3">
+                  <CampoSelector etiqueta="Tipo de documento" obligatorio vacio={null} valor={datos.tipo_documento} alCambiar={cambiar('tipo_documento')} error={error('tipo_documento')} opciones={TIPOS_DOCUMENTO} />
+                  <CampoTexto etiqueta="Número de documento" obligatorio valor={datos.numero_documento} alCambiar={cambiar('numero_documento')} error={error('numero_documento')} />
+                  <CampoTexto etiqueta="Teléfono" tipo="tel" valor={datos.telefono} alCambiar={cambiar('telefono')} error={error('telefono')} />
+                </div>
+              </Tarjeta>
+            </div>
+            <div className="formulario__bloque" style={{ order: 3 }}>
+              <Tarjeta titulo={`Especialidades (${datos.especialidades.length})`}>
+                {(error('especialidades') || errores['especialidades.0']) && <Alerta>{error('especialidades') || errores['especialidades.0'][0]}</Alerta>}
+                <div className="lista-seleccion">
+                  {catalogo.map((e) => (
+                    <Casilla key={e.id} etiqueta={e.nombre} valor={datos.especialidades.includes(e.id)} alCambiar={(marcada) => alternarEspecialidad(e.id, marcada)} />
+                  ))}
+                </div>
+              </Tarjeta>
+            </div>
           </div>
-        </Tarjeta>
-
-        <Tarjeta titulo={`Especialidades (${datos.especialidades.length})`}>
-          {(error('especialidades') || errores['especialidades.0']) && <Alerta>{error('especialidades') || errores['especialidades.0'][0]}</Alerta>}
-          <div className="lista-seleccion">
-            {catalogo.map((e) => (
-              <Casilla key={e.id} etiqueta={e.nombre} valor={datos.especialidades.includes(e.id)} alCambiar={(marcada) => alternarEspecialidad(e.id, marcada)} />
-            ))}
+          <div className="formulario__columna">
+            <div className="formulario__bloque" style={{ order: 4 }}>
+              <Tarjeta titulo="Días y horas de trabajo">
+                <p className="texto-pequeno texto-suave" style={{ marginTop: 0 }}>
+                  Al asignar órdenes, SIGMA solo ofrece al técnico dentro de este horario. Sin días marcados, puede recibir órdenes a cualquier hora.
+                </p>
+                {error('horario') && <Alerta>{error('horario')}</Alerta>}
+                <HorarioSemanal valor={datos.horario} alCambiar={(h) => setDatos((d) => ({ ...d, horario: h }))} errores={errores} />
+              </Tarjeta>
+            </div>
+            <div className="formulario__bloque" style={{ order: 5 }}>
+              <Tarjeta titulo="Disponibilidad">
+                <div className="formulario">
+                  <Casilla
+                    etiqueta="Disponible para recibir órdenes"
+                    valor={datos.disponibilidad === 'disponible'}
+                    alCambiar={(marcada) => cambiar('disponibilidad')(marcada ? 'disponible' : 'no_disponible')}
+                  />
+                  {datos.disponibilidad === 'no_disponible' && (
+                    <div className="formulario__fila">
+                      <CampoTexto etiqueta="Motivo" obligatorio valor={datos.motivo_no_disponible} alCambiar={cambiar('motivo_no_disponible')} error={error('motivo_no_disponible')} placeholder="Vacaciones, incapacidad, capacitación…" />
+                      <CampoTexto etiqueta="Disponible de nuevo desde" tipo="date" valor={datos.no_disponible_hasta} alCambiar={cambiar('no_disponible_hasta')} error={error('no_disponible_hasta')} />
+                    </div>
+                  )}
+                  <CampoArea etiqueta="Observaciones" valor={datos.observaciones} alCambiar={cambiar('observaciones')} error={error('observaciones')} rows={2} />
+                </div>
+              </Tarjeta>
+            </div>
           </div>
-        </Tarjeta>
-
-        <Tarjeta titulo="Días y horas de trabajo">
-          <p className="texto-pequeno texto-suave" style={{ marginTop: 0 }}>
-            Al asignar órdenes, SIGMA solo ofrece al técnico dentro de este horario. Sin días marcados, puede recibir órdenes a cualquier hora.
-          </p>
-          {error('horario') && <Alerta>{error('horario')}</Alerta>}
-          <HorarioSemanal valor={datos.horario} alCambiar={(h) => setDatos((d) => ({ ...d, horario: h }))} errores={errores} />
-        </Tarjeta>
-
-        <Tarjeta titulo="Disponibilidad">
-          <div className="formulario">
-            <Casilla
-              etiqueta="Disponible para recibir órdenes"
-              valor={datos.disponibilidad === 'disponible'}
-              alCambiar={(marcada) => cambiar('disponibilidad')(marcada ? 'disponible' : 'no_disponible')}
-            />
-            {datos.disponibilidad === 'no_disponible' && (
-              <div className="formulario__fila">
-                <CampoTexto etiqueta="Motivo" obligatorio valor={datos.motivo_no_disponible} alCambiar={cambiar('motivo_no_disponible')} error={error('motivo_no_disponible')} placeholder="Vacaciones, incapacidad, capacitación…" />
-                <CampoTexto etiqueta="Disponible de nuevo desde" tipo="date" valor={datos.no_disponible_hasta} alCambiar={cambiar('no_disponible_hasta')} error={error('no_disponible_hasta')} />
-              </div>
-            )}
-            <CampoArea etiqueta="Observaciones" valor={datos.observaciones} alCambiar={cambiar('observaciones')} error={error('observaciones')} rows={2} />
-          </div>
-        </Tarjeta>
+        </div>
 
         <div className="formulario__acciones">
           <Link to={editando ? `/tecnicos/${id}` : '/tecnicos'} className="boton boton--secundario">

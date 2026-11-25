@@ -160,6 +160,37 @@ class PruebasDobleFactorTelefonoTest extends TestCase
             ->assertJsonMissingPath('codigo_demo')->assertJsonStructure(['nota']);
     }
 
+    public function test_en_produccion_el_modo_simulado_no_muestra_el_codigo_y_desactiva_el_celular(): void
+    {
+        $this->app['env'] = 'production';
+        config(['services.sms.driver' => 'simulado']);
+        $this->usuario('coordinador', ['telefono' => '3001112233']);
+
+        // Mostrar el código permitiría tomar la cuenta de quien tenga ese celular.
+        $this->getJson('/api/v1/publico/acceso')->assertOk()->assertJsonPath('datos.sms_disponible', false);
+        $this->postJson('/api/v1/recuperar-contrasena/telefono', ['telefono' => '3001112233'])->assertStatus(503)
+            ->assertJsonMissingPath('codigo_demo')->assertJsonMissingPath('desafio');
+        // La misma respuesta para un número que no existe: no revela qué celulares están registrados.
+        $this->postJson('/api/v1/recuperar-contrasena/telefono', ['telefono' => '3005550000'])->assertStatus(503);
+        $this->assertSame(0, CodigoVerificacion::count());
+
+        // Solo con el permiso explícito para una presentación vuelve a mostrarse.
+        config(['services.sms.demo_en_produccion' => true]);
+        $this->postJson('/api/v1/recuperar-contrasena/telefono', ['telefono' => '3001112233'])->assertOk()->assertJsonStructure(['codigo_demo']);
+    }
+
+    public function test_en_produccion_con_operador_real_la_recuperacion_por_celular_sigue_disponible(): void
+    {
+        $this->app['env'] = 'production';
+        config(['services.sms' => ['driver' => 'twilio', 'demo_en_produccion' => false, 'twilio' => ['sid' => 'AC123', 'token' => 'tk', 'numero' => '+15005550006'], 'n8n' => []]]);
+        Http::fake(['api.twilio.com/*' => Http::response(['sid' => 'SM1'], 201)]);
+        $this->usuario('coordinador', ['telefono' => '3001112233']);
+
+        $this->getJson('/api/v1/publico/acceso')->assertOk()->assertJsonPath('datos.sms_disponible', true);
+        $this->postJson('/api/v1/recuperar-contrasena/telefono', ['telefono' => '3001112233'])->assertOk()->assertJsonMissingPath('codigo_demo');
+        Http::assertSentCount(1);
+    }
+
     /** Verifica el código en un dispositivo y devuelve su llave de confianza. */
     private function verificarEnDispositivoNuevo(Usuario $usuario): string
     {

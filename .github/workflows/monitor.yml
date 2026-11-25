@@ -1,0 +1,36 @@
+# Monitor externo de SIGMA: cada 15 minutos revisa desde fuera del servidor que el panel y el chequeo de salud
+# respondan. Si fallan, la ejecución queda en rojo y GitHub avisa por correo a quien programó el flujo.
+# (Los flujos programados se pausan tras 60 días sin actividad en el repositorio: GitHub lo avisa y se reactivan
+# con un clic en Actions.)
+name: Monitor
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sitio:
+    name: SIGMA en línea
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Revisar el panel y /up
+        run: |
+          falla=0
+          for ruta in / /up /api/v1/publico/acceso; do
+            for intento in 1 2 3; do
+              codigo=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://sigma.proyectoscampus.top${ruta}" || echo 000)
+              [ "$codigo" = "200" ] && break
+              sleep 10
+            done
+            echo "${ruta}: ${codigo}"
+            [ "$codigo" = "200" ] || falla=1
+          done
+          if [ "$falla" = "1" ]; then
+            echo "::error::SIGMA no responde como se espera. Revise el servidor (runbook en backend/README.md)."
+            exit 1
+          fi

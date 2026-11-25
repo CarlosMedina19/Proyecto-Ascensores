@@ -127,7 +127,7 @@ class VerificacionService
                 $respuesta['destino'] = Telefono::enmascarar($usuario->telefono);
                 $this->sms->enviar($usuario->telefono, "SIGMA: su código para restablecer la contraseña es {$codigo}. Vence en ".self::MINUTOS.' minutos. No lo comparta.');
                 // Demostración sin operador de SMS: el código se muestra en pantalla, salvo en cuentas protegidas.
-                if ($this->sms->esSimulado()) {
+                if ($this->sms->muestraCodigo()) {
                     if ($this->cuentaProtegida($usuario)) {
                         $respuesta['nota'] = 'Esta cuenta está protegida: en el modo de demostración el código no se muestra. Recupere la contraseña por correo.';
                     } else {

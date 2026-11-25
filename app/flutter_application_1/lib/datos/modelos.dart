@@ -921,3 +921,79 @@ class DesafioVerificacion {
   final String? codigoDemo;
   final String? nota;
 }
+
+/// Acción que propone el asistente (un enlace del panel, por ejemplo la ficha de un ascensor).
+class AccionAsistente {
+  AccionAsistente({required this.texto, this.ruta, this.tipo});
+
+  factory AccionAsistente.desdeJson(Map<String, dynamic> json) =>
+      AccionAsistente(texto: '${json['texto'] ?? ''}', ruta: json['ruta'] as String?, tipo: json['tipo'] as String?);
+
+  final String texto;
+  final String? ruta;
+  final String? tipo;
+
+  /// Ascensor u orden que la app puede abrir directamente.
+  int? get equipoId => _id(RegExp(r'^/equipos/(\d+)$'));
+  int? get ordenId => _id(RegExp(r'^/ordenes/(\d+)$'));
+
+  int? _id(RegExp patron) {
+    final coincidencia = patron.firstMatch(ruta ?? '');
+    return coincidencia == null ? null : int.tryParse(coincidencia.group(1)!);
+  }
+}
+
+/// Respuesta del asistente: el servidor aplica los permisos del rol (el cliente solo ve lo de su empresa).
+class RespuestaAsistente {
+  RespuestaAsistente({required this.texto, this.acciones = const [], this.sugerencias = const []});
+
+  factory RespuestaAsistente.desdeJson(Map<String, dynamic> json) => RespuestaAsistente(
+    texto: '${json['texto'] ?? ''}',
+    acciones: [for (final a in (json['acciones'] as List? ?? const [])) AccionAsistente.desdeJson(a as Map<String, dynamic>)],
+    sugerencias: [for (final s in (json['sugerencias'] as List? ?? const [])) '$s'],
+  );
+
+  final String texto;
+  final List<AccionAsistente> acciones;
+  final List<String> sugerencias;
+}
+
+/// Planilla de asistencia técnica ya enviada (pestaña Visitas).
+class VisitaEnviada {
+  VisitaEnviada({
+    required this.id,
+    required this.numero,
+    required this.tipo,
+    required this.equipoId,
+    required this.equipoCodigo,
+    this.edificio,
+    this.salida,
+    this.tecnico,
+    this.conteo = const {},
+  });
+
+  factory VisitaEnviada.desdeJson(Map<String, dynamic> json) {
+    final equipo = json['equipo'] as Map<String, dynamic>? ?? const {};
+    return VisitaEnviada(
+      id: (json['id'] as num).toInt(),
+      numero: '${json['numero'] ?? ''}',
+      tipo: '${json['tipo_nombre'] ?? json['tipo_servicio'] ?? ''}',
+      equipoId: (equipo['id'] as num?)?.toInt() ?? 0,
+      equipoCodigo: '${equipo['codigo'] ?? ''}',
+      edificio: equipo['edificio'] as String?,
+      salida: _fecha(json['salida_en']),
+      tecnico: json['tecnico'] as String?,
+      conteo: {for (final e in (json['conteo'] as Map? ?? const {}).entries) '${e.key}': (e.value as num).toInt()},
+    );
+  }
+
+  final int id;
+  final String numero;
+  final String tipo;
+  final int equipoId;
+  final String equipoCodigo;
+  final String? edificio;
+  final DateTime? salida;
+  final String? tecnico;
+  final Map<String, int> conteo;
+}

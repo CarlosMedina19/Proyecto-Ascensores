@@ -77,13 +77,23 @@ export default function FormularioUsuario() {
     <>
       <EncabezadoPagina titulo={editando ? 'Editar usuario' : 'Nuevo usuario'} migas={<Link to="/usuarios">Usuarios</Link>} />
       <Tarjeta>
-        <form className="formulario" onSubmit={alEnviar} noValidate style={{ maxWidth: 720 }}>
+        {/* A todo el ancho de la tarjeta, tres campos por fila: sin espacio vacío a la derecha. */}
+        <form className="formulario" onSubmit={alEnviar} noValidate>
           <Alerta>{mensajeError}</Alerta>
-          <div className="formulario__fila">
+          <div className="formulario__fila formulario__fila--3">
             <CampoTexto etiqueta="Nombre completo" obligatorio valor={datos.nombre} alCambiar={cambiar('nombre')} error={error('nombre')} />
             <CampoTexto etiqueta="Correo electrónico" obligatorio tipo="email" valor={datos.correo} alCambiar={cambiar('correo')} error={error('correo')} />
+            <CampoContrasena
+              etiqueta={editando ? 'Nueva contraseña' : 'Contraseña'}
+              obligatorio={!editando}
+              valor={datos.password}
+              alCambiar={cambiar('password')}
+              error={error('password')}
+              autoComplete="new-password"
+              ayuda={editando ? 'Déjela vacía para conservar la actual. Si la cambia, se cerrarán las sesiones del usuario.' : 'Mínimo 8 caracteres, con letras y números.'}
+            />
           </div>
-          <div className="formulario__fila">
+          <div className="formulario__fila formulario__fila--3">
             <CampoSelector
               etiqueta="Rol"
               obligatorio
@@ -105,17 +115,6 @@ export default function FormularioUsuario() {
                 opciones={opcionesClientes.map((c) => ({ valor: String(c.id), texto: c.nombre }))}
               />
             )}
-          </div>
-          <CampoContrasena
-            etiqueta={editando ? 'Nueva contraseña' : 'Contraseña'}
-            obligatorio={!editando}
-            valor={datos.password}
-            alCambiar={cambiar('password')}
-            error={error('password')}
-            autoComplete="new-password"
-            ayuda={editando ? 'Déjela vacía para conservar la actual. Si la cambia, se cerrarán las sesiones del usuario.' : 'Mínimo 8 caracteres, con letras y números.'}
-          />
-          <div className="formulario__fila">
             <CampoTexto
               etiqueta="Celular"
               tipo="tel"
@@ -125,12 +124,18 @@ export default function FormularioUsuario() {
               placeholder="300 123 4567"
               ayuda="Sirve para recuperar la contraseña por SMS."
             />
-            <div className="campo" style={{ alignSelf: 'center' }}>
+          </div>
+          <div className="formulario__fila formulario__fila--3">
+            <div className="campo">
               <Casilla etiqueta="Verificación en dos pasos (código al correo)" valor={datos.doble_factor} alCambiar={cambiar('doble_factor')} />
               <span className="campo__ayuda">Actívela solo si el correo del usuario es real: sin el código no podrá entrar.</span>
             </div>
+            {!esPropio && (
+              <div className="campo">
+                <Casilla etiqueta="Usuario activo" valor={datos.activo} alCambiar={cambiar('activo')} />
+              </div>
+            )}
           </div>
-          {!esPropio && <Casilla etiqueta="Usuario activo" valor={datos.activo} alCambiar={cambiar('activo')} />}
 
           <div className="formulario__acciones">
             <button type="button" className="boton boton--secundario" onClick={() => navegar(-1)}>

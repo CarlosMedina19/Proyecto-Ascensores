@@ -58,6 +58,13 @@ class AsistenteService
             $analisis['texto'] .= "\n\n".$estado['texto'];
             $acciones = $estado['acciones'];
         }
+        // Repuestos del inventario relacionados con la zona (técnico, coordinador…: quien pueda ver el inventario).
+        if ($usuario->tienePermiso('inventario.ver')) {
+            $repuestos = $this->analisisImagen->repuestosRelacionados($analisis['zona'], $mensaje);
+            if ($repuestos) {
+                $analisis['texto'] .= "\n\nRepuestos relacionados en el inventario:\n".implode("\n", array_map(fn ($r) => "• {$r}", $repuestos));
+            }
+        }
         if ($analisis['estado'] === 'revisar' && $usuario->tienePermiso('ordenes.crear')) {
             $acciones[] = ['tipo' => 'enlace', 'texto' => 'Crear una orden correctiva', 'ruta' => '/ordenes/nueva'];
         }

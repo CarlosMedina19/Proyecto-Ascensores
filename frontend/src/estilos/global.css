@@ -7052,17 +7052,21 @@ textarea.campo__control[rows='2'] {
   color: var(--color-texto-tenue);
 }
 
-/* El mapa de técnicos siempre va en modo oscuro (Google Maps o el respaldo de OpenStreetMap), en ambos temas del panel. */
+/* El mapa de técnicos siempre va en modo oscuro (Google Maps o el respaldo de OpenFreeMap), en ambos temas del panel. */
 .mapa-auditoria--oscuro {
   position: relative;
-  background: #14121a;
+  background: #121019;
   border-color: #2c2936;
   color: #afa9be;
 }
 
-.mapa-auditoria__lienzo {
+/* MapLibre (.maplibregl-map) y Google Maps (estilo en línea) ponen el contenedor en position: relative: el alto
+   explícito evita que quede en 0 px. */
+.mapa-auditoria .mapa-auditoria__lienzo {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .mapa-auditoria__aviso {
@@ -7073,43 +7077,84 @@ textarea.campo__control[rows='2'] {
   pointer-events: none;
 }
 
-.mapa-auditoria--oscuro .leaflet-container {
-  background: #14121a;
+.mapa-auditoria--oscuro .maplibregl-canvas {
+  outline: none;
 }
 
-/* Respaldo sin clave: los mosaicos claros de OpenStreetMap se invierten y se tiñen hacia la paleta violeta. */
-.mapa-auditoria--oscuro .leaflet-tile-pane {
-  filter: invert(1) hue-rotate(190deg) saturate(0.35) brightness(0.82) contrast(1.08);
-}
-
-.mapa-auditoria--oscuro .leaflet-bar a {
+/* Controles, atribución y ventanas de MapLibre (respaldo) en oscuro */
+.mapa-auditoria--oscuro .maplibregl-ctrl-group {
   background: #1c1a23;
-  color: #eceaf2;
-  border-color: #2c2936;
+  box-shadow: 0 0 0 1px #2c2936;
 }
 
-.mapa-auditoria--oscuro .leaflet-bar a:hover {
-  background: #24212d;
+.mapa-auditoria--oscuro .maplibregl-ctrl-group button + button {
+  border-top-color: #2c2936;
 }
 
-.mapa-auditoria--oscuro .leaflet-control-attribution {
-  background: rgb(20 18 26 / 0.82);
+.mapa-auditoria--oscuro .maplibregl-ctrl button .maplibregl-ctrl-icon {
+  filter: invert(1) brightness(0.85);
+}
+
+.mapa-auditoria--oscuro .maplibregl-ctrl.maplibregl-ctrl-attrib,
+.mapa-auditoria--oscuro .maplibregl-ctrl-attrib.maplibregl-compact {
+  background: rgb(18 16 25 / 0.85);
   color: #968fa8;
 }
 
-.mapa-auditoria--oscuro .leaflet-control-attribution a {
+.mapa-auditoria--oscuro .maplibregl-ctrl-attrib a {
   color: #bba6ff;
 }
 
-.mapa-auditoria--oscuro .leaflet-popup-content-wrapper,
-.mapa-auditoria--oscuro .leaflet-popup-tip {
+.mapa-auditoria--oscuro .maplibregl-ctrl-attrib-button {
+  background-color: rgb(18 16 25 / 0.85);
+  filter: invert(1) brightness(0.85);
+}
+
+.mapa-auditoria--oscuro .maplibregl-popup-content {
   background: #1c1a23;
   color: #eceaf2;
+  border-radius: 10px;
+  padding: 10px 28px 10px 12px;
   box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.8);
 }
 
-.mapa-auditoria--oscuro .leaflet-popup-close-button {
+.mapa-auditoria--oscuro .maplibregl-popup-close-button {
   color: #afa9be;
+  font-size: 18px;
+  padding: 0 6px;
+}
+
+.mapa-auditoria--oscuro .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.mapa-auditoria--oscuro .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.mapa-auditoria--oscuro .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+  border-top-color: #1c1a23;
+}
+
+.mapa-auditoria--oscuro .maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.mapa-auditoria--oscuro .maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.mapa-auditoria--oscuro .maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+  border-bottom-color: #1c1a23;
+}
+
+.mapa-auditoria--oscuro .maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: #1c1a23;
+}
+
+.mapa-auditoria--oscuro .maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: #1c1a23;
+}
+
+.mapa-tecnico--libre {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.mapa-tecnico--libre:focus-visible {
+  outline: 2px solid #bba6ff;
+  outline-offset: 3px;
+  border-radius: 50%;
 }
 
 /* Ventana de información de Google Maps en oscuro */
@@ -7979,5 +8024,63 @@ td.planilla-editor__acciones {
   .asistente {
     right: 12px;
     bottom: 12px;
+  }
+}
+
+/* ---------- Error general (LimiteErrores en main.jsx) ---------- */
+.error-general {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  background: var(--color-pagina);
+  color: var(--color-texto);
+}
+
+.error-general h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.error-general p {
+  margin: 0;
+  max-width: 420px;
+  color: var(--color-texto-suave);
+}
+
+/* ---------- Formularios en dos columnas independientes ----------
+   Cada columna apila sus tarjetas, así una tarjeta baja no deja un hueco junto a una alta.
+   En pantallas angostas las dos se intercalan en el orden de lectura (style={{ order }} de cada bloque). */
+.formulario__columnas {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+.formulario__columna {
+  display: contents;
+}
+
+.formulario__bloque {
+  min-width: 0;
+}
+
+.formulario__bloque:empty {
+  display: none;
+}
+
+@media (min-width: 1200px) {
+  .formulario__columnas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .formulario__columna {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+    min-width: 0;
   }
 }

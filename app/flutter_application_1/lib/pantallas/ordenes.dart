@@ -58,7 +58,11 @@ class _PantallaOrdenesState extends State<PantallaOrdenes> {
   }
 
   void _cargar() {
-    setState(() => _ordenes = context.read<Sesion>().repositorio.ordenes(activas: _activas));
+    // setState no debe devolver el Future: se consulta primero y luego se actualiza el estado.
+    final ordenes = context.read<Sesion>().repositorio.ordenes(activas: _activas);
+    setState(() {
+      _ordenes = ordenes;
+    });
   }
 
   @override

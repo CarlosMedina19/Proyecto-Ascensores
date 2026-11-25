@@ -17,6 +17,25 @@ class VisitaTecnicaController extends Controller
 {
     public function __construct(private readonly VisitaTecnicaService $visitas) {}
 
+    /**
+     * Planillas recientes que el usuario puede ver (pestaña Visitas de la app): el técnico, las suyas; el cliente,
+     * las de sus ascensores; los demás roles con acceso a ascensores, todas.
+     */
+    public function recientes(Request $solicitud): JsonResponse
+    {
+        $usuario = $solicitud->user();
+        abort_unless($usuario->tienePermiso('equipos.ver'), 403, 'Su rol no puede consultar las visitas.');
+
+        $visitas = VisitaTecnica::with(['tecnico', 'equipo.edificio'])
+            ->when($usuario->esTecnico(), fn ($q) => $q->where('tecnico_usuario_id', $usuario->id))
+            ->when($usuario->esCliente(), fn ($q) => $q->whereHas('equipo.edificio', fn ($e) => $e->where('cliente_id', $usuario->cliente_id)))
+            ->latest('salida_en')->limit(30)->get();
+
+        return response()->json(['datos' => $visitas->map(fn (VisitaTecnica $v) => $v->resumen() + [
+            'equipo' => ['id' => $v->equipo_id, 'codigo' => $v->equipo?->codigo, 'edificio' => $v->equipo?->edificio?->nombre],
+        ])->values()]);
+    }
+
     public function index(Equipo $equipo): JsonResponse
     {
         $this->authorize('view', $equipo);

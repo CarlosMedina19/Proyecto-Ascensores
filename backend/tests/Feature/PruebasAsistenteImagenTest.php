@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Cliente;
 use App\Models\Edificio;
 use App\Models\Equipo;
+use App\Models\Repuesto;
 use App\Models\Rol;
 use App\Models\Usuario;
 use Database\Seeders\ChecklistSeeder;
@@ -76,6 +77,29 @@ class PruebasAsistenteImagenTest extends TestCase
         $rutas = array_column($datos['acciones'], 'ruta');
         $this->assertContains("/equipos/{$this->equipo->id}", $rutas);
         $this->assertContains('/ordenes/nueva', $rutas);
+    }
+
+    public function test_el_tecnico_pregunta_con_una_foto_por_repuestos_de_la_zona(): void
+    {
+        Repuesto::create(['codigo' => 'REP-010', 'nombre' => 'Zapata de puerta en nylon', 'referencia' => 'ZP-40', 'unidad' => 'und', 'precio' => 18000, 'stock' => 12, 'stock_minimo' => 4, 'activo' => true]);
+        Repuesto::create(['codigo' => 'REP-011', 'nombre' => 'Contacto de cerradura de puerta', 'unidad' => 'und', 'precio' => 45000, 'stock' => 1, 'stock_minimo' => 2, 'activo' => true]);
+        Repuesto::create(['codigo' => 'REP-012', 'nombre' => 'Aceite hidráulico ISO 46', 'unidad' => 'gal', 'precio' => 90000, 'stock' => 8, 'stock_minimo' => 2, 'activo' => true]);
+        $tecnico = Usuario::factory()->create(['rol_id' => Rol::where('nombre', 'tecnico')->value('id'), 'activo' => true]);
+        $this->actingAs($tecnico, 'sanctum');
+
+        $datos = $this->enviar(['mensaje' => '¿Qué repuesto necesito para esta puerta?', 'imagen' => $this->foto('oxido')])->assertOk()->json('datos');
+
+        $this->assertSame('puertas', $datos['analisis']['zona']);
+        $this->assertStringContainsString('Repuestos relacionados en el inventario', $datos['texto']);
+        $this->assertStringContainsString('REP-010 Zapata de puerta en nylon (ref. ZP-40) · 12 und disponibles', $datos['texto']);
+        $this->assertStringContainsString('REP-011 Contacto de cerradura de puerta · 1 und disponibles · stock bajo', $datos['texto']);
+        $this->assertStringNotContainsString('Aceite hidráulico', $datos['texto'], 'solo los de la zona');
+
+        // El cliente no ve el inventario.
+        $usuarioCliente = Usuario::factory()->create(['rol_id' => Rol::where('nombre', 'cliente')->value('id'), 'activo' => true, 'cliente_id' => $this->equipo->edificio->cliente_id]);
+        $this->actingAs($usuarioCliente, 'sanctum');
+        $paraCliente = $this->enviar(['mensaje' => 'la puerta', 'imagen' => $this->foto('oxido')])->assertOk()->json('datos');
+        $this->assertStringNotContainsString('Repuestos relacionados', $paraCliente['texto']);
     }
 
     public function test_pide_repetir_una_foto_oscura_y_acepta_una_foto_clara(): void
