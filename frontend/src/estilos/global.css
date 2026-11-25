@@ -2175,6 +2175,18 @@ textarea.campo__control {
   align-items: start;
 }
 
+/* Cada columna apila sus tarjetas por su cuenta: una tarjeta baja no deja un hueco junto a una alta. */
+.panel-operacion__columna {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+}
+
+.panel-operacion__columna > * {
+  min-width: 0;
+}
+
 .panel-operacion__titulo {
   display: flex;
   justify-content: space-between;
@@ -3273,6 +3285,31 @@ span.estado-brm {
 @media (max-width: 1180px) {
   .panel-operacion {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* En una sola columna se intercalan las dos, en el orden de lectura: los avisos justo después de la gráfica. */
+  .panel-operacion__columna {
+    display: contents;
+  }
+
+  .panel-operacion__semanas {
+    order: 1;
+  }
+
+  .panel-operacion__avisos {
+    order: 2;
+  }
+
+  .panel-operacion__ascensores {
+    order: 3;
+  }
+
+  .panel-operacion__equipo {
+    order: 4;
+  }
+
+  .panel-operacion__eventos {
+    order: 5;
   }
 }
 
@@ -7013,6 +7050,108 @@ textarea.campo__control[rows='2'] {
   display: grid;
   place-items: center;
   color: var(--color-texto-tenue);
+}
+
+/* El mapa de técnicos siempre va en modo oscuro (Google Maps o el respaldo de OpenStreetMap), en ambos temas del panel. */
+.mapa-auditoria--oscuro {
+  position: relative;
+  background: #14121a;
+  border-color: #2c2936;
+  color: #afa9be;
+}
+
+.mapa-auditoria__lienzo {
+  position: absolute;
+  inset: 0;
+}
+
+.mapa-auditoria__aviso {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.mapa-auditoria--oscuro .leaflet-container {
+  background: #14121a;
+}
+
+/* Respaldo sin clave: los mosaicos claros de OpenStreetMap se invierten y se tiñen hacia la paleta violeta. */
+.mapa-auditoria--oscuro .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(190deg) saturate(0.35) brightness(0.82) contrast(1.08);
+}
+
+.mapa-auditoria--oscuro .leaflet-bar a {
+  background: #1c1a23;
+  color: #eceaf2;
+  border-color: #2c2936;
+}
+
+.mapa-auditoria--oscuro .leaflet-bar a:hover {
+  background: #24212d;
+}
+
+.mapa-auditoria--oscuro .leaflet-control-attribution {
+  background: rgb(20 18 26 / 0.82);
+  color: #968fa8;
+}
+
+.mapa-auditoria--oscuro .leaflet-control-attribution a {
+  color: #bba6ff;
+}
+
+.mapa-auditoria--oscuro .leaflet-popup-content-wrapper,
+.mapa-auditoria--oscuro .leaflet-popup-tip {
+  background: #1c1a23;
+  color: #eceaf2;
+  box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.8);
+}
+
+.mapa-auditoria--oscuro .leaflet-popup-close-button {
+  color: #afa9be;
+}
+
+/* Ventana de información de Google Maps en oscuro */
+.mapa-auditoria--oscuro .gm-style .gm-style-iw-c {
+  background: #1c1a23;
+  color: #eceaf2;
+  box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.8);
+}
+
+.mapa-auditoria--oscuro .gm-style .gm-style-iw-d {
+  overflow: auto !important;
+}
+
+.mapa-auditoria--oscuro .gm-style .gm-style-iw-tc::after {
+  background: #1c1a23;
+}
+
+.mapa-auditoria--oscuro .gm-style .gm-ui-hover-effect > span {
+  background-color: #afa9be !important;
+}
+
+.mapa-ventana {
+  font: 13px/1.45 system-ui, sans-serif;
+}
+
+.mapa-ventana small {
+  color: #968fa8;
+}
+
+.mapa-tecnico--google {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.mapa-tecnico--google:focus-visible {
+  outline: 2px solid #bba6ff;
+  outline-offset: 3px;
+  border-radius: 50%;
 }
 
 .auditoria-vivo__lista {

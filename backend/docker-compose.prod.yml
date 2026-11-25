@@ -137,6 +137,7 @@ services:
       args:
         VITE_API_URL: /api/v1
         VITE_REVERB_KEY: ${REVERB_APP_KEY:-}
+        VITE_GOOGLE_MAPS_KEY: ${GOOGLE_MAPS_KEY:-}
     image: sigma-frontend:latest
     container_name: sigma_frontend
     restart: unless-stopped

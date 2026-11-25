@@ -371,149 +371,154 @@ export default function PanelOperacion({ nombre }) {
           />
         </div>
 
+        {/* Dos columnas independientes: cada una crece con su contenido y no quedan huecos entre tarjetas. */}
         <div className="rejilla panel-operacion">
-          <Tarjeta sinRelleno>
-            <div className="tarjeta__cuerpo">
-              <div className="panel-operacion__titulo">
-                <div>
-                  <h2 className="tarjeta__titulo" style={{ marginBottom: 2 }}>
-                    Mantenimientos por semana
+          <div className="panel-operacion__columna">
+            <div className="panel-operacion__semanas">
+              <Tarjeta sinRelleno>
+                <div className="tarjeta__cuerpo">
+                  <div className="panel-operacion__titulo">
+                    <div>
+                      <h2 className="tarjeta__titulo" style={{ marginBottom: 2 }}>
+                        Mantenimientos por semana
+                      </h2>
+                      <p className="texto-pequeno texto-suave" style={{ margin: 0 }}>
+                        Programados frente a ejecutados · semana {actual.semana} en curso
+                      </p>
+                    </div>
+                    <div className="leyenda">
+                      <span>
+                        <i style={{ background: 'var(--grafica-1)' }} /> Programados
+                      </span>
+                      <span>
+                        <i style={{ background: 'var(--grafica-2)' }} /> Ejecutados
+                      </span>
+                      <span>
+                        <i style={{ background: 'var(--grafica-3)' }} /> Semana actual
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="separador" style={{ margin: 0 }} />
+                <div className="tarjeta__cuerpo">
+                  <GraficoSemanas semanas={semanas} />
+                </div>
+              </Tarjeta>
+            </div>
+            <div className="panel-operacion__ascensores">
+              <Tarjeta sinRelleno>
+                <div className="tarjeta__cuerpo panel-operacion__titulo" style={{ paddingBottom: 12 }}>
+                  <h2 className="tarjeta__titulo" style={{ margin: 0 }}>
+                    Estado por ascensor
                   </h2>
-                  <p className="texto-pequeno texto-suave" style={{ margin: 0 }}>
-                    Programados frente a ejecutados · semana {actual.semana} en curso
-                  </p>
+                  <span className="etiqueta-mono">última inspección · toca para abrir</span>
                 </div>
-                <div className="leyenda">
-                  <span>
-                    <i style={{ background: 'var(--grafica-1)' }} /> Programados
-                  </span>
-                  <span>
-                    <i style={{ background: 'var(--grafica-2)' }} /> Ejecutados
-                  </span>
-                  <span>
-                    <i style={{ background: 'var(--grafica-3)' }} /> Semana actual
-                  </span>
+                <div className="separador" style={{ margin: 0 }} />
+                <div className="tarjeta__cuerpo">
+                  <EstadoPorAscensor ascensores={ascensores} />
                 </div>
-              </div>
+              </Tarjeta>
             </div>
-            <div className="separador" style={{ margin: 0 }} />
-            <div className="tarjeta__cuerpo">
-              <GraficoSemanas semanas={semanas} />
+            <div className="panel-operacion__eventos">
+              <Tarjeta titulo="Últimos eventos de los ascensores">
+                {resumen.ultimos_eventos.length ? <LineaTiempo eventos={resumen.ultimos_eventos} conEquipo /> : <EstadoVacio titulo="Aún no hay eventos" />}
+              </Tarjeta>
             </div>
-          </Tarjeta>
-
-          <div className="rejilla" style={{ alignContent: 'start' }}>
-            {alertas.map((alerta) => (
-              <button key={`${alerta.enlace}-${alerta.titulo}`} type="button" className={`aviso aviso--${alerta.tipo}`} onClick={() => navegar(alerta.enlace)}>
-                {alerta.tipo === 'peligro' ? <AlertTriangle size={18} aria-hidden="true" /> : <FileText size={18} aria-hidden="true" />}
-                <span>
-                  <b>{alerta.titulo}</b>
-                  <small>{alerta.detalle}</small>
-                </span>
-              </button>
-            ))}
-
-            <Tarjeta sinRelleno>
-              <div className="tarjeta__cuerpo panel-operacion__titulo" style={{ paddingBottom: 12 }}>
-                <h2 className="tarjeta__titulo" style={{ margin: 0 }}>
-                  Cola de hoy
-                </h2>
-                <span className="etiqueta-mono">
-                  {ordenesHoy} {ordenesHoy === 1 ? 'orden' : 'órdenes'}
-                  {cola.length > ordenesHoy && ` · ${cola.length - ordenesHoy} sin orden`}
-                </span>
-              </div>
-              {cola.length ? (
-                <ul className="cola">
-                  {cola.map((elemento) => {
-                    const estado = estadoCola(elemento);
-                    const destino = elemento.tipo === 'orden' ? `/ordenes/${elemento.id}` : `/calendario?fecha=${hoyIso}&vista=dia`;
-                    return (
-                      <li key={`${elemento.tipo}-${elemento.id}`}>
-                        <button type="button" className="cola__item" onClick={() => navegar(destino)}>
-                          <span className="cola__hora tabular">{elemento.hora || '—'}</span>
-                          <span className="cola__texto">
-                            <b>
-                              {elemento.equipo} · {elemento.edificio}
-                            </b>
-                            <small>
-                              {SERVICIOS_ORDEN[elemento.servicio]?.texto}
-                              {elemento.descripcion && ` · ${elemento.descripcion}`}
-                              {elemento.tecnicos?.length > 0 && ` · ${elemento.tecnicos.join(', ')}`}
-                            </small>
-                          </span>
-                          <Insignia tipo={elemento.prioridad === 'critica' ? 'peligro' : estado.tipo}>
-                            {elemento.prioridad === 'critica' ? 'Crítica' : estado.texto}
-                          </Insignia>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <EstadoVacio titulo="No hay trabajos programados para hoy" descripcion="Las órdenes y visitas del día aparecen aquí." />
-              )}
-            </Tarjeta>
           </div>
-        </div>
+          <div className="panel-operacion__columna">
+            <div className="rejilla panel-operacion__avisos" style={{ alignContent: 'start' }}>
+              {alertas.map((alerta) => (
+                <button key={`${alerta.enlace}-${alerta.titulo}`} type="button" className={`aviso aviso--${alerta.tipo}`} onClick={() => navegar(alerta.enlace)}>
+                  {alerta.tipo === 'peligro' ? <AlertTriangle size={18} aria-hidden="true" /> : <FileText size={18} aria-hidden="true" />}
+                  <span>
+                    <b>{alerta.titulo}</b>
+                    <small>{alerta.detalle}</small>
+                  </span>
+                </button>
+              ))}
 
-        <div className="rejilla panel-operacion">
-          <Tarjeta sinRelleno>
-            <div className="tarjeta__cuerpo panel-operacion__titulo" style={{ paddingBottom: 12 }}>
-              <h2 className="tarjeta__titulo" style={{ margin: 0 }}>
-                Estado por ascensor
-              </h2>
-              <span className="etiqueta-mono">última inspección · toca para abrir</span>
+              <Tarjeta sinRelleno>
+                <div className="tarjeta__cuerpo panel-operacion__titulo" style={{ paddingBottom: 12 }}>
+                  <h2 className="tarjeta__titulo" style={{ margin: 0 }}>
+                    Cola de hoy
+                  </h2>
+                  <span className="etiqueta-mono">
+                    {ordenesHoy} {ordenesHoy === 1 ? 'orden' : 'órdenes'}
+                    {cola.length > ordenesHoy && ` · ${cola.length - ordenesHoy} sin orden`}
+                  </span>
+                </div>
+                {cola.length ? (
+                  <ul className="cola">
+                    {cola.map((elemento) => {
+                      const estado = estadoCola(elemento);
+                      const destino = elemento.tipo === 'orden' ? `/ordenes/${elemento.id}` : `/calendario?fecha=${hoyIso}&vista=dia`;
+                      return (
+                        <li key={`${elemento.tipo}-${elemento.id}`}>
+                          <button type="button" className="cola__item" onClick={() => navegar(destino)}>
+                            <span className="cola__hora tabular">{elemento.hora || '—'}</span>
+                            <span className="cola__texto">
+                              <b>
+                                {elemento.equipo} · {elemento.edificio}
+                              </b>
+                              <small>
+                                {SERVICIOS_ORDEN[elemento.servicio]?.texto}
+                                {elemento.descripcion && ` · ${elemento.descripcion}`}
+                                {elemento.tecnicos?.length > 0 && ` · ${elemento.tecnicos.join(', ')}`}
+                              </small>
+                            </span>
+                            <Insignia tipo={elemento.prioridad === 'critica' ? 'peligro' : estado.tipo}>
+                              {elemento.prioridad === 'critica' ? 'Crítica' : estado.texto}
+                            </Insignia>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <EstadoVacio titulo="No hay trabajos programados para hoy" descripcion="Las órdenes y visitas del día aparecen aquí." />
+                )}
+              </Tarjeta>
             </div>
-            <div className="separador" style={{ margin: 0 }} />
-            <div className="tarjeta__cuerpo">
-              <EstadoPorAscensor ascensores={ascensores} />
-            </div>
-          </Tarjeta>
-
-          <div className="rejilla" style={{ alignContent: 'start' }}>
-            <Tarjeta sinRelleno>
-              <div className="tarjeta__cuerpo panel-operacion__titulo" style={{ paddingBottom: 12 }}>
-                <h2 className="tarjeta__titulo" style={{ margin: 0 }}>
-                  Técnicos
-                </h2>
-                <span className="etiqueta-mono">ocupación de hoy</span>
-              </div>
-              {tecnicos.length ? (
-                <ul className="tecnicos">
-                  {tecnicos.map((t) => (
-                    <li key={t.id}>
-                      <span className="avatar" aria-hidden="true">
-                        {iniciales(t.nombre)}
-                      </span>
-                      <span className="tecnicos__texto">
-                        <b>{t.nombre}</b>
-                        <small>{t.estado}</small>
-                        <span className="tecnicos__barra" aria-hidden="true">
-                          <i style={{ width: `${t.ocupacion ?? 0}%` }} />
+            <div className="rejilla panel-operacion__equipo" style={{ alignContent: 'start' }}>
+              <Tarjeta sinRelleno>
+                <div className="tarjeta__cuerpo panel-operacion__titulo" style={{ paddingBottom: 12 }}>
+                  <h2 className="tarjeta__titulo" style={{ margin: 0 }}>
+                    Técnicos
+                  </h2>
+                  <span className="etiqueta-mono">ocupación de hoy</span>
+                </div>
+                {tecnicos.length ? (
+                  <ul className="tecnicos">
+                    {tecnicos.map((t) => (
+                      <li key={t.id}>
+                        <span className="avatar" aria-hidden="true">
+                          {iniciales(t.nombre)}
                         </span>
-                      </span>
-                      <span className="tecnicos__porcentaje tabular">{t.ocupacion === null ? '—' : `${t.ocupacion}%`}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <EstadoVacio titulo="No hay técnicos activos" />
-              )}
-              <p className="texto-pequeno texto-suave tecnicos__nota">Ocupación: horas de órdenes de hoy sobre una jornada de 8 horas.</p>
-            </Tarjeta>
+                        <span className="tecnicos__texto">
+                          <b>{t.nombre}</b>
+                          <small>{t.estado}</small>
+                          <span className="tecnicos__barra" aria-hidden="true">
+                            <i style={{ width: `${t.ocupacion ?? 0}%` }} />
+                          </span>
+                        </span>
+                        <span className="tecnicos__porcentaje tabular">{t.ocupacion === null ? '—' : `${t.ocupacion}%`}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <EstadoVacio titulo="No hay técnicos activos" />
+                )}
+                <p className="texto-pequeno texto-suave tecnicos__nota">Ocupación: horas de órdenes de hoy sobre una jornada de 8 horas.</p>
+              </Tarjeta>
 
-            <Tarjeta titulo="Estado de los ascensores">
-              <DistribucionEstados
-                conteo={{ activo: resumen.equipos.activo, mantenimiento: resumen.equipos.mantenimiento, inactivo: resumen.equipos.inactivo }}
-              />
-            </Tarjeta>
+              <Tarjeta titulo="Estado de los ascensores">
+                <DistribucionEstados
+                  conteo={{ activo: resumen.equipos.activo, mantenimiento: resumen.equipos.mantenimiento, inactivo: resumen.equipos.inactivo }}
+                />
+              </Tarjeta>
+            </div>
           </div>
         </div>
-
-        <Tarjeta titulo="Últimos eventos de los ascensores">
-          {resumen.ultimos_eventos.length ? <LineaTiempo eventos={resumen.ultimos_eventos} conEquipo /> : <EstadoVacio titulo="Aún no hay eventos" />}
-        </Tarjeta>
       </div>
     </>
   );

@@ -191,8 +191,13 @@ Los clientes llevan en `observaciones` la marca `EntornoSimuladoSeeder::MARCA`.
   Los canales se autorizan en `/api/broadcasting/auth` con el mismo token de la API. Sin `VITE_REVERB_KEY`
   el panel funciona igual, con consultas periódicas.
 - Mientras una orden está **en proceso**, la app (y el navegador del técnico) envía su posición cada 30 s a
-  `POST /api/v1/ordenes/{id}/ubicacion`. Auditoría muestra el mapa (OpenStreetMap) con
+  `POST /api/v1/ordenes/{id}/ubicacion`. Auditoría muestra el mapa con
   `GET /api/v1/auditoria/en-vivo`, los movimientos de las últimas 24 horas y el historial con filtros.
+- **Mapa de Google Maps en modo oscuro**: el panel lo usa si se compila con `VITE_GOOGLE_MAPS_KEY`
+  (en producción, `GOOGLE_MAPS_KEY` en `backend/.env`; luego reconstruir `sigma_frontend`). Es una clave de navegador:
+  en Google Cloud se activa «Maps JavaScript API» y se restringe a `sigma.proyectoscampus.top/*` (y
+  `localhost:5173/*` en desarrollo). Sin clave, o si Google la rechaza, el panel usa un mapa oscuro de respaldo
+  (OpenStreetMap oscurecido con un filtro, sin clave). El estilo oscuro va en `frontend/src/paginas/auditoria/mapa/estiloOscuro.js`.
 - **Cierre administrativo**: si un técnico no cerró su orden en la app, el administrador o el coordinador
   (permiso `ordenes.cerrar`) la finalizan desde «Técnicos en mantenimiento» con un motivo
   (`PATCH /api/v1/ordenes/{id}/cerrar`). No exige firmas ni la planilla completa, no registra duración y deja

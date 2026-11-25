@@ -146,7 +146,7 @@ function TecnicosEnVivo({ tecnicos, error, enVivo, puedeCerrar, alCerrar }) {
     >
       <Alerta>{error}</Alerta>
       <div className="auditoria-vivo">
-        <Suspense fallback={<div className="mapa-auditoria mapa-auditoria--cargando">Cargando mapa…</div>}>
+        <Suspense fallback={<div className="mapa-auditoria mapa-auditoria--oscuro mapa-auditoria--cargando">Cargando mapa…</div>}>
           <MapaTecnicos tecnicos={tecnicos} seleccionado={seleccionado} />
         </Suspense>
         <div className="auditoria-vivo__lista">
