@@ -1,25 +1,12 @@
 import { useEffect, useState } from 'react';
 import { RotateCw } from 'lucide-react';
 import { autenticacion } from '../api/servicios';
-import { CampoTexto } from './Campos';
+import { CampoCodigoCuadros } from './Campos';
 
 /** Campo de 6 dígitos para el código de verificación (el celular lo propone desde el SMS o el correo). */
 export function CampoCodigo({ valor, alCambiar, error, ayuda, etiqueta = 'Código de verificación', autoFocus = true }) {
   return (
-    <CampoTexto
-      etiqueta={etiqueta}
-      obligatorio
-      valor={valor}
-      alCambiar={(texto) => alCambiar(texto.replace(/\D/g, '').slice(0, 6))}
-      error={error}
-      ayuda={ayuda}
-      inputMode="numeric"
-      autoComplete="one-time-code"
-      maxLength={6}
-      placeholder="000000"
-      autoFocus={autoFocus}
-      style={{ fontSize: 22, letterSpacing: '0.4em', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}
-    />
+    <CampoCodigoCuadros etiqueta={etiqueta} obligatorio valor={valor} alCambiar={alCambiar} error={error} ayuda={ayuda} autoFocus={autoFocus} />
   );
 }
 

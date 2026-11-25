@@ -33,5 +33,5 @@ export function contenidoTecnico(t) {
   return `<div class="mapa-ventana"><b>${escapar(t.tecnico)}</b><br>${escapar(t.equipo || '')}${t.edificio ? ` · ${escapar(t.edificio)}` : ''}<br><small>Orden ${escapar(t.orden?.numero)} · ${escapar(fechaHora(t.registrada_en))}</small></div>`;
 }
 
-/** Marcador redondo con las iniciales del técnico (el mismo en Google Maps y en el mapa de respaldo). */
+/** Marcador redondo con las iniciales del técnico. */
 export const htmlMarcador = (nombre) => `<span class="mapa-tecnico__punto">${escapar(iniciales(nombre))}</span>`;

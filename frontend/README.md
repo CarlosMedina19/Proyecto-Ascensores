@@ -13,9 +13,8 @@ npm run dev                # http://localhost:5173
 
 La API debe estar corriendo (ver `../backend`). Para producción: `npm run build` genera `dist/`.
 
-El mapa de técnicos de Auditoría es de Google Maps, en modo oscuro, cuando `.env` tiene `VITE_GOOGLE_MAPS_KEY` (clave de
-navegador restringida por dominio). Sin ella, o si Google la rechaza, se usa el mapa oscuro de respaldo
-(OpenFreeMap con la misma paleta, `src/paginas/auditoria/mapa/paleta.js`).
+El mapa de técnicos de Auditoría es OpenStreetMap (OpenFreeMap, sin clave) con la paleta nocturna estilo Google Maps
+(`src/paginas/auditoria/mapa/paleta.js`).
 
 ## Pruebas
 

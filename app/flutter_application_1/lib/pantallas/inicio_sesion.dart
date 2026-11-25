@@ -292,8 +292,9 @@ class _Aviso extends StatelessWidget {
   }
 }
 
-/// Campo de 6 dígitos para el código de verificación (el teclado del celular lo propone desde el SMS o el correo).
-class _CampoCodigo extends StatelessWidget {
+/// Código de 6 dígitos en cuadros, uno por dígito. Por debajo es un solo campo de texto invisible sobre los
+/// cuadros: el teclado propone el código desde el SMS o el correo y se puede pegar completo.
+class _CampoCodigo extends StatefulWidget {
   const _CampoCodigo({required this.controlador, this.etiqueta = 'Código de verificación', this.error, this.alEnviar});
 
   final TextEditingController controlador;
@@ -302,19 +303,110 @@ class _CampoCodigo extends StatelessWidget {
   final VoidCallback? alEnviar;
 
   @override
+  State<_CampoCodigo> createState() => _CampoCodigoState();
+}
+
+class _CampoCodigoState extends State<_CampoCodigo> {
+  static const _digitos = 6;
+  final _foco = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _foco.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _foco.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return TextField(
-      key: const Key('campo-codigo'),
-      controller: controlador,
-      keyboardType: TextInputType.number,
-      maxLength: 6,
-      autofocus: true,
-      autofillHints: const [AutofillHints.oneTimeCode],
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      textAlign: TextAlign.center,
-      style: const TextStyle(fontSize: 24, letterSpacing: 8, fontFeatures: [FontFeature.tabularFigures()]),
-      onSubmitted: (_) => alEnviar?.call(),
-      decoration: InputDecoration(labelText: etiqueta, counterText: '', errorText: error, errorMaxLines: 3),
+    final esquema = Theme.of(context).colorScheme;
+    final error = widget.error;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(widget.etiqueta, style: TextStyle(fontWeight: FontWeight.w600, color: esquema.onSurface)),
+        const SizedBox(height: 8),
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: widget.controlador,
+          builder: (context, valor, _) {
+            final texto = valor.text;
+            final activo = texto.length.clamp(0, _digitos - 1);
+            return Stack(
+              children: [
+                Row(
+                  children: [
+                    for (var i = 0; i < _digitos; i++) ...[
+                      if (i > 0) const SizedBox(width: 8),
+                      Expanded(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          height: 56,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: i < texto.length ? esquema.primaryContainer.withValues(alpha: 0.45) : esquema.surfaceContainerHighest.withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              width: _foco.hasFocus && i == activo ? 2 : 1.4,
+                              color: error != null
+                                  ? esquema.error
+                                  : _foco.hasFocus && i == activo
+                                  ? esquema.primary
+                                  : i < texto.length
+                                  ? esquema.primary.withValues(alpha: 0.6)
+                                  : esquema.outlineVariant,
+                            ),
+                          ),
+                          child: Text(
+                            i < texto.length ? texto[i] : '',
+                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: esquema.onSurface, fontFeatures: const [FontFeature.tabularFigures()]),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                // El campo real, invisible, ocupa todo el ancho: un toque en cualquier cuadro abre el teclado.
+                Positioned.fill(
+                  child: Opacity(
+                    opacity: 0.011,
+                    child: TextField(
+                      key: const Key('campo-codigo'),
+                      controller: widget.controlador,
+                      focusNode: _foco,
+                      keyboardType: TextInputType.number,
+                      maxLength: _digitos,
+                      autofocus: true,
+                      autofillHints: const [AutofillHints.oneTimeCode],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      showCursor: false,
+                      enableInteractiveSelection: false,
+                      onSubmitted: (_) => widget.alEnviar?.call(),
+                      decoration: InputDecoration(
+                        labelText: widget.etiqueta,
+                        counterText: '',
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        filled: false,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(error, style: TextStyle(color: esquema.error, fontSize: 12.5)),
+          ),
+      ],
     );
   }
 }

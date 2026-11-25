@@ -7052,16 +7052,15 @@ textarea.campo__control[rows='2'] {
   color: var(--color-texto-tenue);
 }
 
-/* El mapa de técnicos siempre va en modo oscuro (Google Maps o el respaldo de OpenFreeMap), en ambos temas del panel. */
+/* El mapa de técnicos siempre va en modo oscuro (paleta nocturna estilo Google Maps), en ambos temas del panel. */
 .mapa-auditoria--oscuro {
   position: relative;
-  background: #121019;
-  border-color: #2c2936;
-  color: #afa9be;
+  background: #242f3e;
+  border-color: #2c3848;
+  color: #9ca5b3;
 }
 
-/* MapLibre (.maplibregl-map) y Google Maps (estilo en línea) ponen el contenedor en position: relative: el alto
-   explícito evita que quede en 0 px. */
+/* MapLibre (.maplibregl-map) pone el contenedor en position: relative: el alto explícito evita que quede en 0 px. */
 .mapa-auditoria .mapa-auditoria__lienzo {
   position: absolute;
   inset: 0;
@@ -7081,14 +7080,14 @@ textarea.campo__control[rows='2'] {
   outline: none;
 }
 
-/* Controles, atribución y ventanas de MapLibre (respaldo) en oscuro */
+/* Controles, atribución y ventanas de MapLibre en oscuro */
 .mapa-auditoria--oscuro .maplibregl-ctrl-group {
-  background: #1c1a23;
-  box-shadow: 0 0 0 1px #2c2936;
+  background: #1f2835;
+  box-shadow: 0 0 0 1px #38414e;
 }
 
 .mapa-auditoria--oscuro .maplibregl-ctrl-group button + button {
-  border-top-color: #2c2936;
+  border-top-color: #38414e;
 }
 
 .mapa-auditoria--oscuro .maplibregl-ctrl button .maplibregl-ctrl-icon {
@@ -7097,8 +7096,8 @@ textarea.campo__control[rows='2'] {
 
 .mapa-auditoria--oscuro .maplibregl-ctrl.maplibregl-ctrl-attrib,
 .mapa-auditoria--oscuro .maplibregl-ctrl-attrib.maplibregl-compact {
-  background: rgb(18 16 25 / 0.85);
-  color: #968fa8;
+  background: rgb(31 40 53 / 0.88);
+  color: #9ca5b3;
 }
 
 .mapa-auditoria--oscuro .maplibregl-ctrl-attrib a {
@@ -7106,13 +7105,13 @@ textarea.campo__control[rows='2'] {
 }
 
 .mapa-auditoria--oscuro .maplibregl-ctrl-attrib-button {
-  background-color: rgb(18 16 25 / 0.85);
+  background-color: rgb(31 40 53 / 0.88);
   filter: invert(1) brightness(0.85);
 }
 
 .mapa-auditoria--oscuro .maplibregl-popup-content {
-  background: #1c1a23;
-  color: #eceaf2;
+  background: #1f2835;
+  color: #e6e9ef;
   border-radius: 10px;
   padding: 10px 28px 10px 12px;
   box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.8);
@@ -7127,21 +7126,21 @@ textarea.campo__control[rows='2'] {
 .mapa-auditoria--oscuro .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
 .mapa-auditoria--oscuro .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
 .mapa-auditoria--oscuro .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
-  border-top-color: #1c1a23;
+  border-top-color: #1f2835;
 }
 
 .mapa-auditoria--oscuro .maplibregl-popup-anchor-top .maplibregl-popup-tip,
 .mapa-auditoria--oscuro .maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
 .mapa-auditoria--oscuro .maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
-  border-bottom-color: #1c1a23;
+  border-bottom-color: #1f2835;
 }
 
 .mapa-auditoria--oscuro .maplibregl-popup-anchor-left .maplibregl-popup-tip {
-  border-right-color: #1c1a23;
+  border-right-color: #1f2835;
 }
 
 .mapa-auditoria--oscuro .maplibregl-popup-anchor-right .maplibregl-popup-tip {
-  border-left-color: #1c1a23;
+  border-left-color: #1f2835;
 }
 
 .mapa-tecnico--libre {
@@ -7157,46 +7156,12 @@ textarea.campo__control[rows='2'] {
   border-radius: 50%;
 }
 
-/* Ventana de información de Google Maps en oscuro */
-.mapa-auditoria--oscuro .gm-style .gm-style-iw-c {
-  background: #1c1a23;
-  color: #eceaf2;
-  box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.8);
-}
-
-.mapa-auditoria--oscuro .gm-style .gm-style-iw-d {
-  overflow: auto !important;
-}
-
-.mapa-auditoria--oscuro .gm-style .gm-style-iw-tc::after {
-  background: #1c1a23;
-}
-
-.mapa-auditoria--oscuro .gm-style .gm-ui-hover-effect > span {
-  background-color: #afa9be !important;
-}
-
 .mapa-ventana {
   font: 13px/1.45 system-ui, sans-serif;
 }
 
 .mapa-ventana small {
   color: #968fa8;
-}
-
-.mapa-tecnico--google {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-}
-
-.mapa-tecnico--google:focus-visible {
-  outline: 2px solid #bba6ff;
-  outline-offset: 3px;
-  border-radius: 50%;
 }
 
 .auditoria-vivo__lista {
@@ -8082,5 +8047,83 @@ td.planilla-editor__acciones {
     gap: 16px;
     align-content: start;
     min-width: 0;
+  }
+}
+
+/* ---------- Código de verificación en cuadros (un dígito por cuadro) ----------
+   Un solo <input> transparente encima de los cuadros: permite pegar el código y el autocompletado del celular. */
+.codigo-cuadros {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  max-width: 360px;
+}
+
+.codigo-cuadros__entrada {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  font-size: 16px;
+  letter-spacing: 0;
+  cursor: text;
+  z-index: 1;
+}
+
+.codigo-cuadros__entrada:focus {
+  outline: none;
+}
+
+.codigo-cuadros__cuadro {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 1.15;
+  min-height: 46px;
+  border: 1.5px solid var(--color-borde);
+  border-radius: 10px;
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  font: 600 22px/1 'JetBrains Mono', ui-monospace, monospace;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.codigo-cuadros__cuadro--lleno {
+  border-color: color-mix(in srgb, var(--color-primario) 55%, var(--color-borde));
+  background: var(--color-primario-suave);
+}
+
+.codigo-cuadros__cuadro--activo {
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primario) 25%, transparent);
+}
+
+.codigo-cuadros__cuadro--activo:not(.codigo-cuadros__cuadro--lleno)::after {
+  content: '';
+  width: 2px;
+  height: 22px;
+  border-radius: 1px;
+  background: var(--color-primario);
+  animation: codigo-cursor 1s steps(1) infinite;
+}
+
+.codigo-cuadros--error .codigo-cuadros__cuadro {
+  border-color: var(--color-peligro);
+}
+
+@keyframes codigo-cursor {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .codigo-cuadros__cuadro--activo:not(.codigo-cuadros__cuadro--lleno)::after {
+    animation: none;
   }
 }

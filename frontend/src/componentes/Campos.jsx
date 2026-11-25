@@ -47,6 +47,47 @@ export function CampoTexto({ etiqueta, obligatorio, ayuda, error, valor, alCambi
   );
 }
 
+/**
+ * Código de N dígitos en cuadros, uno por dígito. Por debajo es un solo campo (invisible sobre los cuadros):
+ * así se puede pegar el código completo, el celular lo propone desde el SMS o el correo y el lector de pantalla
+ * lo lee como un solo campo.
+ */
+export function CampoCodigoCuadros({ etiqueta, obligatorio, ayuda, error, valor, alCambiar, digitos = 6, autoFocus, ...resto }) {
+  const id = useId();
+  const [enfocado, setEnfocado] = useState(false);
+  const texto = String(valor ?? '');
+  const activo = Math.min(texto.length, digitos - 1);
+  return (
+    <Envoltura id={id} etiqueta={etiqueta} obligatorio={obligatorio} ayuda={ayuda} error={error}>
+      <div className={`codigo-cuadros${error ? ' codigo-cuadros--error' : ''}`}>
+        <input
+          {...atributosComunes(id, error, obligatorio)}
+          className="codigo-cuadros__entrada"
+          type="text"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={digitos}
+          value={texto}
+          autoFocus={autoFocus}
+          onChange={(e) => alCambiar(e.target.value.replace(/\D/g, '').slice(0, digitos))}
+          onFocus={() => setEnfocado(true)}
+          onBlur={() => setEnfocado(false)}
+          {...resto}
+        />
+        {Array.from({ length: digitos }, (_, i) => (
+          <span
+            key={i}
+            aria-hidden="true"
+            className={`codigo-cuadros__cuadro${texto[i] ? ' codigo-cuadros__cuadro--lleno' : ''}${enfocado && i === activo ? ' codigo-cuadros__cuadro--activo' : ''}`}
+          >
+            {texto[i] ?? ''}
+          </span>
+        ))}
+      </div>
+    </Envoltura>
+  );
+}
+
 export function CampoArea({ etiqueta, obligatorio, ayuda, error, valor, alCambiar, ...resto }) {
   const id = useId();
   return (

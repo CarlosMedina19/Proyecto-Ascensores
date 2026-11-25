@@ -1,7 +1,7 @@
 import { PALETA as P } from './paleta';
 
-// Mapa de respaldo: teselas vectoriales de OpenFreeMap (datos de OpenStreetMap, sin clave ni límite de uso).
-// Se toma su estilo claro «positron» y se vuelve a pintar con la paleta «SIGMA noche».
+// Mapa de técnicos: teselas vectoriales de OpenFreeMap (datos de OpenStreetMap, sin clave ni costo).
+// Se toma su estilo claro «positron» y se vuelve a pintar con la paleta nocturna (paleta.js).
 export const URL_ESTILO_BASE = 'https://tiles.openfreemap.org/styles/positron';
 
 const texto = (color, halo = P.halo) => ({ 'text-color': color, 'text-halo-color': halo });
@@ -49,7 +49,7 @@ const COLORES = {
   water_name_line_label: texto(P.textoAgua, P.agua),
   'highway-name-path': texto(P.textoSendero),
   'highway-name-minor': texto(P.textoCalle),
-  'highway-name-major': texto(P.texto),
+  'highway-name-major': texto(P.textoCalle),
   airport: texto(P.texto),
   label_other: texto(P.textoCalle),
   label_village: texto(P.textoPueblo),

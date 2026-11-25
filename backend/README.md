@@ -197,11 +197,9 @@ Los clientes llevan en `observaciones` la marca `EntornoSimuladoSeeder::MARCA`.
 - Mientras una orden está **en proceso**, la app (y el navegador del técnico) envía su posición cada 30 s a
   `POST /api/v1/ordenes/{id}/ubicacion`. Auditoría muestra el mapa con
   `GET /api/v1/auditoria/en-vivo`, los movimientos de las últimas 24 horas y el historial con filtros.
-- **Mapa de Google Maps en modo oscuro**: el panel lo usa si se compila con `VITE_GOOGLE_MAPS_KEY`
-  (en producción, `GOOGLE_MAPS_KEY` en `backend/.env`; luego reconstruir `sigma_frontend`). Es una clave de navegador:
-  en Google Cloud se activa «Maps JavaScript API» y se restringe a `sigma.proyectoscampus.top/*` (y
-  `localhost:5173/*` en desarrollo). Sin clave, o si Google la rechaza, el panel usa un mapa oscuro de respaldo
-  (teselas vectoriales de OpenFreeMap, sin clave, dibujadas con MapLibre). Los dos usan la paleta «SIGMA noche» de `frontend/src/paginas/auditoria/mapa/paleta.js`.
+- **Mapa oscuro de técnicos**: OpenStreetMap con teselas vectoriales de OpenFreeMap (sin clave ni costo), dibujado
+  con MapLibre y pintado con la paleta nocturna estilo Google Maps (`frontend/src/paginas/auditoria/mapa/paleta.js`).
+  El procesador de teselas es un módulo `.mjs`: nginx lo entrega como `text/javascript` (`frontend/docker/nginx.conf`).
 - **Cierre administrativo**: si un técnico no cerró su orden en la app, el administrador o el coordinador
   (permiso `ordenes.cerrar`) la finalizan desde «Técnicos en mantenimiento» con un motivo
   (`PATCH /api/v1/ordenes/{id}/cerrar`). No exige firmas ni la planilla completa, no registra duración y deja
