@@ -86,7 +86,7 @@ class AsistenteService
                 $r = Http::withHeaders(['X-Sigma-Clave' => (string) $configuracion['clave']])->acceptJson()
                     ->timeout((int) ($configuracion['tiempo'] ?? 30))
                     ->post($configuracion['url_landing'], ['mensaje' => $mensaje, 'sesion' => 'landing-'.$sesion]);
-                $texto = $r->successful() ? trim((string) ($r->json('respuesta') ?? $r->json('output') ?? '')) : '';
+                $texto = $r->successful() ? self::textoPlano((string) ($r->json('respuesta') ?? $r->json('output') ?? '')) : '';
                 if ($texto !== '') {
                     return ['texto' => Str::limit($texto, 3000), 'acciones' => $this->accionesContacto(), 'sugerencias' => [], 'origen' => 'n8n'];
                 }
@@ -142,7 +142,7 @@ class AsistenteService
                         'instruccion' => 'Analiza el estado del componente del ascensor de la foto (desgaste, óxido, fugas, daños, limpieza) y di qué revisar.',
                     ] : null,
                 ]);
-            $texto = $r->successful() ? trim((string) ($r->json('respuesta') ?? $r->json('output') ?? '')) : '';
+            $texto = $r->successful() ? self::textoPlano((string) ($r->json('respuesta') ?? $r->json('output') ?? '')) : '';
             if ($texto === '') {
                 Log::warning('Asistente del panel: respuesta vacía o con error de n8n', ['estado' => $r->status()]);
 
@@ -309,5 +309,35 @@ class AsistenteService
         $texto = preg_replace('/^\s*(buscar|busca|busque|encuentra|encontrar|donde esta|dónde está|muestrame|muéstrame)\s+/iu', '', $mensaje);
 
         return trim((string) preg_replace('/[¿?¡!.]/u', '', (string) $texto));
+    }
+
+    /**
+     * El chat (panel y app) muestra texto plano: se quita el Markdown que pueda traer el modelo. Las tablas pasan
+     * a líneas «- a · b · c», los títulos y las negritas quedan como texto y los enlaces muestran su nombre.
+     */
+    public static function textoPlano(string $texto): string
+    {
+        $lineas = [];
+        foreach (preg_split('/\R/u', trim($texto)) as $linea) {
+            $limpia = trim($linea);
+            if (preg_match('/^\|?\s*:?-{3,}/u', $limpia)) {
+                // Separador |---|: la fila anterior era el encabezado de la tabla, queda como título sin viñeta.
+                if ($lineas && str_starts_with(end($lineas), '- ')) {
+                    $lineas[array_key_last($lineas)] = substr(end($lineas), 2).':';
+                }
+
+                continue;
+            }
+            if (str_starts_with($limpia, '|')) {
+                $celdas = array_values(array_filter(array_map('trim', explode('|', trim($limpia, '|'))), fn ($c) => $c !== ''));
+                $linea = '- '.implode(' · ', $celdas);
+            }
+            $linea = preg_replace('/^#{1,6}\s+/u', '', $linea);
+            $linea = preg_replace('/^(\s*)[*+]\s+/u', '$1- ', $linea);
+            $linea = preg_replace('/\[([^\]]+)\]\([^)]+\)/u', '$1', $linea);
+            $lineas[] = rtrim(str_replace(['**', '__', '`'], '', $linea));
+        }
+
+        return trim((string) preg_replace('/\n{3,}/', "\n\n", implode("\n", $lineas)));
     }
 }
