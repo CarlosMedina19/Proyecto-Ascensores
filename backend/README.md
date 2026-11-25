@@ -197,9 +197,16 @@ Los clientes llevan en `observaciones` la marca `EntornoSimuladoSeeder::MARCA`.
 - Mientras una orden está **en proceso**, la app (y el navegador del técnico) envía su posición cada 30 s a
   `POST /api/v1/ordenes/{id}/ubicacion`. Auditoría muestra el mapa con
   `GET /api/v1/auditoria/en-vivo`, los movimientos de las últimas 24 horas y el historial con filtros.
-- **Mapa oscuro de técnicos**: OpenStreetMap con teselas vectoriales de OpenFreeMap (sin clave ni costo), dibujado
-  con MapLibre y pintado con la paleta nocturna estilo Google Maps (`frontend/src/paginas/auditoria/mapa/paleta.js`).
+- **Mapa de técnicos**: OpenStreetMap con teselas vectoriales de OpenFreeMap (sin clave ni costo), dibujado con
+  MapLibre. Sigue el tema del panel: en el oscuro usa la paleta nocturna estilo Google Maps
+  (`frontend/src/paginas/auditoria/mapa/paleta.js`) y en el claro el estilo claro original; cambia en vivo.
   El procesador de teselas es un módulo `.mjs`: nginx lo entrega como `text/javascript` (`frontend/docker/nginx.conf`).
+- **Pago en línea (PSE)**: el cliente paga sus facturas desde «Pagar en línea» (o desde su estado de cuenta). Con
+  llaves de Wompi (`WOMPI_LLAVE_PUBLICA`, `WOMPI_SECRETO_INTEGRIDAD`, `WOMPI_SECRETO_EVENTOS`) se usa el checkout de
+  Wompi. Sin llaves y con `SIGMA_PAGO_SIMULADO=true` se usa la **pasarela de prueba** del panel (`/pagos/simulador`):
+  el mismo recorrido de PSE (datos, banco, resultado) con bancos ficticios; quien prueba elige si el banco aprueba,
+  rechaza o deja pendiente el pago. No cobra dinero; el pago aprobado se registra en la factura con la referencia
+  `SIMULADO-…`. Con llaves reales el simulador se apaga solo.
 - **Cierre administrativo**: si un técnico no cerró su orden en la app, el administrador o el coordinador
   (permiso `ordenes.cerrar`) la finalizan desde «Técnicos en mantenimiento» con un motivo
   (`PATCH /api/v1/ordenes/{id}/cerrar`). No exige firmas ni la planilla completa, no registra duración y deja

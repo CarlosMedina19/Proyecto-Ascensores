@@ -6,6 +6,7 @@ use App\Exceptions\ReglaNegocioException;
 use App\Http\Controllers\Controller;
 use App\Models\Factura;
 use App\Models\PagoEnLinea;
+use App\Models\Usuario;
 use App\Services\PagoEnLineaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,55 @@ class PagoEnLineaController extends Controller
     /** ¿Está configurada la pasarela? El panel muestra u oculta el botón «Pagar con PSE». */
     public function configuracion(): JsonResponse
     {
-        return response()->json(['datos' => ['habilitado' => PagoEnLineaService::habilitado(), 'pruebas' => PagoEnLineaService::enPruebas()]]);
+        return response()->json(['datos' => [
+            'habilitado' => PagoEnLineaService::habilitado(),
+            'pruebas' => PagoEnLineaService::enPruebas(),
+            'simulado' => PagoEnLineaService::simulado(),
+        ]]);
+    }
+
+    /** Últimos pagos en línea: el cliente ve los de su empresa; cartera, todos. */
+    public function listar(Request $solicitud): JsonResponse
+    {
+        $usuario = $solicitud->user();
+        abort_unless($usuario->tienePermiso('cartera.ver'), 403, 'Su rol no puede consultar la cartera.');
+        $intentos = PagoEnLinea::with('factura')
+            ->when($usuario->esCliente(), fn ($c) => $c->whereHas('factura', fn ($f) => $f->where('cliente_id', $usuario->cliente_id)))
+            ->latest('id')->limit(20)->get();
+
+        return response()->json(['datos' => $intentos->map(fn (PagoEnLinea $i) => $this->resumen($i))->values()]);
+    }
+
+    /** Datos de un pago para la pasarela de prueba. */
+    public function mostrar(Request $solicitud, string $referencia): JsonResponse
+    {
+        $intento = $this->intento($solicitud->user(), $referencia);
+
+        return response()->json(['datos' => $this->resumen($intento) + [
+            'cliente' => $intento->factura->cliente?->nombre,
+            'correo' => $solicitud->user()->correo,
+        ]]);
+    }
+
+    /** Pasarela de prueba: el usuario elige qué responde el banco. */
+    public function simular(Request $solicitud, string $referencia): JsonResponse
+    {
+        $intento = $this->intento($solicitud->user(), $referencia);
+        $datos = $solicitud->validate([
+            'resultado' => ['required', 'in:aprobado,rechazado,pendiente'],
+            'banco' => ['nullable', 'string', 'max:60'],
+        ]);
+
+        return response()->json(['datos' => $this->resumen($this->pagos->simular($intento, $datos['resultado'], $datos['banco'] ?? null))]);
+    }
+
+    private function intento(Usuario $usuario, string $referencia): PagoEnLinea
+    {
+        abort_unless($usuario->tienePermiso('cartera.ver'), 403, 'Su rol no puede consultar la cartera.');
+        $intento = PagoEnLinea::with('factura.cliente')->where('referencia', $referencia)->firstOrFail();
+        abort_if($usuario->esCliente() && $intento->factura->cliente_id !== $usuario->cliente_id, 403, 'Este pago no pertenece a su empresa.');
+
+        return $intento;
     }
 
     public function iniciar(Request $solicitud, Factura $factura): JsonResponse
@@ -63,7 +112,16 @@ class PagoEnLineaController extends Controller
             'estado' => $intento->estado,
             'monto' => $intento->monto_centavos / 100,
             'medio' => $intento->medio,
-            'factura' => ['id' => $intento->factura->id, 'numero' => $intento->factura->numero, 'saldo' => $intento->factura->saldo],
+            'transaccion_id' => $intento->transaccion_id,
+            'simulado' => str_starts_with((string) $intento->transaccion_id, 'SIM-') || ($intento->transaccion_id === null && PagoEnLineaService::simulado()),
+            'banco' => $intento->respuesta['banco'] ?? null,
+            'creado_en' => $intento->created_at?->toIso8601String(),
+            'factura' => [
+                'id' => $intento->factura->id,
+                'numero' => $intento->factura->numero,
+                'concepto' => $intento->factura->concepto,
+                'saldo' => $intento->factura->saldo,
+            ],
             'mensaje' => $intento->respuesta['status_message'] ?? null,
         ];
     }

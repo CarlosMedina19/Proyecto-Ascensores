@@ -147,8 +147,8 @@ function TecnicosEnVivo({ tecnicos, error, enVivo, puedeCerrar, alCerrar }) {
     >
       <Alerta>{error}</Alerta>
       <div className="auditoria-vivo">
-        <LimiteErrores alternativa={<div className="mapa-auditoria mapa-auditoria--oscuro mapa-auditoria--cargando">No se pudo cargar el mapa. Recargue la página.</div>}>
-          <Suspense fallback={<div className="mapa-auditoria mapa-auditoria--oscuro mapa-auditoria--cargando">Cargando mapa…</div>}>
+        <LimiteErrores alternativa={<div className="mapa-auditoria mapa-auditoria--cargando">No se pudo cargar el mapa. Recargue la página.</div>}>
+          <Suspense fallback={<div className="mapa-auditoria mapa-auditoria--cargando">Cargando mapa…</div>}>
             <MapaTecnicos tecnicos={tecnicos} seleccionado={seleccionado} />
           </Suspense>
         </LimiteErrores>

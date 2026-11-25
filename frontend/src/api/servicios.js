@@ -324,6 +324,10 @@ export const cartera = {
   pseConfiguracion: () => api.obtener('/pagos-en-linea/configuracion'),
   pagarConPse: (facturaId, monto) => api.crear(`/facturas/${facturaId}/pago-en-linea`, monto ? { monto } : {}),
   confirmarPse: (transaccionId) => api.crear('/pagos-en-linea/confirmar', { transaccion_id: transaccionId }),
+  pagosEnLinea: () => api.obtener('/pagos-en-linea'),
+  pagoEnLinea: (referencia) => api.obtener(`/pagos-en-linea/${encodeURIComponent(referencia)}`),
+  // Pasarela de prueba (sin llaves de Wompi): el usuario elige qué responde el banco.
+  simularPago: (referencia, datos) => api.crear(`/pagos-en-linea/${encodeURIComponent(referencia)}/simular`, datos),
 };
 
 // Servicio comercial: certificación anual, emergencias 24/7, cotizaciones, indicadores y documentos.

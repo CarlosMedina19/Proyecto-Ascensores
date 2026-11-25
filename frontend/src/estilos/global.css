@@ -6712,6 +6712,259 @@ textarea.campo__control[rows='2'] {
   color: var(--color-peligro);
 }
 
+/* Pagar en línea (cliente) y pasarela de pago de prueba. */
+.pila-pagina {
+  display: grid;
+  gap: 16px;
+}
+
+.pila-pagina > * {
+  margin: 0;
+}
+
+.pago-pasos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--color-borde);
+  list-style: none;
+}
+
+.pago-pasos li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.pago-pasos b,
+.pago-pasos small {
+  display: block;
+}
+
+.pago-pasos small {
+  color: var(--color-texto-suave);
+}
+
+.pago-pasos__icono {
+  display: grid;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-primario) 14%, transparent);
+  color: var(--color-primario);
+}
+
+.pago-valor {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+}
+
+.pago-valor legend {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.pago-valor__opcion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio, 10px);
+  cursor: pointer;
+}
+
+.pago-valor__opcion--activa {
+  border-color: var(--color-primario);
+  background: color-mix(in srgb, var(--color-primario) 8%, transparent);
+}
+
+.pago-valor__opcion b,
+.pago-valor__opcion small {
+  display: block;
+}
+
+.pago-valor__opcion small {
+  color: var(--color-texto-suave);
+}
+
+.pasarela {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .pasarela {
+    grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  }
+}
+
+.pasarela__resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pasarela__resumen > small {
+  margin-top: 12px;
+  color: var(--color-texto-suave);
+}
+
+.pasarela__total {
+  font-family: var(--fuente-titulos);
+  font-size: 30px;
+  line-height: 1.15;
+}
+
+.pasarela__resumen dl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 14px;
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-borde);
+  font-size: 14px;
+}
+
+.pasarela__resumen dt {
+  color: var(--color-texto-suave);
+}
+
+.pasarela__resumen dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.pasarela__sello {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-alerta) 16%, transparent);
+  color: var(--color-texto);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.resultado-pago .pasarela__sello {
+  align-self: center;
+}
+
+.pasarela__pasos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 0 0 18px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid var(--color-borde);
+  list-style: none;
+  color: var(--color-texto-suave);
+  font-size: 14px;
+}
+
+.pasarela__pasos li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pasarela__pasos li span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid var(--color-borde);
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pasarela__pasos .pasarela__paso--activo {
+  color: var(--color-texto);
+  font-weight: 600;
+}
+
+.pasarela__pasos .pasarela__paso--activo span,
+.pasarela__pasos .pasarela__paso--hecho span {
+  border-color: var(--color-primario);
+  background: var(--color-primario);
+  color: var(--color-sobre-primario, #fff);
+}
+
+.pasarela__formulario {
+  display: grid;
+  gap: 4px;
+}
+
+.pasarela__medio,
+.pasarela__banco-encabezado {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-primario);
+  border-radius: var(--radio, 10px);
+  background: color-mix(in srgb, var(--color-primario) 8%, transparent);
+}
+
+.pasarela__medio b,
+.pasarela__medio small,
+.pasarela__banco-encabezado b,
+.pasarela__banco-encabezado small {
+  display: block;
+}
+
+.pasarela__medio small,
+.pasarela__banco-encabezado small {
+  color: var(--color-texto-suave);
+}
+
+.pasarela__acciones,
+.pasarela__respuestas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.pasarela__acciones {
+  justify-content: flex-end;
+}
+
+.resultado-pago .pasarela__acciones {
+  justify-content: center;
+}
+
+.pasarela__banco {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
+.pasarela__banco p,
+.pasarela__fin p {
+  margin: 0;
+  color: var(--color-texto-suave);
+}
+
+.pasarela__fin {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
 .resultado-pago dl {
   display: grid;
   grid-template-columns: auto auto;
@@ -7038,6 +7291,7 @@ textarea.campo__control[rows='2'] {
 }
 
 .mapa-auditoria {
+  position: relative;
   height: 360px;
   border-radius: 12px;
   overflow: hidden;
@@ -7052,9 +7306,8 @@ textarea.campo__control[rows='2'] {
   color: var(--color-texto-tenue);
 }
 
-/* El mapa de técnicos siempre va en modo oscuro (paleta nocturna estilo Google Maps), en ambos temas del panel. */
+/* Mapa de técnicos en el tema oscuro del panel (paleta nocturna estilo Google Maps); en el claro usa los estilos de MapLibre. */
 .mapa-auditoria--oscuro {
-  position: relative;
   background: #242f3e;
   border-color: #2c3848;
   color: #9ca5b3;

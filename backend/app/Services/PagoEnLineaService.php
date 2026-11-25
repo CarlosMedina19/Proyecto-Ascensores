@@ -20,6 +20,11 @@ use Illuminate\Support\Str;
  *    en la API de Wompi (no se confía en lo que diga el navegador).
  * 3. El evento transaction.updated que envía Wompi (con su firma) también confirma el pago.
  * Un pago aprobado se registra una sola vez en la factura, con el medio "pse".
+ *
+ * Pasarela de prueba (demostración): sin llaves de Wompi y con SIGMA_PAGO_SIMULADO=true, iniciar() lleva al
+ * simulador del panel (/pagos/simulador) y simular() aplica el resultado que elija el usuario como si lo
+ * respondiera el banco. El pago aprobado queda en la factura con la referencia SIMULADO-… Con llaves reales
+ * el simulador se apaga solo.
  */
 class PagoEnLineaService
 {
@@ -30,16 +35,22 @@ class PagoEnLineaService
         return filled(config('services.wompi.llave_publica')) && filled(config('services.wompi.secreto_integridad'));
     }
 
+    /** Pasarela de prueba del panel: solo sin llaves de Wompi y si se activó con SIGMA_PAGO_SIMULADO. */
+    public static function simulado(): bool
+    {
+        return ! self::habilitado() && (bool) config('services.wompi.simulado');
+    }
+
     /** Modo de pruebas: llaves pub_test_… (no se cobra dinero real). */
     public static function enPruebas(): bool
     {
         return str_starts_with((string) config('services.wompi.llave_publica'), 'pub_test_');
     }
 
-    /** @return array{url: string, referencia: string, monto: float} */
+    /** @return array{url: string, referencia: string, monto: float, simulado: bool} */
     public function iniciar(Factura $factura, Usuario $usuario, ?float $monto = null): array
     {
-        if (! self::habilitado()) {
+        if (! self::habilitado() && ! self::simulado()) {
             throw new ReglaNegocioException('El pago en línea no está configurado. Registre las llaves de Wompi en el servidor.');
         }
         $saldo = (float) $factura->saldo;
@@ -59,6 +70,10 @@ class PagoEnLineaService
         ]);
         RegistroAuditoriaService::registrar('creado', $intento, ['factura' => $factura->numero, 'monto' => $monto], null, 'cartera');
 
+        if (self::simulado()) {
+            return ['url' => '/pagos/simulador?referencia='.rawurlencode($intento->referencia), 'referencia' => $intento->referencia, 'monto' => $monto, 'simulado' => true];
+        }
+
         $parametros = [
             'public-key' => config('services.wompi.llave_publica'),
             'currency' => 'COP',
@@ -72,6 +87,7 @@ class PagoEnLineaService
             'url' => config('services.wompi.checkout').'?'.http_build_query($parametros),
             'referencia' => $intento->referencia,
             'monto' => $monto,
+            'simulado' => false,
         ];
     }
 
@@ -80,9 +96,40 @@ class PagoEnLineaService
         return hash('sha256', $referencia.$centavos.'COP'.config('services.wompi.secreto_integridad'));
     }
 
-    /** Consulta la transacción en Wompi y aplica su estado. */
+    /**
+     * Pasarela de prueba: aplica el resultado que eligió el usuario en el banco simulado.
+     * «pendiente» deja el pago abierto para volver a responder después.
+     */
+    public function simular(PagoEnLinea $intento, string $resultado, ?string $banco = null): PagoEnLinea
+    {
+        if (! self::simulado()) {
+            throw new ReglaNegocioException('La pasarela de prueba no está activa.');
+        }
+        if ($intento->estado !== 'pendiente') {
+            throw new ReglaNegocioException("Este pago ya terminó ({$intento->estado}). Inicie uno nuevo desde la factura.");
+        }
+
+        return $this->aplicar([
+            'id' => $intento->transaccion_id ?: 'SIM-'.Str::upper(Str::random(12)),
+            'reference' => $intento->referencia,
+            'amount_in_cents' => $intento->monto_centavos,
+            'currency' => 'COP',
+            'status' => ['aprobado' => 'APPROVED', 'rechazado' => 'DECLINED', 'pendiente' => 'PENDING'][$resultado],
+            'status_message' => ['aprobado' => 'Aprobado por el banco de prueba', 'rechazado' => 'El banco de prueba rechazó el pago', 'pendiente' => 'El banco de prueba dejó el pago pendiente'][$resultado],
+            'payment_method_type' => 'PSE',
+            'banco' => $banco,
+            'created_at' => ($intento->respuesta['created_at'] ?? null) ?: now()->toIso8601String(),
+            'finalized_at' => $resultado === 'pendiente' ? null : now()->toIso8601String(),
+        ], 'SIMULADO');
+    }
+
+    /** Consulta la transacción en Wompi y aplica su estado (las de la pasarela de prueba se leen de SIGMA). */
     public function confirmar(string $transaccionId): PagoEnLinea
     {
+        if (str_starts_with($transaccionId, 'SIM-')) {
+            return PagoEnLinea::where('transaccion_id', $transaccionId)->with(['factura', 'pago'])->first()
+                ?? throw new ReglaNegocioException('El pago no corresponde a ninguna factura de SIGMA.');
+        }
         $respuesta = Http::timeout(15)->acceptJson()->get(rtrim(config('services.wompi.api'), '/').'/transactions/'.rawurlencode($transaccionId));
         if (! $respuesta->successful() || ! is_array($respuesta->json('data'))) {
             throw new ReglaNegocioException('No fue posible consultar el pago en Wompi. Intente de nuevo en unos minutos.');
@@ -111,9 +158,9 @@ class PagoEnLineaService
     }
 
     /** Aplica el estado de la transacción al intento; si quedó aprobada, registra el pago (una sola vez). */
-    private function aplicar(array $transaccion): PagoEnLinea
+    private function aplicar(array $transaccion, string $origen = 'WOMPI'): PagoEnLinea
     {
-        return DB::transaction(function () use ($transaccion) {
+        return DB::transaction(function () use ($transaccion, $origen) {
             $intento = PagoEnLinea::where('referencia', (string) ($transaccion['reference'] ?? ''))->lockForUpdate()->first();
             if (! $intento) {
                 throw new ReglaNegocioException('El pago no corresponde a ninguna factura de SIGMA.');
@@ -128,7 +175,7 @@ class PagoEnLineaService
                 'estado' => $intento->pago_id ? 'aprobado' : $estado,
                 'transaccion_id' => $transaccion['id'] ?? $intento->transaccion_id,
                 'medio' => $transaccion['payment_method_type'] ?? $intento->medio,
-                'respuesta' => array_intersect_key($transaccion, array_flip(['id', 'status', 'status_message', 'payment_method_type', 'created_at', 'finalized_at'])),
+                'respuesta' => array_intersect_key($transaccion, array_flip(['id', 'status', 'status_message', 'payment_method_type', 'banco', 'created_at', 'finalized_at'])),
             ])->save();
 
             if ($estado === 'aprobado' && ! $intento->pago_id) {
@@ -137,7 +184,7 @@ class PagoEnLineaService
                     'valor' => $intento->monto_centavos / 100,
                     'fecha' => now()->toDateString(),
                     'medio' => 'pse',
-                    'referencia' => 'WOMPI-'.($transaccion['id'] ?? $intento->referencia),
+                    'referencia' => $origen.'-'.($transaccion['id'] ?? $intento->referencia),
                 ]);
                 $intento->update(['pago_id' => $pago->id]);
             }

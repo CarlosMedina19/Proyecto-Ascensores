@@ -76,7 +76,22 @@ const POR_TIPO = {
 // Nombres en español: el nombre local (en Colombia ya es español) antes que la versión latina o inglesa.
 export const NOMBRE_ES = ['coalesce', ['get', 'name:es'], ['get', 'name'], ['get', 'name:latin']];
 
-/** Devuelve una copia del estilo con la paleta oscura de SIGMA y los nombres en español. */
+/** Nombres en español y sin los escudos de carreteras; los colores no se tocan. */
+function ajustarCapa(capa) {
+  if (OCULTAS.has(capa.id)) return { ...capa, layout: { ...capa.layout, visibility: 'none' } };
+  const campo = capa.layout?.['text-field'];
+  return campo && JSON.stringify(campo).includes('name') ? { ...capa, layout: { ...capa.layout, 'text-field': NOMBRE_ES } } : capa;
+}
+
+/** Tema claro del panel: el estilo claro original de OpenStreetMap (positron), con los nombres en español. */
+export function pintarClaro(estilo) {
+  return { ...estilo, layers: estilo.layers.map(ajustarCapa) };
+}
+
+/** Elige el estilo según el tema del panel. */
+export const estiloSegunTema = (estilo, tema) => (tema === 'oscuro' ? pintarOscuro(estilo) : pintarClaro(estilo));
+
+/** Tema oscuro del panel: copia del estilo con la paleta nocturna y los nombres en español. */
 export function pintarOscuro(estilo) {
   return {
     ...estilo,

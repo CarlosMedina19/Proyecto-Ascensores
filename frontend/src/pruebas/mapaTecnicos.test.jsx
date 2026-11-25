@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pintarOscuro, NOMBRE_ES } from '../paginas/auditoria/mapa/estiloMapa';
+import { estiloSegunTema, pintarClaro, pintarOscuro, NOMBRE_ES } from '../paginas/auditoria/mapa/estiloMapa';
 import { PALETA } from '../paginas/auditoria/mapa/paleta';
 
 // El mapa (MapLibre) necesita WebGL: aquí se prueba el estilo que se le entrega.
@@ -35,5 +35,30 @@ describe('paleta nocturna del mapa de técnicos', () => {
     expect(capas.find((c) => c.id === 'highway-shield-non-us').layout.visibility).toBe('none');
     expect(capas.find((c) => c.id === 'capa_nueva').paint['fill-color']).toBe(PALETA.residencial);
     expect(base.layers[0].paint['background-color']).toBe('rgb(242,243,240)');
+  });
+});
+
+describe('estilo del mapa según el tema del panel', () => {
+  const base = {
+    version: 8,
+    layers: [
+      { id: 'background', type: 'background', paint: { 'background-color': 'rgb(242,243,240)' } },
+      { id: 'label_city', type: 'symbol', layout: { 'text-field': ['get', 'name_en'] }, paint: { 'text-color': '#000' } },
+      { id: 'highway-shield-non-us', type: 'symbol', layout: { 'text-field': ['get', 'ref'] } },
+    ],
+  };
+
+  it('en el tema claro conserva los colores claros, con nombres en español y sin escudos', () => {
+    const capas = pintarClaro(base).layers;
+    expect(capas[0].paint['background-color']).toBe('rgb(242,243,240)');
+    expect(capas[1].paint['text-color']).toBe('#000');
+    expect(capas[1].layout['text-field']).toEqual(NOMBRE_ES);
+    expect(capas[2].layout.visibility).toBe('none');
+    expect(base.layers[1].layout['text-field']).toEqual(['get', 'name_en']);
+  });
+
+  it('elige la paleta nocturna solo en el tema oscuro', () => {
+    expect(estiloSegunTema(base, 'oscuro').layers[0].paint['background-color']).toBe('#242f3e');
+    expect(estiloSegunTema(base, 'claro').layers[0].paint['background-color']).toBe('rgb(242,243,240)');
   });
 });

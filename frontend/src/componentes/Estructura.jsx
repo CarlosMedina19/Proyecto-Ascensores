@@ -12,6 +12,7 @@ import {
   ClipboardCheck,
   ListChecks,
   ClipboardList,
+  CreditCard,
   FileText,
   HardHat,
   LayoutDashboard,
@@ -67,6 +68,8 @@ function opcionesMenu(esCliente, esTecnico, verAuditoria) {
     { ruta: '/planes', texto: 'Plan de alquiler', icono: ClipboardList, permiso: 'planes.ver' },
     { ruta: '/inventario', texto: 'Inventario', icono: Package, permiso: 'inventario.ver' },
     { ruta: '/cartera', texto: esCliente ? 'Mi estado de cuenta' : 'Cartera', icono: Wallet, permiso: 'cartera.ver' },
+    // El cliente paga sus facturas por PSE (o en la pasarela de prueba mientras no haya llaves de Wompi).
+    ...(esCliente ? [{ ruta: '/pagos', texto: 'Pagar en línea', icono: CreditCard, permiso: 'cartera.ver' }] : []),
     { grupo: 'Servicio' },
     { ruta: '/emergencias', texto: 'Emergencias', icono: Siren, permiso: 'emergencias.ver', recorrido: 'emergencias' },
     { ruta: '/certificaciones', texto: 'Certificación anual', icono: BadgeCheck, permiso: 'certificaciones.ver', recorrido: 'certificaciones' },
@@ -148,7 +151,7 @@ export default function Estructura() {
     hijoActual ||
     (ruta.startsWith('/conjuntos') && { texto: 'Conjuntos' }) ||
     (ruta.startsWith('/edificios') && { texto: 'Edificios' }) ||
-    (ruta.startsWith('/pagos') && { texto: 'Cartera' }) ||
+    (ruta.startsWith('/pagos') && { texto: esCliente ? 'Pagar en línea' : 'Cartera' }) ||
     (ruta.startsWith('/equipos') && { texto: 'Ascensores' }) ||
     menu.find((o) => o.ruta && ruta.startsWith(o.ruta));
   const dentroDe = (o) => ruta.startsWith(o.ruta) || (o.relacionadas || []).some((r) => ruta.startsWith(r));

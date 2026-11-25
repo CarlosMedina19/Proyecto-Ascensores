@@ -34,6 +34,9 @@ class CarteraService
                 ? $consulta->where('saldo', '>', 0)->whereDate('fecha_vencimiento', '<', now())
                 : $consulta->where('estado', $filtros['estado']);
         }
+        if (! empty($filtros['con_saldo'])) {
+            $consulta->where('saldo', '>', 0);
+        }
         if (! empty($filtros['busqueda'])) {
             $como = DB::getDriverName() === 'pgsql' ? 'ilike' : 'like';
             $texto = '%'.$filtros['busqueda'].'%';

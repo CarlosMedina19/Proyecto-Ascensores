@@ -20,6 +20,8 @@ import ListaEdificios from './paginas/edificios/ListaEdificios';
 import FormularioConjunto from './paginas/conjuntos/FormularioConjunto';
 import DetalleConjunto from './paginas/conjuntos/DetalleConjunto';
 import ResultadoPago from './paginas/pagos/ResultadoPago';
+import PagarEnLinea from './paginas/pagos/PagarEnLinea';
+import SimuladorPago from './paginas/pagos/SimuladorPago';
 import Landing from './paginas/publico/Landing';
 import FormularioEdificio from './paginas/edificios/FormularioEdificio';
 import DetalleEdificio from './paginas/edificios/DetalleEdificio';
@@ -104,6 +106,8 @@ export default function App() {
               <Route path="/equipos/:id/editar" element={conPermiso('equipos.editar', <FormularioEquipo />)} />
 
               <Route path="/cartera" element={conPermiso('cartera.ver', <Cartera />)} />
+              <Route path="/pagos" element={conPermiso('cartera.ver', <PagarEnLinea />)} />
+              <Route path="/pagos/simulador" element={conPermiso('cartera.ver', <SimuladorPago />)} />
               <Route path="/pagos/resultado" element={conPermiso('cartera.ver', <ResultadoPago />)} />
               <Route path="/inventario" element={conPermiso('inventario.ver', <Inventario />)} />
               <Route path="/inventario/:id" element={conPermiso('inventario.ver', <DetalleRepuesto />)} />

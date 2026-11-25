@@ -84,6 +84,8 @@ return [
         'checkout' => env('WOMPI_CHECKOUT', 'https://checkout.wompi.co/p/'),
         // Página del panel a la que Wompi devuelve al cliente después de pagar.
         'retorno' => env('WOMPI_RETORNO', env('FRONTEND_URL', 'http://localhost:5173').'/pagos/resultado'),
+        // Pasarela de prueba del panel (demostración): solo funciona mientras no haya llaves de Wompi.
+        'simulado' => (bool) env('SIGMA_PAGO_SIMULADO', false),
     ],
 
     'slack' => [

@@ -3,7 +3,31 @@ import { LngLatBounds, Map as MapaLibre, Marker, NavigationControl, Popup, setWo
 import urlTrabajador from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { CENTRO, ZOOM_DETALLE, ZOOM_INICIAL, claveTecnico, conPosicion, contenidoTecnico, htmlMarcador } from './mapa/comun';
-import { URL_ESTILO_BASE, pintarOscuro } from './mapa/estiloMapa';
+import { URL_ESTILO_BASE, estiloSegunTema } from './mapa/estiloMapa';
+
+/** Tema del panel (atributo data-tema que pone useTema; si falta, el del sistema). */
+function temaDelPanel() {
+  const tema = document.documentElement.getAttribute('data-tema');
+  if (tema === 'oscuro' || tema === 'claro') return tema;
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'oscuro' : 'claro';
+}
+
+/** El mapa sigue al tema del panel, también cuando el usuario lo cambia con el botón del encabezado. */
+function useTemaDelPanel() {
+  const [tema, setTema] = useState(temaDelPanel);
+  useEffect(() => {
+    const actualizar = () => setTema(temaDelPanel());
+    const observador = new MutationObserver(actualizar);
+    observador.observe(document.documentElement, { attributes: true, attributeFilter: ['data-tema'] });
+    const sistema = window.matchMedia?.('(prefers-color-scheme: dark)');
+    sistema?.addEventListener?.('change', actualizar);
+    return () => {
+      observador.disconnect();
+      sistema?.removeEventListener?.('change', actualizar);
+    };
+  }, []);
+  return tema;
+}
 
 // El procesador de teselas de MapLibre se sirve como archivo propio del panel.
 setWorkerUrl(urlTrabajador);
@@ -16,11 +40,15 @@ function abrirVentana(estado, clave) {
 
 /**
  * Mapa de los técnicos en mantenimiento: OpenStreetMap (teselas vectoriales de OpenFreeMap, sin clave ni costo)
- * dibujado con MapLibre y pintado con la paleta nocturna estilo Google Maps. Siempre oscuro, en ambos temas.
+ * dibujado con MapLibre. En el tema oscuro del panel usa la paleta nocturna estilo Google Maps; en el claro, el
+ * estilo claro original. Cambia en vivo al cambiar el tema.
  */
 export default function MapaTecnicos({ tecnicos, seleccionado }) {
   const nodo = useRef(null);
-  const estado = useRef({ mapa: null, ventana: null, marcadores: new Map(), yaEncuadro: false });
+  const estado = useRef({ mapa: null, ventana: null, marcadores: new Map(), yaEncuadro: false, base: null, temaPintado: null });
+  const tema = useTemaDelPanel();
+  const temaActual = useRef(tema);
+  temaActual.current = tema;
   const [listo, setListo] = useState(false);
   const [error, setError] = useState('');
 
@@ -34,9 +62,11 @@ export default function MapaTecnicos({ tecnicos, seleccionado }) {
       })
       .then((base) => {
         if (cancelado || !nodo.current) return;
+        e.base = base;
+        e.temaPintado = temaActual.current;
         e.mapa = new MapaLibre({
           container: nodo.current,
-          style: pintarOscuro(base),
+          style: estiloSegunTema(base, temaActual.current),
           center: [CENTRO.lng, CENTRO.lat],
           zoom: ZOOM_INICIAL,
           attributionControl: { compact: true },
@@ -66,6 +96,14 @@ export default function MapaTecnicos({ tecnicos, seleccionado }) {
       e.yaEncuadro = false;
     };
   }, []);
+
+  // Cambio de tema: se vuelve a pintar el mapa (los marcadores se conservan).
+  useEffect(() => {
+    const e = estado.current;
+    if (!listo || !e.mapa || !e.base || e.temaPintado === tema) return;
+    e.temaPintado = tema;
+    e.mapa.setStyle(estiloSegunTema(e.base, tema));
+  }, [tema, listo]);
 
   useEffect(() => {
     const e = estado.current;
@@ -121,7 +159,7 @@ export default function MapaTecnicos({ tecnicos, seleccionado }) {
   }, [seleccionado, listo]);
 
   return (
-    <div className="mapa-auditoria mapa-auditoria--oscuro" role="region" aria-label="Mapa de técnicos en mantenimiento">
+    <div className={`mapa-auditoria${tema === 'oscuro' ? ' mapa-auditoria--oscuro' : ''}`} role="region" aria-label="Mapa de técnicos en mantenimiento">
       <div ref={nodo} className="mapa-auditoria__lienzo" />
       {!listo && <span className="mapa-auditoria__aviso">{error || 'Cargando mapa…'}</span>}
     </div>

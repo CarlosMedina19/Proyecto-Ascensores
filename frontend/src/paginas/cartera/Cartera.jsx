@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Landmark, Plus, Search } from 'lucide-react';
 import { cartera, clientes } from '../../api/servicios';
 import { useListado } from '../../hooks/useListado';
@@ -9,6 +10,7 @@ import { Alerta, Cargando, EncabezadoPagina, EstadoVacio, Insignia, Modal, Pagin
 import { CampoSelector, CampoTexto } from '../../componentes/Campos';
 import HerramientasExcel from '../../componentes/HerramientasExcel';
 import { dinero, fecha, fechaIso } from '../../utilidades/formato';
+import { iniciarPago } from '../pagos/pagoEnLinea';
 
 const ESTADOS = {
   pendiente: { texto: 'Pendiente', tipo: 'info' },
@@ -40,9 +42,11 @@ export default function Cartera() {
   const [resumen, setResumen] = useState(null);
   const [facturaPago, setFacturaPago] = useState(null);
   const [nuevaFactura, setNuevaFactura] = useState(false);
-  const [pse, setPse] = useState(null); // { habilitado, pruebas }
+  const [pse, setPse] = useState(null); // { habilitado, pruebas, simulado }
   const [pagando, setPagando] = useState(null);
   const notificar = useNotificar();
+  const navegar = useNavigate();
+  const pagoEnLinea = Boolean(pse?.habilitado || pse?.simulado);
 
   useEffect(() => {
     cartera
@@ -51,12 +55,11 @@ export default function Cartera() {
       .catch(() => setPse(null));
   }, []);
 
-  /** Abre el checkout de Wompi; al terminar, Wompi devuelve a /pagos/resultado. */
+  /** Abre el checkout de Wompi (o la pasarela de prueba); al terminar se llega a /pagos/resultado. */
   async function pagarConPse(factura) {
     setPagando(factura.id);
     try {
-      const r = await cartera.pagarConPse(factura.id);
-      window.location.assign(r.datos.url);
+      await iniciarPago(factura, null, navegar);
     } catch (e) {
       notificar(e.message, 'error');
       setPagando(null);
@@ -94,6 +97,11 @@ export default function Cartera() {
       {resumen ? <ResumenCartera resumen={resumen} /> : <Cargando texto="Cargando saldos…" />}
 
 
+      {pse?.simulado && (
+        <Alerta tipo="info">
+          Pago en línea en modo demostración: la pasarela es simulada y no cobra dinero.{esCliente ? ' También puede pagar desde «Pagar en línea» en el menú.' : ''}
+        </Alerta>
+      )}
       {pse?.habilitado && pse.pruebas && (
         <Alerta tipo="info">Pago por PSE en modo de pruebas (Wompi sandbox): no se cobra dinero real. En el banco de pruebas elija «Banco que aprueba» para simular un pago exitoso.</Alerta>
       )}
@@ -171,7 +179,7 @@ export default function Cartera() {
                   return <Insignia tipo={e.tipo}>{e.texto}</Insignia>;
                 },
               },
-              ...(pse?.habilitado
+              ...(pagoEnLinea
                 ? [
                     {
                       clave: 'pse',

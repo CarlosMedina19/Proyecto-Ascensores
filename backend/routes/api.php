@@ -234,6 +234,9 @@ Route::middleware(['auth:sanctum', LimitarTokenAsistente::class])->group(functio
     Route::get('/facturas/{factura}', [CarteraController::class, 'verFactura']);
     Route::post('/pagos', [CarteraController::class, 'registrarPago']);
     Route::get('/pagos-en-linea/configuracion', [PagoEnLineaController::class, 'configuracion']);
+    Route::get('/pagos-en-linea', [PagoEnLineaController::class, 'listar']);
+    Route::get('/pagos-en-linea/{referencia}', [PagoEnLineaController::class, 'mostrar'])->where('referencia', 'SIGMA-[A-Za-z0-9-]+');
+    Route::post('/pagos-en-linea/{referencia}/simular', [PagoEnLineaController::class, 'simular'])->where('referencia', 'SIGMA-[A-Za-z0-9-]+')->middleware('throttle:20,1');
     Route::post('/facturas/{factura}/pago-en-linea', [PagoEnLineaController::class, 'iniciar'])->middleware('throttle:20,1');
     Route::post('/pagos-en-linea/confirmar', [PagoEnLineaController::class, 'confirmar'])->middleware('throttle:30,1');
 

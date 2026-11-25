@@ -69,7 +69,18 @@ export function Tarjeta({ titulo, acciones, children, sinRelleno = false }) {
   return (
     <section className="tarjeta">
       {sinRelleno ? (
-        children
+        <>
+          {/* Sin relleno (tablas a todo el ancho), el título va en su propia franja. */}
+          {(titulo || acciones) && (
+            <div className="tarjeta__cuerpo" style={{ paddingBottom: 12 }}>
+              <h2 className="tarjeta__titulo" style={{ margin: 0 }}>
+                <span>{titulo}</span>
+                {acciones && <span style={{ display: 'flex', gap: 8 }}>{acciones}</span>}
+              </h2>
+            </div>
+          )}
+          {children}
+        </>
       ) : (
         <div className="tarjeta__cuerpo">
           {(titulo || acciones) && (
