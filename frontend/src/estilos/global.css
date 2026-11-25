@@ -7698,6 +7698,89 @@ textarea.campo__control[rows='2'] {
   letter-spacing: 0.02em;
 }
 
+/* Sección desactivada con el interruptor: atenuada y con borde punteado. */
+.planilla-editor__seccion--inactiva {
+  border-style: dashed;
+}
+
+.planilla-editor__seccion--inactiva .planilla-editor__titulo {
+  background: #5d6675;
+}
+
+.planilla-editor__seccion--inactiva .planilla-editor__tabla,
+.planilla-editor__seccion--inactiva .planilla-editor__nueva {
+  opacity: 0.55;
+}
+
+.planilla-editor__aviso {
+  margin: 0;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--color-borde);
+  background: var(--color-alerta-suave);
+  color: var(--color-texto);
+  font-size: 12.5px;
+}
+
+.planilla-editor__interruptor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 4px;
+  padding: 3px 8px 3px 4px;
+  border: 1px solid rgb(255 255 255 / 0.28);
+  border-radius: 999px;
+  background: transparent;
+  color: #e3e8f2;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.planilla-editor__interruptor:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.planilla-editor__interruptor:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.planilla-editor__interruptor-pista {
+  position: relative;
+  width: 28px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.3);
+  transition: background-color 0.18s ease;
+}
+
+.planilla-editor__interruptor-pista span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.18s ease;
+}
+
+.planilla-editor__interruptor--activa .planilla-editor__interruptor-pista {
+  background: #2fb36d;
+}
+
+.planilla-editor__interruptor--activa .planilla-editor__interruptor-pista span {
+  transform: translateX(12px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planilla-editor__interruptor-pista,
+  .planilla-editor__interruptor-pista span {
+    transition: none;
+  }
+}
+
 .planilla-editor__titulo .planilla-editor__icono {
   color: #c9d3e6;
 }

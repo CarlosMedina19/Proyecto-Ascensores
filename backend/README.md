@@ -115,6 +115,10 @@ cd ../analitica && pip install -r requirements-pruebas.txt && python -m pytest -
 - La plantilla (secciones y actividades) la edita el administrador en **Configuración → Planilla técnica**: agregar,
   renombrar, ordenar, marcar como crítica o quitar. Lo que ya se usó queda inactivo para no alterar las planillas
   diligenciadas; cada planilla guarda su propia copia de la plantilla. «Restablecer original» vuelve al formato base.
+- Cada sección tiene un interruptor **Activa / Desactivada** (`PATCH /planilla/secciones/{id}` con `habilitada`).
+  Desactivada no aparece en las planillas nuevas (app y panel), no se exige para finalizar la orden y conserva sus
+  actividades; al activarla vuelve igual. Siempre queda al menos una sección activa. La configuración la ve con
+  `GET /planilla/plantilla?todas=1`; los demás reciben solo las secciones activas.
 
 ## Object Storage (archivos)
 
@@ -137,9 +141,10 @@ docker exec sigma_backend php artisan sigma:migrar-archivos             # copia 
   El administrador tiene todo; los demás roles, solo lo que sus permisos permiten.
 - En n8n hay dos flujos: **SIGMA** (panel) y **SIGMA Landing**. Laravel los llama con la cabecera `X-Sigma-Clave`.
   El agente del panel consulta datos con un token temporal (10 min) del mismo usuario que solo abre
-  `/asistente/herramienta`, así Laravel sigue aplicando los permisos. El modelo es DeepSeek: al tener la API, se crea
-  la credencial en n8n, se elige en el nodo «DeepSeek Chat Model» de ambos flujos, se activan y se pone
-  `ASISTENTE_N8N_ACTIVO=true`. Mientras tanto (o si n8n falla) responde el motor local de SIGMA.
+  `/asistente/herramienta`, así Laravel sigue aplicando los permisos. El modelo es DeepSeek, con la credencial propia
+  «SIGMA · DeepSeek» en n8n (la llave solo vive allí, nunca en el repositorio) elegida en el nodo «DeepSeek Chat
+  Model» de ambos flujos. Laravel los usa con `ASISTENTE_N8N_ACTIVO=true`; si n8n falla o tarda más de
+  `ASISTENTE_N8N_TIEMPO` segundos, responde el motor local de SIGMA.
 
 ### Fotos del ascensor en el chat
 

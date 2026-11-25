@@ -37,7 +37,7 @@ class PlanillaService
     {
         $orden = array_keys(ChecklistSeccion::mapa());
 
-        return ChecklistItem::where('activo', true)
+        return ChecklistItem::vigentes()
             ->whereIn('seccion', $orden)
             ->get()
             ->sortBy(fn (ChecklistItem $i) => [array_search($i->seccion, $orden, true), $i->orden])
@@ -64,7 +64,7 @@ class PlanillaService
                 $planilla->update(['recomendaciones' => $datos['recomendaciones']]);
             }
 
-            $items = ChecklistItem::whereKey(collect($datos['resultados'] ?? [])->pluck('item_id'))->get()->keyBy('id');
+            $items = ChecklistItem::vigentes()->whereKey(collect($datos['resultados'] ?? [])->pluck('item_id'))->get()->keyBy('id');
             $criticos = [];
 
             foreach ($datos['resultados'] ?? [] as $fila) {
@@ -104,15 +104,15 @@ class PlanillaService
         });
     }
 
-    /** Ítems activos que aún no tienen resultado (RF-030: todos deben tenerlo para finalizar). */
+    /** Ítems vigentes que aún no tienen resultado (RF-030: todos deben tenerlo para finalizar). */
     public function faltantes(?Planilla $planilla): int
     {
-        $total = ChecklistItem::where('activo', true)->count();
+        $total = ChecklistItem::vigentes()->count();
         if (! $planilla) {
             return $total;
         }
 
-        return $total - $planilla->resultados()->whereHas('item', fn ($i) => $i->where('activo', true))->count();
+        return $total - $planilla->resultados()->whereHas('item', fn ($i) => $i->vigentes())->count();
     }
 
     /** Al finalizar: marca la planilla completa y avisa los ítems en M que faltaban por avisar. */

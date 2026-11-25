@@ -241,7 +241,7 @@ class AnalisisImagenService
             return [];
         }
 
-        return ChecklistItem::where('seccion', $zona)->where('activo', true)
+        return ChecklistItem::vigentes()->where('seccion', $zona)
             ->orderByDesc('critico')->orderBy('orden')->limit(5)->get()
             ->map(fn ($item) => trim("{$item->codigo} {$item->nombre}").($item->critico ? ' (crítica)' : ''))
             ->all();

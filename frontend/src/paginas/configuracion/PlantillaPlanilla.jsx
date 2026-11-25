@@ -4,6 +4,8 @@ import { plantillaPlanilla } from '../../api/servicios';
 import { useNotificar } from '../../contexto/NotificacionesContexto';
 import { Alerta, Cargando, Confirmacion, EncabezadoPagina } from '../../componentes/Basicos';
 
+const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+
 /** Texto editable en el mismo lugar: clic en el lápiz, Enter guarda, Escape cancela. */
 function TextoEditable({ valor, alGuardar, etiqueta, clase = '' }) {
   const [editando, setEditando] = useState(false);
@@ -99,6 +101,8 @@ function NuevaActividad({ seccion, alAgregar }) {
  * Configuración · Planilla de asistencia técnica. Se ve como la planilla en papel y se edita en el mismo lugar:
  * secciones y actividades se agregan, renombran, ordenan, marcan como críticas o se quitan.
  * Lo que se quita y ya se usó queda en las planillas diligenciadas (no se pierde el historial).
+ * Cada sección tiene un interruptor para desactivarla (sale de las planillas nuevas, conserva sus actividades)
+ * y volver a activarla.
  */
 export default function PlantillaPlanilla() {
   const notificar = useNotificar();
@@ -137,7 +141,9 @@ export default function PlantillaPlanilla() {
   if (error) return <Alerta>{error}</Alerta>;
   if (!secciones) return <Cargando />;
 
-  const total = secciones.reduce((a, s) => a + s.items.length, 0);
+  const activas = secciones.filter((s) => s.habilitada !== false);
+  const total = activas.reduce((a, s) => a + s.items.length, 0);
+  const desactivadas = secciones.length - activas.length;
   // Dos columnas equilibradas, como en la planilla en papel.
   const mitad = secciones.reduce((a, s) => a + s.items.length + 2, 0) / 2;
   const columnas = [[], []];
@@ -151,7 +157,11 @@ export default function PlantillaPlanilla() {
     <>
       <EncabezadoPagina
         titulo="Planilla de asistencia técnica"
-        descripcion={['La diligencian los técnicos en cada visita (app y panel)', `${secciones.length} secciones · ${total} actividades`, 'Los cambios aplican a las próximas planillas']}
+        descripcion={[
+          'La diligencian los técnicos en cada visita (app y panel)',
+          [plural(activas.length, 'sección activa', 'secciones activas'), plural(total, 'actividad', 'actividades'), desactivadas ? plural(desactivadas, 'desactivada', 'desactivadas') : null].filter(Boolean).join(' · '),
+          'Los cambios aplican a las próximas planillas',
+        ]}
       >
         <button type="button" className="boton boton--secundario" onClick={() => setConfirmar({ titulo: 'Restablecer la planilla original', mensaje: 'La planilla vuelve a las 45 actividades del formato original. Las planillas ya diligenciadas no cambian.', textoConfirmar: 'Restablecer', accion: () => plantillaPlanilla.restablecer() })}>
           <RotateCcw size={16} /> Restablecer original
@@ -170,83 +180,101 @@ export default function PlantillaPlanilla() {
         <div className="planilla-editor__columnas">
           {columnas.map((columna, k) => (
             <div key={k} className="planilla-editor__columna">
-              {columna.map((seccion) => (
-                <section key={seccion.id} className="planilla-editor__seccion" aria-label={seccion.nombre}>
-                  <header className="planilla-editor__titulo">
-                    <TextoEditable valor={seccion.nombre} etiqueta={`nombre de la sección ${seccion.nombre}`} alGuardar={(nombre) => ejecutar(() => plantillaPlanilla.actualizarSeccion(seccion.id, { nombre }))} />
-                    <span className="planilla-editor__acciones">
-                      <button type="button" className="planilla-editor__icono" disabled={seccion.indice === 0} onClick={() => ejecutar(() => plantillaPlanilla.actualizarSeccion(seccion.id, { mover: 'arriba' }))} aria-label={`Subir la sección ${seccion.nombre}`} title="Subir">
-                        <ArrowUp size={14} />
-                      </button>
-                      <button type="button" className="planilla-editor__icono" disabled={seccion.indice === secciones.length - 1} onClick={() => ejecutar(() => plantillaPlanilla.actualizarSeccion(seccion.id, { mover: 'abajo' }))} aria-label={`Bajar la sección ${seccion.nombre}`} title="Bajar">
-                        <ArrowDown size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        className="planilla-editor__icono"
-                        onClick={() => setConfirmar({ titulo: `Quitar la sección «${seccion.nombre}»`, mensaje: `Se quitan sus ${seccion.items.length} actividades de las próximas planillas.`, textoConfirmar: 'Quitar', peligro: true, accion: () => plantillaPlanilla.eliminarSeccion(seccion.id) })}
-                        aria-label={`Quitar la sección ${seccion.nombre}`}
-                        title="Quitar sección"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </span>
-                  </header>
-                  <table className="planilla-editor__tabla">
-                    <thead>
-                      <tr>
-                        <th>Actividad</th>
-                        <th>INS</th>
-                        <th>EST</th>
-                        <th>N.A.</th>
-                        <th>
-                          <span className="oculto-visual">Acciones</span>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {seccion.items.map((item, i) => (
-                        <tr key={item.id}>
-                          <td>
-                            <TextoEditable valor={item.nombre} etiqueta={`actividad ${item.nombre}`} alGuardar={(nombre) => ejecutar(() => plantillaPlanilla.actualizarItem(item.id, { nombre }))} />
-                          </td>
-                          <td className="planilla-editor__casilla" aria-hidden="true" />
-                          <td className="planilla-editor__casilla" aria-hidden="true" />
-                          <td className="planilla-editor__casilla" aria-hidden="true" />
-                          <td className="planilla-editor__acciones">
-                            <button
-                              type="button"
-                              className={`planilla-editor__icono${item.critico ? ' planilla-editor__icono--critica' : ''}`}
-                              onClick={() => ejecutar(() => plantillaPlanilla.actualizarItem(item.id, { critico: !item.critico }))}
-                              aria-label={item.critico ? `Quitar crítica a ${item.nombre}` : `Marcar como crítica ${item.nombre}`}
-                              aria-pressed={item.critico}
-                              title={item.critico ? 'Crítica: en Malo avisa de inmediato' : 'Marcar como crítica'}
-                            >
-                              <ShieldAlert size={14} />
-                            </button>
-                            <button type="button" className="planilla-editor__icono" disabled={i === 0} onClick={() => ejecutar(() => plantillaPlanilla.actualizarItem(item.id, { mover: 'arriba' }))} aria-label={`Subir ${item.nombre}`} title="Subir">
-                              <ArrowUp size={14} />
-                            </button>
-                            <button type="button" className="planilla-editor__icono" disabled={i === seccion.items.length - 1} onClick={() => ejecutar(() => plantillaPlanilla.actualizarItem(item.id, { mover: 'abajo' }))} aria-label={`Bajar ${item.nombre}`} title="Bajar">
-                              <ArrowDown size={14} />
-                            </button>
-                            <button
-                              type="button"
-                              className="planilla-editor__icono"
-                              onClick={() => setConfirmar({ titulo: 'Quitar actividad', mensaje: `«${item.nombre}» deja de aparecer en las próximas planillas.`, textoConfirmar: 'Quitar', peligro: true, accion: () => plantillaPlanilla.eliminarItem(item.id) })}
-                              aria-label={`Quitar ${item.nombre}`}
-                              title="Quitar"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </td>
+              {columna.map((seccion) => {
+                const habilitada = seccion.habilitada !== false;
+                return (
+                  <section key={seccion.id} className={`planilla-editor__seccion${habilitada ? '' : ' planilla-editor__seccion--inactiva'}`} aria-label={habilitada ? seccion.nombre : `${seccion.nombre} (desactivada)`}>
+                    <header className="planilla-editor__titulo">
+                      <TextoEditable valor={seccion.nombre} etiqueta={`nombre de la sección ${seccion.nombre}`} alGuardar={(nombre) => ejecutar(() => plantillaPlanilla.actualizarSeccion(seccion.id, { nombre }))} />
+                      <span className="planilla-editor__acciones">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={habilitada}
+                          className={`planilla-editor__interruptor${habilitada ? ' planilla-editor__interruptor--activa' : ''}`}
+                          onClick={() => ejecutar(() => plantillaPlanilla.actualizarSeccion(seccion.id, { habilitada: !habilitada }))}
+                          aria-label={`${habilitada ? 'Desactivar' : 'Activar'} la sección ${seccion.nombre}`}
+                          title={habilitada ? 'Desactivar: deja de aparecer en las planillas nuevas' : 'Activar: vuelve a las planillas nuevas'}
+                        >
+                          <span className="planilla-editor__interruptor-pista" aria-hidden="true">
+                            <span />
+                          </span>
+                          {habilitada ? 'Activa' : 'Desactivada'}
+                        </button>
+                        <button type="button" className="planilla-editor__icono" disabled={seccion.indice === 0} onClick={() => ejecutar(() => plantillaPlanilla.actualizarSeccion(seccion.id, { mover: 'arriba' }))} aria-label={`Subir la sección ${seccion.nombre}`} title="Subir">
+                          <ArrowUp size={14} />
+                        </button>
+                        <button type="button" className="planilla-editor__icono" disabled={seccion.indice === secciones.length - 1} onClick={() => ejecutar(() => plantillaPlanilla.actualizarSeccion(seccion.id, { mover: 'abajo' }))} aria-label={`Bajar la sección ${seccion.nombre}`} title="Bajar">
+                          <ArrowDown size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className="planilla-editor__icono"
+                          onClick={() => setConfirmar({ titulo: `Quitar la sección «${seccion.nombre}»`, mensaje: `Se quitan sus ${seccion.items.length} actividades de las próximas planillas.`, textoConfirmar: 'Quitar', peligro: true, accion: () => plantillaPlanilla.eliminarSeccion(seccion.id) })}
+                          aria-label={`Quitar la sección ${seccion.nombre}`}
+                          title="Quitar sección"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </span>
+                    </header>
+                    {!habilitada && <p className="planilla-editor__aviso">Desactivada: no aparece en las planillas nuevas ni se exige para finalizar. Sus actividades se conservan.</p>}
+                    <table className="planilla-editor__tabla">
+                      <thead>
+                        <tr>
+                          <th>Actividad</th>
+                          <th>INS</th>
+                          <th>EST</th>
+                          <th>N.A.</th>
+                          <th>
+                            <span className="oculto-visual">Acciones</span>
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <NuevaActividad seccion={seccion} alAgregar={(datos) => ejecutar(() => plantillaPlanilla.crearItem(datos))} />
-                </section>
-              ))}
+                      </thead>
+                      <tbody>
+                        {seccion.items.map((item, i) => (
+                          <tr key={item.id}>
+                            <td>
+                              <TextoEditable valor={item.nombre} etiqueta={`actividad ${item.nombre}`} alGuardar={(nombre) => ejecutar(() => plantillaPlanilla.actualizarItem(item.id, { nombre }))} />
+                            </td>
+                            <td className="planilla-editor__casilla" aria-hidden="true" />
+                            <td className="planilla-editor__casilla" aria-hidden="true" />
+                            <td className="planilla-editor__casilla" aria-hidden="true" />
+                            <td className="planilla-editor__acciones">
+                              <button
+                                type="button"
+                                className={`planilla-editor__icono${item.critico ? ' planilla-editor__icono--critica' : ''}`}
+                                onClick={() => ejecutar(() => plantillaPlanilla.actualizarItem(item.id, { critico: !item.critico }))}
+                                aria-label={item.critico ? `Quitar crítica a ${item.nombre}` : `Marcar como crítica ${item.nombre}`}
+                                aria-pressed={item.critico}
+                                title={item.critico ? 'Crítica: en Malo avisa de inmediato' : 'Marcar como crítica'}
+                              >
+                                <ShieldAlert size={14} />
+                              </button>
+                              <button type="button" className="planilla-editor__icono" disabled={i === 0} onClick={() => ejecutar(() => plantillaPlanilla.actualizarItem(item.id, { mover: 'arriba' }))} aria-label={`Subir ${item.nombre}`} title="Subir">
+                                <ArrowUp size={14} />
+                              </button>
+                              <button type="button" className="planilla-editor__icono" disabled={i === seccion.items.length - 1} onClick={() => ejecutar(() => plantillaPlanilla.actualizarItem(item.id, { mover: 'abajo' }))} aria-label={`Bajar ${item.nombre}`} title="Bajar">
+                                <ArrowDown size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                className="planilla-editor__icono"
+                                onClick={() => setConfirmar({ titulo: 'Quitar actividad', mensaje: `«${item.nombre}» deja de aparecer en las próximas planillas.`, textoConfirmar: 'Quitar', peligro: true, accion: () => plantillaPlanilla.eliminarItem(item.id) })}
+                                aria-label={`Quitar ${item.nombre}`}
+                                title="Quitar"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <NuevaActividad seccion={seccion} alAgregar={(datos) => ejecutar(() => plantillaPlanilla.crearItem(datos))} />
+                  </section>
+                );
+              })}
             </div>
           ))}
         </div>

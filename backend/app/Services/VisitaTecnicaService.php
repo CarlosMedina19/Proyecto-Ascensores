@@ -40,15 +40,21 @@ class VisitaTecnicaService
      *
      * @return array<int, array{id: int, clave: string, nombre: string, items: array<int, array{id: int, codigo: string, nombre: string, critico: bool}>}>
      */
-    public function plantilla(): array
+    /**
+     * Secciones con sus actividades. Las visitas solo ven las secciones en uso; la configuración ($conDesactivadas)
+     * también las desactivadas, para poder activarlas de nuevo.
+     */
+    public function plantilla(bool $conDesactivadas = false): array
     {
         $items = ChecklistItem::where('activo', true)->orderBy('orden')->orderBy('id')->get()->groupBy('seccion');
 
-        return ChecklistSeccion::where('activo', true)->orderBy('orden')->orderBy('id')->get()
+        return ChecklistSeccion::where('activo', true)->when(! $conDesactivadas, fn ($c) => $c->where('habilitada', true))
+            ->orderBy('orden')->orderBy('id')->get()
             ->map(fn (ChecklistSeccion $s) => [
                 'id' => $s->id,
                 'clave' => $s->clave,
                 'nombre' => $s->nombre,
+                'habilitada' => $s->habilitada,
                 'items' => ($items[$s->clave] ?? collect())->map(fn (ChecklistItem $i) => [
                     'id' => $i->id,
                     'codigo' => $i->codigo,

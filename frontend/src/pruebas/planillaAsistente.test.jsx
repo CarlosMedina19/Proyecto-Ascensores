@@ -71,6 +71,26 @@ describe('planilla de asistencia técnica (configuración)', () => {
     expect(await screen.findByText('Verificación y limpieza de la botonera.')).toBeInTheDocument();
     expect(llamadas.find((l) => l.metodo === 'POST' && l.ruta === '/planilla/items').cuerpo).toMatchObject({ seccion_id: 1, nombre: 'Verificación y limpieza de la botonera.', critico: false });
   });
+
+  it('desactiva una sección con el interruptor y la muestra atenuada', async () => {
+    const llamadas = simularApi({
+      '/perfil': { datos: { id: 1, nombre: 'Admin', rol: { nombre: 'administrador', permisos: ['configuracion.editar'] } } },
+      'GET /planilla/plantilla': { datos: plantilla.map((s) => ({ ...s, habilitada: true })) },
+      'PATCH /planilla/secciones/2': { datos: [{ ...plantilla[0], habilitada: true }, { ...plantilla[1], habilitada: false }], mensaje: 'Sección «En foso» desactivada.' },
+    });
+    montar(<PlantillaPlanilla />);
+
+    const interruptor = await screen.findByRole('switch', { name: 'Desactivar la sección En foso' });
+    expect(interruptor).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByText(/2 secciones activas · 2 actividades/)).toBeInTheDocument();
+
+    await userEvent.click(interruptor);
+    expect(await screen.findByRole('switch', { name: 'Activar la sección En foso' })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('region', { name: 'En foso (desactivada)' })).toBeInTheDocument();
+    expect(screen.getByText(/1 sección activa · 1 actividad · 1 desactivada/)).toBeInTheDocument();
+    expect(llamadas.find((l) => l.metodo === 'PATCH' && l.ruta === '/planilla/secciones/2').cuerpo).toEqual({ habilitada: false });
+    expect(llamadas.find((l) => l.ruta === '/planilla/plantilla')).toBeTruthy();
+  });
 });
 
 describe('asistente', () => {

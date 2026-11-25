@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -29,6 +30,12 @@ class ChecklistItem extends Model
     protected function casts(): array
     {
         return ['critico' => 'boolean', 'activo' => 'boolean', 'orden' => 'integer'];
+    }
+
+    /** Actividades que hoy se diligencian: activas y de una sección en uso (no quitada ni desactivada). */
+    public function scopeVigentes(Builder $consulta): Builder
+    {
+        return $consulta->where('activo', true)->whereIn('seccion', ChecklistSeccion::enUso()->select('clave'));
     }
 
     public function nombreSeccion(): string

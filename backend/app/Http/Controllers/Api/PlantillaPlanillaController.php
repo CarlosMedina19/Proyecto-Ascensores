@@ -18,14 +18,18 @@ use Illuminate\Support\Str;
  * Plantilla de la «Planilla de asistencia técnica». Todos la consultan (el técnico la diligencia);
  * solo quien edita la configuración (administrador) agrega, cambia, ordena o quita secciones y actividades.
  * Lo que se quita y ya tiene planillas diligenciadas queda inactivo para conservar el historial.
+ * Una sección también se puede desactivar y volver a activar (botón): conserva sus actividades.
  */
 class PlantillaPlanillaController extends Controller
 {
     public function __construct(private readonly VisitaTecnicaService $visitas) {}
 
-    public function index(): JsonResponse
+    /** ?todas=1 (solo quien edita la configuración) incluye las secciones desactivadas. */
+    public function index(Request $solicitud): JsonResponse
     {
-        return response()->json(['datos' => $this->visitas->plantilla(), 'base' => PlantillaPlanilla::totalActividades()]);
+        $todas = $solicitud->boolean('todas') && $solicitud->user()->tienePermiso('configuracion.editar');
+
+        return response()->json(['datos' => $this->visitas->plantilla($todas), 'base' => PlantillaPlanilla::totalActividades()]);
     }
 
     public function guardarSeccion(Request $solicitud): JsonResponse
@@ -49,9 +53,22 @@ class PlantillaPlanillaController extends Controller
         $datos = $solicitud->validate([
             'nombre' => ['sometimes', 'required', 'string', 'max:100'],
             'mover' => ['sometimes', 'in:arriba,abajo'],
+            'habilitada' => ['sometimes', 'boolean'],
         ]);
+        abort_unless($seccion->activo, 404);
         if (isset($datos['nombre'])) {
             $seccion->update(['nombre' => trim($datos['nombre'])]);
+        }
+        if (array_key_exists('habilitada', $datos) && (bool) $datos['habilitada'] !== $seccion->habilitada) {
+            if (! $datos['habilitada'] && $this->ultimaEnUso($seccion)) {
+                throw new ReglaNegocioException('La planilla debe tener al menos una sección activa.');
+            }
+            $seccion->update(['habilitada' => (bool) $datos['habilitada']]);
+            RegistroAuditoriaService::registrar('actualizado', $seccion, ['habilitada' => $seccion->habilitada], null, 'configuracion');
+
+            return $this->respuesta($seccion->habilitada
+                ? "Sección «{$seccion->nombre}» activada: vuelve a las planillas nuevas."
+                : "Sección «{$seccion->nombre}» desactivada: no aparece en las planillas nuevas. Sus actividades se conservan.");
         }
         if (isset($datos['mover'])) {
             $this->mover(ChecklistSeccion::where('activo', true)->orderBy('orden')->orderBy('id')->get(), $seccion->id, $datos['mover']);
@@ -64,8 +81,9 @@ class PlantillaPlanillaController extends Controller
     public function eliminarSeccion(Request $solicitud, ChecklistSeccion $seccion): JsonResponse
     {
         $this->exigirEdicion($solicitud);
-        if (ChecklistSeccion::where('activo', true)->count() <= 1) {
-            throw new ReglaNegocioException('La planilla debe tener al menos una sección.');
+        abort_unless($seccion->activo, 404);
+        if ($this->ultimaEnUso($seccion)) {
+            throw new ReglaNegocioException('La planilla debe tener al menos una sección activa.');
         }
         DB::transaction(function () use ($seccion) {
             foreach (ChecklistItem::where('seccion', $seccion->clave)->get() as $item) {
@@ -137,7 +155,7 @@ class PlantillaPlanillaController extends Controller
             ChecklistSeccion::query()->update(['activo' => false]);
             $orden = 0;
             foreach (PlantillaPlanilla::SECCIONES as $clave => [$nombre, $actividades]) {
-                ChecklistSeccion::updateOrCreate(['clave' => $clave], ['nombre' => $nombre, 'orden' => ++$orden, 'activo' => true]);
+                ChecklistSeccion::updateOrCreate(['clave' => $clave], ['nombre' => $nombre, 'orden' => ++$orden, 'activo' => true, 'habilitada' => true]);
                 foreach ($actividades as $indice => [$codigo, $actividad, $critica]) {
                     ChecklistItem::updateOrCreate(['codigo' => $codigo], ['seccion' => $clave, 'nombre' => $actividad, 'orden' => $indice + 1, 'critico' => $critica, 'activo' => true]);
                 }
@@ -148,6 +166,12 @@ class PlantillaPlanillaController extends Controller
         return $this->respuesta('Se restableció la planilla original.');
     }
 
+    /** ¿Es la única sección que hoy se diligencia? */
+    private function ultimaEnUso(ChecklistSeccion $seccion): bool
+    {
+        return ChecklistSeccion::enUso()->whereKeyNot($seccion->id)->doesntExist();
+    }
+
     private function exigirEdicion(Request $solicitud): void
     {
         abort_unless($solicitud->user()->tienePermiso('configuracion.editar'), 403, 'Solo el administrador edita la planilla.');
@@ -155,7 +179,7 @@ class PlantillaPlanillaController extends Controller
 
     private function respuesta(string $mensaje, int $estado = 200): JsonResponse
     {
-        return response()->json(['datos' => $this->visitas->plantilla(), 'mensaje' => $mensaje], $estado);
+        return response()->json(['datos' => $this->visitas->plantilla(true), 'mensaje' => $mensaje], $estado);
     }
 
     /** Sin planillas que la usen se borra; si ya se usó, queda inactiva (el historial no cambia). */

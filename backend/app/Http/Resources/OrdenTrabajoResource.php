@@ -85,8 +85,10 @@ class OrdenTrabajoResource extends RecursoApi
     /** Avance de la planilla para mostrar en la orden sin cargar todos los ítems. */
     private function resumenPlanilla(): array
     {
-        $total = ChecklistItem::where('activo', true)->count();
-        $resultados = $this->planilla?->resultados ?? collect();
+        $vigentes = ChecklistItem::vigentes()->pluck('id')->flip();
+        $total = $vigentes->count();
+        // Solo cuentan los resultados de actividades que hoy se diligencian (no las de secciones desactivadas).
+        $resultados = ($this->planilla?->resultados ?? collect())->filter(fn ($r) => $vigentes->has($r->item_id));
 
         return [
             'iniciada' => $this->planilla !== null,

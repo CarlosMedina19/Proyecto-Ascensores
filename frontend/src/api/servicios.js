@@ -232,7 +232,8 @@ export const ordenes = {
 // Fase 4 (RF-030 a RF-039): planilla, fotos, firmas, correctivo derivado e informe PDF
 // Planilla de asistencia técnica: plantilla editable (administrador) y planillas de cada visita.
 export const plantillaPlanilla = {
-  obtener: () => api.obtener('/planilla/plantilla'),
+  // todas=1: también las secciones desactivadas (solo la configuración, para poder activarlas).
+  obtener: () => api.obtener('/planilla/plantilla', { todas: 1 }),
   crearSeccion: (nombre) => api.crear('/planilla/secciones', { nombre }),
   actualizarSeccion: (id, datos) => api.actualizar(`/planilla/secciones/${id}`, datos),
   eliminarSeccion: (id) => api.eliminar(`/planilla/secciones/${id}`),
