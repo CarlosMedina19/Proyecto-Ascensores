@@ -5,6 +5,7 @@ import '../estado/cola_envios.dart';
 import '../widgets/comunes.dart';
 
 String _cambios(int n) => n == 1 ? '1 cambio' : '$n cambios';
+String _guardados(int n) => n == 1 ? '1 cambio guardado' : '$n cambios guardados';
 
 /// Franja sobre la barra inferior: sin conexión, enviando o con cambios por enviar. No ocupa espacio si todo
 /// está al día. Al terminar de enviar avisa cuántos cambios llegaron al servidor.
@@ -38,7 +39,7 @@ class _AvisoConexionState extends State<AvisoConexion> {
   void _alCambiar() {
     final cola = _cola!;
     if (_enviabaAntes && !cola.enviando && cola.enviadosUltimaVez > 0 && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Se enviaron ${_cambios(cola.enviadosUltimaVez)} guardado(s) sin conexión.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(cola.enviadosUltimaVez == 1 ? 'Se envió 1 cambio guardado sin conexión.' : 'Se enviaron ${cola.enviadosUltimaVez} cambios guardados sin conexión.')));
     }
     _enviabaAntes = cola.enviando;
   }
@@ -52,14 +53,14 @@ class _AvisoConexionState extends State<AvisoConexion> {
     if (!cola.sinConexion && pendientes == 0 && rechazados == 0) return const SizedBox.shrink();
 
     final (icono, texto, fondo, tinta) = switch (true) {
-      _ when cola.enviando => (null, 'Enviando ${_cambios(pendientes)} guardado(s) en el celular…', esquema.primaryContainer, esquema.onPrimaryContainer),
+      _ when cola.enviando => (null, 'Enviando ${_guardados(pendientes)} en el celular…', esquema.primaryContainer, esquema.onPrimaryContainer),
       _ when cola.sinConexion => (
         Icons.cloud_off_outlined,
-        pendientes > 0 ? 'Sin conexión · ${_cambios(pendientes)} guardado(s) en el celular' : 'Sin conexión · trabajando con los datos guardados',
+        pendientes > 0 ? 'Sin conexión · ${_guardados(pendientes)} en el celular' : 'Sin conexión · trabajando con los datos guardados',
         esquema.tertiaryContainer,
         esquema.onTertiaryContainer,
       ),
-      _ when rechazados > 0 => (Icons.error_outline, '${_cambios(rechazados)} no se pudo aplicar · Revisar', esquema.errorContainer, esquema.onErrorContainer),
+      _ when rechazados > 0 => (Icons.error_outline, '${rechazados == 1 ? '1 cambio no se pudo aplicar' : '$rechazados cambios no se pudieron aplicar'} · Revisar', esquema.errorContainer, esquema.onErrorContainer),
       _ => (Icons.cloud_upload_outlined, '${_cambios(pendientes)} por enviar', esquema.primaryContainer, esquema.onPrimaryContainer),
     };
 
