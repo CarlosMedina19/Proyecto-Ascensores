@@ -7,6 +7,7 @@ import '../datos/modelos.dart';
 import '../estado/sesion.dart';
 import '../tema.dart';
 import '../widgets/comunes.dart';
+import 'envios_pendientes.dart';
 import 'equipos.dart';
 
 /// Colores de estado de las emergencias (mismos del panel web).
@@ -313,107 +314,115 @@ class _PantallaDetalleEmergenciaState extends State<PantallaDetalleEmergencia> {
                 ),
               ),
             ),
-      body: RefreshIndicator(
-        onRefresh: _cargar,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-          children: [
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                Insignia(texto: e.nombreEstado, color: colorEstadoEmergencia(e.estado)),
-                Insignia(texto: e.nombreTipo, color: e.personasAtrapadas ? SigmaColores.malo : SigmaColores.regular),
-              ],
-            ),
-            if (e.personasAtrapadas && e.abierta) ...[
-              const SizedBox(height: 12),
-              Card(
-                color: colorSegunModo(context, SigmaColores.malo).withValues(alpha: 0.12),
-                child: const Padding(
-                  padding: EdgeInsets.all(14),
-                  child: Text('Hay personas atrapadas. Mantenga la comunicación por el citófono de la cabina hasta liberarlas.'),
-                ),
-              ),
-            ],
-            if (e.estado != 'cancelada') ...[
-              const SizedBox(height: 16),
-              AvanceEtapas(
-                etapas: const ['Reportada', 'En camino', 'En sitio', 'Resuelta'],
-                actual: const {'reportada': 0, 'asignada': 1, 'en_sitio': 2, 'resuelta': 3}[e.estado] ?? 0,
-              ),
-            ],
-            const SizedBox(height: 14),
-            Seccion(
-              titulo: 'Tiempo de respuesta',
-              hijos: [
-                Text(
-                  tiempoEmergencia(e),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: e.dentroObjetivo == false ? colorSegunModo(context, SigmaColores.malo) : null,
+      body: Column(
+        children: [
+          // Sin conexión o con cambios guardados en el celular por enviar.
+          const AvisoConexion(),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _cargar,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                children: [
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      Insignia(texto: e.nombreEstado, color: colorEstadoEmergencia(e.estado)),
+                      Insignia(texto: e.nombreTipo, color: e.personasAtrapadas ? SigmaColores.malo : SigmaColores.regular),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                Datos([
-                  ('Reportada', fechaHora(e.reportadaEn)),
-                  ('Objetivo de llegada', '${e.minutosObjetivo} min'),
-                  ('Llegada', e.llegadaEn == null ? 'Pendiente' : fechaHora(e.llegadaEn)),
-                  ('Resuelta', fechaHora(e.resueltaEn)),
-                ]),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Seccion(
-              titulo: 'Reporte',
-              accion: e.equipoId == null
-                  ? null
-                  : TextButton(
-                      onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PantallaDetalleEquipo(equipoId: e.equipoId!))),
-                      child: const Text('Ver ascensor'),
+                  if (e.personasAtrapadas && e.abierta) ...[
+                    const SizedBox(height: 12),
+                    Card(
+                      color: colorSegunModo(context, SigmaColores.malo).withValues(alpha: 0.12),
+                      child: const Padding(
+                        padding: EdgeInsets.all(14),
+                        child: Text('Hay personas atrapadas. Mantenga la comunicación por el citófono de la cabina hasta liberarlas.'),
+                      ),
                     ),
-              hijos: [
-                Datos([
-                  ('Ascensor', e.equipoCodigo),
-                  ('Edificio', e.edificioNombre),
-                  ('Ubicación', e.ubicacion),
-                  ('Cliente', e.clienteNombre),
-                  ('Quién reportó', e.reportanteNombre),
-                  ('Teléfono', e.reportanteTelefono),
-                  ('Técnico', e.tecnicoNombre ?? 'Sin asignar'),
-                  ('Orden de trabajo', e.ordenNumero),
-                ]),
-                if (e.descripcion != null && e.descripcion!.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  const Etiqueta('Descripción'),
-                  const SizedBox(height: 4),
-                  Text(e.descripcion!),
-                ],
-                if (e.solucion != null && e.solucion!.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  const Etiqueta('Solución'),
-                  const SizedBox(height: 4),
-                  Text(e.solucion!),
-                ],
-              ],
-            ),
-            const SizedBox(height: 12),
-            Seccion(
-              titulo: 'Seguimiento',
-              hijos: [
-                for (final s in e.seguimiento)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    leading: Icon(Icons.circle, size: 10, color: colorSegunModo(context, colorEstadoEmergencia(s.estado))),
-                    minLeadingWidth: 12,
-                    title: Text(s.nota ?? nombresEstadoEmergencia[s.estado] ?? s.estado),
-                    subtitle: Text([fechaHora(s.fecha), ?s.usuario].join(' · ')),
+                  ],
+                  if (e.estado != 'cancelada') ...[
+                    const SizedBox(height: 16),
+                    AvanceEtapas(
+                      etapas: const ['Reportada', 'En camino', 'En sitio', 'Resuelta'],
+                      actual: const {'reportada': 0, 'asignada': 1, 'en_sitio': 2, 'resuelta': 3}[e.estado] ?? 0,
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  Seccion(
+                    titulo: 'Tiempo de respuesta',
+                    hijos: [
+                      Text(
+                        tiempoEmergencia(e),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: e.dentroObjetivo == false ? colorSegunModo(context, SigmaColores.malo) : null,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Datos([
+                        ('Reportada', fechaHora(e.reportadaEn)),
+                        ('Objetivo de llegada', '${e.minutosObjetivo} min'),
+                        ('Llegada', e.llegadaEn == null ? 'Pendiente' : fechaHora(e.llegadaEn)),
+                        ('Resuelta', fechaHora(e.resueltaEn)),
+                      ]),
+                    ],
                   ),
-              ],
+                  const SizedBox(height: 12),
+                  Seccion(
+                    titulo: 'Reporte',
+                    accion: e.equipoId == null
+                        ? null
+                        : TextButton(
+                            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PantallaDetalleEquipo(equipoId: e.equipoId!))),
+                            child: const Text('Ver ascensor'),
+                          ),
+                    hijos: [
+                      Datos([
+                        ('Ascensor', e.equipoCodigo),
+                        ('Edificio', e.edificioNombre),
+                        ('Ubicación', e.ubicacion),
+                        ('Cliente', e.clienteNombre),
+                        ('Quién reportó', e.reportanteNombre),
+                        ('Teléfono', e.reportanteTelefono),
+                        ('Técnico', e.tecnicoNombre ?? 'Sin asignar'),
+                        ('Orden de trabajo', e.ordenNumero),
+                      ]),
+                      if (e.descripcion != null && e.descripcion!.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        const Etiqueta('Descripción'),
+                        const SizedBox(height: 4),
+                        Text(e.descripcion!),
+                      ],
+                      if (e.solucion != null && e.solucion!.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        const Etiqueta('Solución'),
+                        const SizedBox(height: 4),
+                        Text(e.solucion!),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Seccion(
+                    titulo: 'Seguimiento',
+                    hijos: [
+                      for (final s in e.seguimiento)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          leading: Icon(Icons.circle, size: 10, color: colorSegunModo(context, colorEstadoEmergencia(s.estado))),
+                          minLeadingWidth: 12,
+                          title: Text(s.nota ?? nombresEstadoEmergencia[s.estado] ?? s.estado),
+                          subtitle: Text([fechaHora(s.fecha), ?s.usuario].join(' · ')),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

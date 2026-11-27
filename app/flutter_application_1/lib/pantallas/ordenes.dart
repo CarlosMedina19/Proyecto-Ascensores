@@ -7,6 +7,7 @@ import '../estado/sesion.dart';
 import '../estado/ubicacion.dart';
 import '../tema.dart';
 import '../widgets/comunes.dart';
+import 'envios_pendientes.dart';
 import 'equipos.dart';
 import 'planilla.dart';
 
@@ -353,143 +354,151 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
                 ),
               ),
             ),
-      body: RefreshIndicator(
-        onRefresh: _cargar,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-          children: [
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                Insignia(texto: orden.nombreServicio, color: colorServicio(orden.servicio)),
-                Insignia(texto: 'Prioridad ${orden.nombrePrioridad.toLowerCase()}', color: colorPrioridad(orden.prioridad)),
-                Insignia(texto: orden.nombreEstado, color: colorEstadoOrden(orden.estado)),
-                if (porEnviar > 0) Insignia(texto: porEnviar == 1 ? '1 cambio por enviar' : '$porEnviar cambios por enviar', color: SigmaColores.regular),
-              ],
-            ),
-            if (_estadoUbicacion != EstadoUbicacion.inactivo) ...[
-              const SizedBox(height: 10),
-              _AvisoUbicacion(estado: _estadoUbicacion),
-            ],
-            if (orden.estado != 'cancelada') ...[
-              const SizedBox(height: 16),
-              AvanceEtapas(
-                etapas: ['Programada', 'Asignada', 'En camino', orden.estado == 'pendiente' ? 'Pendiente' : 'En proceso', 'Finalizada'],
-                actual:
-                    const {
-                      'programada': 0,
-                      'asignada': 1,
-                      'en_camino': 2,
-                      'en_proceso': 3,
-                      'pendiente': 3,
-                      'finalizada': 4,
-                    }[orden.estado] ??
-                    0,
-              ),
-            ],
-            if (orden.estado == 'cancelada' && orden.motivoCancelacion != null) ...[
-              const SizedBox(height: 10),
-              Text('Cancelada: ${orden.motivoCancelacion}'),
-            ],
-            const SizedBox(height: 14),
-            Seccion(
-              titulo: 'Datos de la orden',
-              accion: orden.equipoId == null
-                  ? null
-                  : TextButton(
-                      onPressed: () =>
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => PantallaDetalleEquipo(equipoId: orden.equipoId!))),
-                      child: const Text('Ver ascensor'),
-                    ),
-              hijos: [
-                Datos([
-                  ('Ascensor', orden.equipoCodigo),
-                  ('Edificio', orden.edificioNombre),
-                  ('Dirección', orden.direccion),
-                  ('Cliente', orden.clienteNombre),
-                  ('Fecha', fecha(orden.fecha)),
-                  ('Horario', '${orden.hora}–${orden.finEstimado ?? ''}'),
-                ]),
-                if (orden.descripcion != null && orden.descripcion!.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  const Etiqueta('Trabajo a realizar'),
-                  const SizedBox(height: 4),
-                  Text(orden.descripcion!),
-                ],
-              ],
-            ),
-            const SizedBox(height: 12),
-            Seccion(
-              titulo: 'Tiempos',
-              hijos: [
-                Datos([
-                  ('Inicio', orden.inicioEn == null ? 'Al iniciar el trabajo' : fechaHora(orden.inicioEn)),
-                  ('Finalización', fechaHora(orden.finEn)),
-                  ('Duración real', duracionTexto(orden.duracionMinutos)),
-                  ('Estimada', duracionTexto(orden.duracionEstimada)),
-                ]),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Seccion(titulo: 'Técnicos', hijos: [Text(orden.tecnicos.isEmpty ? 'Sin técnicos asignados' : orden.tecnicos.join(', '))]),
-            const SizedBox(height: 12),
-            SeccionRepuestos(orden: orden),
-            // Fase 4: planilla del preventivo y firmas (RF-025, RF-030 a RF-039).
-            if (orden.llevaPlanilla || orden.firmas.isNotEmpty || orden.puedeEjecutar) ...[
-              const SizedBox(height: 12),
-              Seccion(
-                titulo: 'Planilla y firmas',
-                hijos: [
-                  if (orden.llevaPlanilla)
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(
-                        orden.planillaCompleta ? Icons.fact_check : Icons.fact_check_outlined,
-                        color: orden.planillaCompleta ? SigmaColores.bueno : SigmaColores.primario,
-                      ),
-                      title: const Text('Planilla de mantenimiento'),
-                      subtitle: Text('${orden.planillaRegistrados}/${orden.planillaTotal} ítems registrados'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _abrir(PantallaPlanilla(orden: orden)),
-                    ),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.draw_outlined, color: SigmaColores.primario),
-                    title: const Text('Firmas'),
-                    subtitle: Text(
-                      [
-                        'Técnico: ${orden.firmas['tecnico'] ?? 'pendiente'}',
-                        'Recibe: ${orden.firmas['cliente'] ?? 'pendiente'}',
-                      ].join('\n'),
-                    ),
-                    trailing: orden.puedeEjecutar && (orden.estado == 'en_proceso' || orden.estado == 'pendiente')
-                        ? const Icon(Icons.chevron_right)
-                        : null,
-                    onTap: orden.puedeEjecutar && (orden.estado == 'en_proceso' || orden.estado == 'pendiente')
-                        ? () => _abrir(PantallaFirmas(orden: orden))
-                        : null,
+      body: Column(
+        children: [
+          // Sin conexión o con cambios guardados en el celular por enviar.
+          const AvisoConexion(),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _cargar,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                children: [
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      Insignia(texto: orden.nombreServicio, color: colorServicio(orden.servicio)),
+                      Insignia(texto: 'Prioridad ${orden.nombrePrioridad.toLowerCase()}', color: colorPrioridad(orden.prioridad)),
+                      Insignia(texto: orden.nombreEstado, color: colorEstadoOrden(orden.estado)),
+                      if (porEnviar > 0) Insignia(texto: porEnviar == 1 ? '1 cambio por enviar' : '$porEnviar cambios por enviar', color: SigmaColores.regular),
+                    ],
                   ),
-                  if (orden.informes > 0) Text('Informe PDF generado (${orden.informes} versión(es)). Disponible en el panel web.'),
+                  if (_estadoUbicacion != EstadoUbicacion.inactivo) ...[
+                    const SizedBox(height: 10),
+                    _AvisoUbicacion(estado: _estadoUbicacion),
+                  ],
+                  if (orden.estado != 'cancelada') ...[
+                    const SizedBox(height: 16),
+                    AvanceEtapas(
+                      etapas: ['Programada', 'Asignada', 'En camino', orden.estado == 'pendiente' ? 'Pendiente' : 'En proceso', 'Finalizada'],
+                      actual:
+                          const {
+                            'programada': 0,
+                            'asignada': 1,
+                            'en_camino': 2,
+                            'en_proceso': 3,
+                            'pendiente': 3,
+                            'finalizada': 4,
+                          }[orden.estado] ??
+                          0,
+                    ),
+                  ],
+                  if (orden.estado == 'cancelada' && orden.motivoCancelacion != null) ...[
+                    const SizedBox(height: 10),
+                    Text('Cancelada: ${orden.motivoCancelacion}'),
+                  ],
+                  const SizedBox(height: 14),
+                  Seccion(
+                    titulo: 'Datos de la orden',
+                    accion: orden.equipoId == null
+                        ? null
+                        : TextButton(
+                            onPressed: () =>
+                                Navigator.of(context).push(MaterialPageRoute(builder: (_) => PantallaDetalleEquipo(equipoId: orden.equipoId!))),
+                            child: const Text('Ver ascensor'),
+                          ),
+                    hijos: [
+                      Datos([
+                        ('Ascensor', orden.equipoCodigo),
+                        ('Edificio', orden.edificioNombre),
+                        ('Dirección', orden.direccion),
+                        ('Cliente', orden.clienteNombre),
+                        ('Fecha', fecha(orden.fecha)),
+                        ('Horario', '${orden.hora}–${orden.finEstimado ?? ''}'),
+                      ]),
+                      if (orden.descripcion != null && orden.descripcion!.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        const Etiqueta('Trabajo a realizar'),
+                        const SizedBox(height: 4),
+                        Text(orden.descripcion!),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Seccion(
+                    titulo: 'Tiempos',
+                    hijos: [
+                      Datos([
+                        ('Inicio', orden.inicioEn == null ? 'Al iniciar el trabajo' : fechaHora(orden.inicioEn)),
+                        ('Finalización', fechaHora(orden.finEn)),
+                        ('Duración real', duracionTexto(orden.duracionMinutos)),
+                        ('Estimada', duracionTexto(orden.duracionEstimada)),
+                      ]),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Seccion(titulo: 'Técnicos', hijos: [Text(orden.tecnicos.isEmpty ? 'Sin técnicos asignados' : orden.tecnicos.join(', '))]),
+                  const SizedBox(height: 12),
+                  SeccionRepuestos(orden: orden),
+                  // Fase 4: planilla del preventivo y firmas (RF-025, RF-030 a RF-039).
+                  if (orden.llevaPlanilla || orden.firmas.isNotEmpty || orden.puedeEjecutar) ...[
+                    const SizedBox(height: 12),
+                    Seccion(
+                      titulo: 'Planilla y firmas',
+                      hijos: [
+                        if (orden.llevaPlanilla)
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              orden.planillaCompleta ? Icons.fact_check : Icons.fact_check_outlined,
+                              color: orden.planillaCompleta ? SigmaColores.bueno : SigmaColores.primario,
+                            ),
+                            title: const Text('Planilla de mantenimiento'),
+                            subtitle: Text('${orden.planillaRegistrados}/${orden.planillaTotal} ítems registrados'),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => _abrir(PantallaPlanilla(orden: orden)),
+                          ),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.draw_outlined, color: SigmaColores.primario),
+                          title: const Text('Firmas'),
+                          subtitle: Text(
+                            [
+                              'Técnico: ${orden.firmas['tecnico'] ?? 'pendiente'}',
+                              'Recibe: ${orden.firmas['cliente'] ?? 'pendiente'}',
+                            ].join('\n'),
+                          ),
+                          trailing: orden.puedeEjecutar && (orden.estado == 'en_proceso' || orden.estado == 'pendiente')
+                              ? const Icon(Icons.chevron_right)
+                              : null,
+                          onTap: orden.puedeEjecutar && (orden.estado == 'en_proceso' || orden.estado == 'pendiente')
+                              ? () => _abrir(PantallaFirmas(orden: orden))
+                              : null,
+                        ),
+                        if (orden.informes > 0) Text('Informe PDF generado (${orden.informes} versión(es)). Disponible en el panel web.'),
+                      ],
+                    ),
+                  ],
+                  if (orden.informe != null) ...[
+                    const SizedBox(height: 12),
+                    Seccion(titulo: 'Informe del trabajo', hijos: [Text(orden.informe!)]),
+                  ],
+                  const SizedBox(height: 12),
+                  Seccion(
+                    titulo: 'Trazabilidad',
+                    hijos: [
+                      if (orden.trazabilidad.isEmpty)
+                        const EstadoVacio(titulo: 'Sin cambios registrados', icono: Icons.history)
+                      else
+                        LineaTiempo(eventos: orden.trazabilidad),
+                    ],
+                  ),
                 ],
               ),
-            ],
-            if (orden.informe != null) ...[
-              const SizedBox(height: 12),
-              Seccion(titulo: 'Informe del trabajo', hijos: [Text(orden.informe!)]),
-            ],
-            const SizedBox(height: 12),
-            Seccion(
-              titulo: 'Trazabilidad',
-              hijos: [
-                if (orden.trazabilidad.isEmpty)
-                  const EstadoVacio(titulo: 'Sin cambios registrados', icono: Icons.history)
-                else
-                  LineaTiempo(eventos: orden.trazabilidad),
-              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
