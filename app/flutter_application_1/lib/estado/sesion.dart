@@ -129,7 +129,9 @@ class Sesion extends ChangeNotifier {
       if (token != null) {
         repositorio.api.token = token;
         try {
-          usuario = await repositorio.perfil();
+          // Sin conexión se usa el último perfil guardado: el técnico sigue trabajando y sus cambios quedan en cola.
+          usuario = await repositorio.perfil(permitirCopia: true);
+          _activarCola();
           _iniciarReloj();
         } catch (_) {
           repositorio.api.token = null;
@@ -166,8 +168,15 @@ class Sesion extends ChangeNotifier {
     minutosInactividad = minutos;
     usuario = nuevo;
     motivoCierre = null;
+    _activarCola();
     _iniciarReloj();
     notifyListeners();
+  }
+
+  /// Los cambios guardados sin conexión son de cada usuario: se envían los suyos al entrar.
+  void _activarCola() {
+    repositorio.cola.usuarioId = usuario?.id;
+    repositorio.cola.sincronizar();
   }
 
   Future<void> cerrarSesion([String? motivo]) => _terminar(motivo, avisarServidor: true);
@@ -223,6 +232,8 @@ class Sesion extends ChangeNotifier {
     }
     repositorio.api.token = null;
     await _almacen.borrar();
+    // Los cambios sin enviar quedan en el celular y se envían cuando ese usuario vuelva a entrar.
+    repositorio.cola.usuarioId = null;
     usuario = null;
     segundosParaCierre = null;
     motivoCierre = motivo;
@@ -236,6 +247,9 @@ class Sesion extends ChangeNotifier {
     super.dispose();
   }
 }
+
+/// Aviso cuando un cambio quedó guardado sin conexión.
+const textoGuardadoSinConexion = 'Guardado en el celular: se enviará solo al tener conexión.';
 
 /// Mensaje legible para mostrar en pantalla a partir de cualquier error.
 String mensajeError(Object error) => error is ErrorApi ? error.mensaje : 'Ocurrió un error inesperado.';

@@ -95,11 +95,13 @@ class _PantallaPlanillaState extends State<PantallaPlanilla> {
     }
     setState(() => _guardando = true);
     try {
-      final planilla = await context.read<Sesion>().repositorio.guardarPlanilla(
+      final guardado = await context.read<Sesion>().repositorio.guardarPlanilla(
         widget.orden.id,
         Map.of(_cambios),
         recomendaciones: _recomendaciones.text.trim().isEmpty ? null : _recomendaciones.text.trim(),
+        referencia: widget.orden.numero,
       );
+      final planilla = guardado.valor;
       if (!mounted) return;
       setState(() {
         _cambios.clear();
@@ -108,7 +110,11 @@ class _PantallaPlanillaState extends State<PantallaPlanilla> {
       mensajero.showSnackBar(
         SnackBar(
           content: Text(
-            planilla.faltantes == 0 ? 'Planilla guardada y completa.' : 'Planilla guardada. Faltan ${planilla.faltantes} ítems.',
+            guardado.enCola
+                ? 'Planilla guardada en el celular: se enviará sola al tener conexión.'
+                : planilla.faltantes == 0
+                ? 'Planilla guardada y completa.'
+                : 'Planilla guardada. Faltan ${planilla.faltantes} ítems.',
           ),
         ),
       );
@@ -136,8 +142,8 @@ class _PantallaPlanillaState extends State<PantallaPlanilla> {
     try {
       final foto = await ImagePicker().pickImage(source: fuente, maxWidth: 1600, imageQuality: 80);
       if (foto == null) return;
-      await repositorio.subirFotoPlanilla(widget.orden.id, await foto.readAsBytes(), foto.name);
-      mensajero.showSnackBar(const SnackBar(content: Text('Foto agregada.')));
+      final enCola = await repositorio.subirFotoPlanilla(widget.orden.id, await foto.readAsBytes(), foto.name, referencia: widget.orden.numero);
+      mensajero.showSnackBar(SnackBar(content: Text(enCola ? 'Foto guardada en el celular: se enviará sola al tener conexión.' : 'Foto agregada.')));
       _cargar();
     } catch (e) {
       mensajero.showSnackBar(SnackBar(content: Text(mensajeError(e))));
@@ -451,15 +457,16 @@ class _PantallaFirmasState extends State<PantallaFirmas> {
     if (!mounted) return;
     setState(() => _guardando = tipo);
     try {
-      await context.read<Sesion>().repositorio.firmarOrden(
+      final enCola = await context.read<Sesion>().repositorio.firmarOrden(
         widget.orden.id,
         tipo: tipo,
         nombre: nombre,
         pngBase64: base64Encode(png),
         cargo: tipo == 'cliente' && _cargo.text.trim().isNotEmpty ? _cargo.text.trim() : null,
+        referencia: widget.orden.numero,
       );
-      setState(() => _registradas[tipo] = nombre);
-      mensajero.showSnackBar(const SnackBar(content: Text('Firma registrada.')));
+      if (mounted) setState(() => _registradas[tipo] = nombre);
+      mensajero.showSnackBar(SnackBar(content: Text(enCola ? 'Firma guardada en el celular: se enviará sola al tener conexión.' : 'Firma registrada.')));
     } catch (e) {
       mensajero.showSnackBar(SnackBar(content: Text(mensajeError(e))));
     } finally {

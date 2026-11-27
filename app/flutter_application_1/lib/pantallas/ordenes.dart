@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../datos/modelos.dart';
+import '../estado/cola_envios.dart';
 import '../estado/sesion.dart';
 import '../estado/ubicacion.dart';
 import '../tema.dart';
@@ -269,20 +270,24 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
     final mensajero = ScaffoldMessenger.of(context);
     setState(() => _guardando = true);
     try {
-      final orden = await context.read<Sesion>().repositorio.cambiarEstadoOrden(
+      final guardado = await context.read<Sesion>().repositorio.cambiarEstadoOrden(
         widget.ordenId,
         estado,
         motivo: motivo,
         informe: informe,
         observaciones: observaciones,
+        referencia: _orden?.numero,
       );
+      final orden = guardado.valor;
       if (mounted) {
         setState(() {
           _orden = orden;
           _seguirUbicacion(orden);
         });
       }
-      mensajero.showSnackBar(SnackBar(content: Text('Orden ${nombresEstadoOrden[estado]!.toLowerCase()}.')));
+      mensajero.showSnackBar(
+        SnackBar(content: Text(guardado.enCola ? textoGuardadoSinConexion : 'Orden ${nombresEstadoOrden[estado]!.toLowerCase()}.')),
+      );
     } catch (e) {
       mensajero.showSnackBar(SnackBar(content: Text(mensajeError(e))));
     } finally {
@@ -314,6 +319,8 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
     if (orden == null) return Scaffold(appBar: AppBar(), body: const Cargando());
 
     final acciones = orden.puedeEjecutar ? orden.siguientesEstados : const <String>[];
+    // Cambios de esta orden hechos sin conexión que aún no llegan al servidor.
+    final porEnviar = context.watch<ColaEnvios>().delGrupo('orden:${orden.id}').length;
     // "Retomar" es volver a en proceso desde pendiente.
     String textoAccion(String estado) => orden.estado == 'pendiente' && estado == 'en_proceso' ? 'Retomar trabajo' : _acciones[estado]!.$1;
 
@@ -358,6 +365,7 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
                 Insignia(texto: orden.nombreServicio, color: colorServicio(orden.servicio)),
                 Insignia(texto: 'Prioridad ${orden.nombrePrioridad.toLowerCase()}', color: colorPrioridad(orden.prioridad)),
                 Insignia(texto: orden.nombreEstado, color: colorEstadoOrden(orden.estado)),
+                if (porEnviar > 0) Insignia(texto: porEnviar == 1 ? '1 cambio por enviar' : '$porEnviar cambios por enviar', color: SigmaColores.regular),
               ],
             ),
             if (_estadoUbicacion != EstadoUbicacion.inactivo) ...[
@@ -631,8 +639,14 @@ class _SeccionRepuestosState extends State<SeccionRepuestos> {
     );
     if (elegido == null || !mounted) return;
     try {
-      final mensaje = await context.read<Sesion>().repositorio.agregarRepuesto(widget.orden.id, elegido.$1.id, elegido.$2);
-      mensajero.showSnackBar(SnackBar(content: Text(mensaje)));
+      final guardado = await context.read<Sesion>().repositorio.agregarRepuesto(
+        widget.orden.id,
+        elegido.$1.id,
+        elegido.$2,
+        nombre: elegido.$1.nombre,
+        referencia: widget.orden.numero,
+      );
+      mensajero.showSnackBar(SnackBar(content: Text(guardado.valor)));
       _cargar();
     } catch (e) {
       mensajero.showSnackBar(SnackBar(content: Text(mensajeError(e))));
@@ -642,7 +656,8 @@ class _SeccionRepuestosState extends State<SeccionRepuestos> {
   Future<void> _quitar(RepuestoOrden usado) async {
     final mensajero = ScaffoldMessenger.of(context);
     try {
-      await context.read<Sesion>().repositorio.quitarRepuesto(widget.orden.id, usado.id);
+      final enCola = await context.read<Sesion>().repositorio.quitarRepuesto(widget.orden.id, usado.id, referencia: widget.orden.numero);
+      if (enCola) mensajero.showSnackBar(const SnackBar(content: Text(textoGuardadoSinConexion)));
       _cargar();
     } catch (e) {
       mensajero.showSnackBar(SnackBar(content: Text(mensajeError(e))));

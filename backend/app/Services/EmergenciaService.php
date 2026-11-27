@@ -10,6 +10,7 @@ use App\Models\OrdenTrabajo;
 use App\Models\Tecnico;
 use App\Models\Usuario;
 use App\Notifications\EmergenciaNotification;
+use App\Support\MomentoRegistro;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -143,19 +144,22 @@ class EmergenciaService
                 $nota ??= "Asignada a {$tecnico->usuario?->nombre}.";
                 break;
             case 'en_sitio':
-                $cambios['llegada_en'] = now();
+                // Hora real de llegada si la app la guardó sin conexión (no antes del reporte).
+                $cambios['llegada_en'] = MomentoRegistro::desde($datos, $emergencia->reportada_en ?? $emergencia->created_at);
                 if (! $emergencia->tecnico_id && Auth::user()?->tecnico) {
                     $cambios['tecnico_id'] = Auth::user()->tecnico->id;
                 }
                 $nota ??= 'El técnico llegó al sitio.';
+                $nota = trim($nota.' '.MomentoRegistro::nota($cambios['llegada_en']));
                 break;
             case 'resuelta':
                 if (blank($datos['solucion'] ?? null)) {
                     throw new ReglaNegocioException('Describa qué se hizo para resolver la emergencia.');
                 }
-                $cambios += ['resuelta_en' => now(), 'solucion' => $datos['solucion']];
+                $resuelta = MomentoRegistro::desde($datos, $emergencia->llegada_en ?? $emergencia->reportada_en);
+                $cambios += ['resuelta_en' => $resuelta, 'solucion' => $datos['solucion']];
                 // Si se resolvió sin marcar la llegada, la llegada es el cierre.
-                $cambios['llegada_en'] = $emergencia->llegada_en ?? now();
+                $cambios['llegada_en'] = $emergencia->llegada_en ?? $resuelta;
                 $nota ??= $datos['solucion'];
                 break;
             case 'cancelada':

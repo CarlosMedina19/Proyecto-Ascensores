@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Orden;
 
 use App\Models\OrdenTrabajo;
+use App\Support\MomentoRegistro;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -39,6 +40,8 @@ class AccionOrdenRequest extends FormRequest
                 'motivo' => ['nullable', 'required_if:estado,pendiente', 'string', 'min:5', 'max:1000'],
                 'informe' => ['nullable', 'required_if:estado,finalizada', 'string', 'min:10', 'max:10000'],
                 'observaciones' => ['nullable', 'string', 'max:5000'],
+                // Hora real del cambio cuando la app lo guardó sin conexión.
+                'ocurrido_en' => MomentoRegistro::REGLA,
             ],
             default => [],
         };

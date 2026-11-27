@@ -120,6 +120,15 @@ cd ../analitica && pip install -r requirements-pruebas.txt && python -m pytest -
   actividades; al activarla vuelve igual. Siempre queda al menos una sección activa. La configuración la ve con
   `GET /planilla/plantilla?todas=1`; los demás reciben solo las secciones activas.
 
+## Trabajo sin conexión de la app
+
+- `X-Clave-Envio` (middleware `EnvioSinDuplicados`): la app manda una clave única en cada cambio guardado sin conexión;
+  si lo reintenta, el servidor devuelve la misma respuesta sin volver a ejecutarlo (7 días, por usuario).
+- `ocurrido_en` en `PATCH /ordenes/{id}/estado` y `POST /emergencias/{id}/estado`: hora real del cambio
+  (`App\Support\MomentoRegistro`). Se acepta hasta 7 días atrás; una hora futura se cambia por la del servidor y nunca
+  queda antes del paso anterior. La trazabilidad agrega «Registrado sin conexión el …». Las planillas de visita ya
+  traen sus horas de entrada y salida.
+
 ## Object Storage (archivos)
 
 Fotos, firmas, certificados, informes y planillas en PDF se guardan en el disco que indique `SIGMA_DISCO_ARCHIVOS`:

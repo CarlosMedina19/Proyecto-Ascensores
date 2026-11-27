@@ -25,6 +25,7 @@ use App\Services\EmergenciaService;
 use App\Services\IndicadoresServicioService;
 use App\Services\OrdenTrabajoService;
 use App\Support\Archivos;
+use App\Support\MomentoRegistro;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -257,6 +258,7 @@ class ServicioController extends Controller
             'tecnico_id' => ['nullable', 'integer', Rule::exists('tecnicos', 'id')],
             'nota' => ['nullable', 'string', 'max:1000'],
             'solucion' => ['nullable', 'string', 'max:2000'],
+            'ocurrido_en' => MomentoRegistro::REGLA,
         ]);
         $propia = $usuario->tecnico && $emergencia->tecnico_id === $usuario->tecnico->id;
         $puede = $usuario->tienePermiso('emergencias.gestionar')

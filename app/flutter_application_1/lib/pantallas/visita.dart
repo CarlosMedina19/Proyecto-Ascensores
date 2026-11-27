@@ -152,11 +152,16 @@ class _PantallaVisitaState extends State<PantallaVisita> {
     }
     setState(() => _enviando = true);
     try {
-      final resultado = await context.read<Sesion>().repositorio.registrarVisita(widget.equipo.id, visita.paraEnviar());
+      final guardado = await context.read<Sesion>().repositorio.registrarVisita(widget.equipo.id, visita.paraEnviar(), codigo: widget.equipo.codigo);
+      // Enviada o en la cola de envíos (que ya lleva todos los datos): el borrador ya no hace falta.
       await _almacen.borrar(widget.equipo.id);
       _visita = null;
       if (!mounted) return;
-      _aviso('Planilla N.º ${resultado['numero']} registrada. El PDF quedó en la ficha del ascensor.');
+      _aviso(
+        guardado.enCola
+            ? 'Sin conexión: la planilla quedó lista en el celular y se enviará sola al tener internet. El PDF se genera al llegar.'
+            : 'Planilla N.º ${guardado.valor?['numero']} registrada. El PDF quedó en la ficha del ascensor.',
+      );
       Navigator.of(context).pop(true);
     } catch (e) {
       _aviso('${mensajeError(e)} La planilla sigue guardada en el dispositivo.');

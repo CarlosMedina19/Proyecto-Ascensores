@@ -10,6 +10,7 @@ use App\Models\OrdenTrabajo;
 use App\Models\Tecnico;
 use App\Models\TrazabilidadOrden;
 use App\Models\Usuario;
+use App\Support\MomentoRegistro;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -314,12 +315,14 @@ class OrdenTrabajoService
         }
 
         return DB::transaction(function () use ($orden, $estado, $datos) {
+            // Hora real del cambio: la que trae la app si lo guardó sin conexión (nunca antes del inicio).
+            $momento = MomentoRegistro::desde($datos, $estado === 'finalizada' ? $orden->inicio_en : null);
             $cambios = [];
             if ($estado === 'en_proceso' && ! $orden->inicio_en) {
-                $cambios['inicio_en'] = now();
+                $cambios['inicio_en'] = $momento;
             }
             if ($estado === 'finalizada') {
-                $fin = now();
+                $fin = $momento;
                 $inicio = $orden->inicio_en ?? $fin;
                 $cambios += [
                     'fin_en' => $fin,
@@ -332,7 +335,8 @@ class OrdenTrabajoService
                 $orden->update($cambios);
             }
 
-            $this->cambiar($orden, $estado, $datos['motivo'] ?? null);
+            $detalle = trim(implode(' ', array_filter([$datos['motivo'] ?? null, MomentoRegistro::nota($momento)])));
+            $this->cambiar($orden, $estado, $detalle !== '' ? $detalle : null);
 
             if (isset($cambios['inicio_en'])) {
                 $this->trazar($orden, 'inicio_registrado', 'inicio_en', null, $orden->inicio_en->toIso8601String());

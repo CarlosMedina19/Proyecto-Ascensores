@@ -43,6 +43,8 @@ class SigmaApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: sesion),
+        // Cambios del técnico guardados sin conexión (se envían solos al volver la conexión).
+        ChangeNotifierProvider.value(value: sesion.repositorio.cola),
         ChangeNotifierProvider.value(value: preferencias),
       ],
       child: Consumer<Preferencias>(

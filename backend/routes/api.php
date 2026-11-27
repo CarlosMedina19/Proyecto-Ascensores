@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\TecnicoController;
 use App\Http\Controllers\Api\UbicacionController;
 use App\Http\Controllers\Api\UsuarioController;
 use App\Http\Controllers\Api\VisitaTecnicaController;
+use App\Http\Middleware\EnvioSinDuplicados;
 use App\Http\Middleware\LimitarTokenAsistente;
 use Illuminate\Support\Facades\Route;
 
@@ -59,7 +60,8 @@ Route::post('/publico/asistente', [AsistenteController::class, 'publico'])->midd
 // Eventos de la pasarela Wompi (PSE): sin sesión, firmados con el secreto de eventos.
 Route::post('/publico/wompi/eventos', [PagoEnLineaController::class, 'evento'])->middleware('throttle:60,1');
 
-Route::middleware(['auth:sanctum', LimitarTokenAsistente::class])->group(function () {
+// EnvioSinDuplicados: los cambios que la app guardó sin conexión no se aplican dos veces al reintentarlos.
+Route::middleware(['auth:sanctum', LimitarTokenAsistente::class, EnvioSinDuplicados::class])->group(function () {
     // Asistente del panel: responde según el rol; el agente de n8n consulta datos por /asistente/herramienta.
     Route::post('/asistente', [AsistenteController::class, 'panel'])->middleware('throttle:30,1');
     Route::post('/asistente/herramienta', [AsistenteController::class, 'herramienta'])->name('asistente.herramienta')->middleware('throttle:60,1');

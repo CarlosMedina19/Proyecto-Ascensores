@@ -49,8 +49,9 @@ class VisitaTecnicaController extends Controller
         $this->authorize('agregarHistorial', $equipo);
         $datos = $solicitud->validate([
             'tipo_servicio' => ['required', Rule::in(array_keys(VisitaTecnica::TIPOS))],
-            'entrada_en' => ['required', 'date', 'before_or_equal:now'],
-            'salida_en' => ['nullable', 'date', 'before_or_equal:now'],
+            // Margen de 10 minutos por si el reloj del celular va adelantado (el servicio usa la hora del servidor).
+            'entrada_en' => ['required', 'date', 'before_or_equal:+10 minutes'],
+            'salida_en' => ['nullable', 'date', 'before_or_equal:+10 minutes'],
             'resultados' => ['required', 'array', 'min:1', 'max:300'],
             'resultados.*.item_id' => ['required', 'integer'],
             'resultados.*.ins' => ['nullable', 'boolean'],

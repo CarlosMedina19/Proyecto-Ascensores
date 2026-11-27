@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 
 import '../datos/cliente_api.dart';
 import '../datos/modelos.dart';
+import '../estado/cola_envios.dart';
 import '../estado/sesion.dart';
 import '../estado/visitas.dart';
 import '../widgets/comunes.dart';
+import 'envios_pendientes.dart';
 import 'equipos.dart';
 
 /// Pestaña del técnico: planillas por enviar (guardadas en el celular, funcionan sin conexión) y las ya enviadas.
@@ -44,6 +46,8 @@ class _PantallaVisitasState extends State<PantallaVisitas> {
   @override
   Widget build(BuildContext context) {
     final esquema = Theme.of(context).colorScheme;
+    // Planillas terminadas sin conexión: esperan en la cola y se envían solas.
+    final enCola = [for (final e in context.watch<ColaEnvios>().envios) if (e.grupo.startsWith('visita:')) e];
     return Scaffold(
       appBar: AppBar(title: const Text('Visitas')),
       body: RefreshIndicator(
@@ -61,6 +65,20 @@ class _PantallaVisitasState extends State<PantallaVisitas> {
             ),
             const SizedBox(height: 18),
             const _Titulo('Por enviar', 'Guardadas en este celular: funcionan sin conexión. Ábralas para completarlas y enviarlas.'),
+            for (final envio in enCola)
+              Card(
+                child: ListTile(
+                  leading: Icon(envio.rechazado ? Icons.error_outline : Icons.cloud_upload_outlined, color: envio.rechazado ? esquema.error : esquema.primary),
+                  title: Text(envio.descripcion, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text(
+                    envio.rechazado
+                        ? 'No se aplicó: ${envio.error ?? 'el servidor la rechazó'}'
+                        : 'Terminada ${fechaHora(envio.creadoEn)} · se enviará sola al tener conexión',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PantallaEnviosPendientes())),
+                ),
+              ),
             FutureBuilder<List<VisitaBorrador>>(
               future: _pendientes,
               builder: (context, instantanea) {

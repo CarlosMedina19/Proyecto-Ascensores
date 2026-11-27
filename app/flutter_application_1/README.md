@@ -32,6 +32,19 @@ plugins en Windows active el Modo de desarrollador (`start ms-settings:developer
   obligatoria en R o M, orden correctiva desde un ítem, recomendaciones y fotos (cámara o galería).
 - **Firmas** del técnico y de quien recibe. Sin la planilla completa y las dos firmas, la orden no se finaliza.
 
+## Trabajo sin conexión (técnico)
+
+- Lo que el técnico consulta (órdenes, planillas, emergencias, ascensores, inventario) queda copiado en el celular
+  (`lib/datos/copia_local.dart`); sin internet la app muestra esa copia y no cierra la sesión al abrirse.
+- Sus cambios (estado de la orden, planilla, fotos, firmas, repuestos, llegada o solución de emergencias y planillas de
+  visita) pasan por la cola `lib/estado/cola_envios.dart`: sin conexión se guardan en el celular, la pantalla los
+  refleja de inmediato y se envían solos, en orden, al volver la conexión (cada 20 s, al volver a la app y en cuanto
+  una consulta responde). Cada envío lleva `X-Clave-Envio` para que el servidor no lo aplique dos veces, y los cambios
+  de estado llevan `ocurrido_en` con la hora real.
+- La franja sobre la barra inferior avisa «Sin conexión · N cambios guardados»; al tocarla se abre «Cambios sin
+  enviar», donde se ven los pendientes y los que el servidor rechazó (se pueden descartar).
+- Requieren conexión: iniciar un mantenimiento desde el QR, reportar emergencias y el asistente.
+
 ## Diseño (prototipo SIGMA)
 
 Mismo sistema visual del panel web: morado #4E29AA, verde lima para datos en vivo y verde/ámbar/rojo

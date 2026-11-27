@@ -34,21 +34,28 @@ class ClienteApi {
   /// Se llama cuando la API responde 401 con un token: sesión vencida o usuario desactivado.
   void Function()? alExpirarSesion;
 
+  /// Avisa si hay conexión con el servidor: falso al fallar la red, verdadero apenas responde algo.
+  void Function(bool conectado)? alCambiarConexion;
+
   Future<Map<String, dynamic>> obtener(String ruta, {Map<String, Object?> consulta = const {}}) => _enviar('GET', ruta, consulta: consulta);
 
-  Future<Map<String, dynamic>> crear(String ruta, [Map<String, Object?>? cuerpo]) => _enviar('POST', ruta, cuerpo: cuerpo);
+  Future<Map<String, dynamic>> crear(String ruta, [Map<String, Object?>? cuerpo, Map<String, String> cabeceras = const {}]) =>
+      _enviar('POST', ruta, cuerpo: cuerpo, cabeceras: cabeceras);
 
-  Future<Map<String, dynamic>> actualizar(String ruta, [Map<String, Object?>? cuerpo]) => _enviar('PATCH', ruta, cuerpo: cuerpo);
+  Future<Map<String, dynamic>> actualizar(String ruta, [Map<String, Object?>? cuerpo, Map<String, String> cabeceras = const {}]) =>
+      _enviar('PATCH', ruta, cuerpo: cuerpo, cabeceras: cabeceras);
 
-  Future<Map<String, dynamic>> reemplazar(String ruta, [Map<String, Object?>? cuerpo]) => _enviar('PUT', ruta, cuerpo: cuerpo);
+  Future<Map<String, dynamic>> reemplazar(String ruta, [Map<String, Object?>? cuerpo, Map<String, String> cabeceras = const {}]) =>
+      _enviar('PUT', ruta, cuerpo: cuerpo, cabeceras: cabeceras);
 
-  Future<Map<String, dynamic>> eliminar(String ruta) => _enviar('DELETE', ruta);
+  Future<Map<String, dynamic>> eliminar(String ruta, [Map<String, String> cabeceras = const {}]) => _enviar('DELETE', ruta, cabeceras: cabeceras);
 
   Future<Map<String, dynamic>> _enviar(
     String metodo,
     String ruta, {
     Map<String, Object?>? cuerpo,
     Map<String, Object?> consulta = const {},
+    Map<String, String> cabeceras = const {},
   }) async {
     final parametros = <String, String>{
       for (final entrada in consulta.entries)
@@ -60,7 +67,8 @@ class ClienteApi {
     final solicitud = http.Request(metodo, uri)
       ..headers['Accept'] = 'application/json'
       ..headers['Content-Type'] = 'application/json'
-      ..headers['X-Origen'] = 'app';
+      ..headers['X-Origen'] = 'app'
+      ..headers.addAll(cabeceras);
     if (cuerpo != null) solicitud.body = jsonEncode(cuerpo);
 
     return _ejecutar(solicitud);
@@ -73,9 +81,11 @@ class ClienteApi {
     required List<int> bytes,
     required String nombreArchivo,
     Map<String, String> campos = const {},
+    Map<String, String> cabeceras = const {},
   }) {
     final solicitud = http.MultipartRequest('POST', Uri.parse('$urlBase$ruta'))
       ..headers['Accept'] = 'application/json'
+      ..headers.addAll(cabeceras)
       ..fields.addAll(campos)
       ..files.add(http.MultipartFile.fromBytes(campo, bytes, filename: nombreArchivo));
 
@@ -89,10 +99,13 @@ class ClienteApi {
     try {
       respuesta = await http.Response.fromStream(await _http.send(solicitud).timeout(Configuracion.tiempoEsperaSolicitud));
     } on TimeoutException {
+      alCambiarConexion?.call(false);
       throw ErrorApi('El servidor tardó demasiado en responder. Intente de nuevo.');
     } catch (_) {
+      alCambiarConexion?.call(false);
       throw ErrorApi('No fue posible conectar con el servidor. Verifique su conexión.');
     }
+    alCambiarConexion?.call(true);
 
     Map<String, dynamic> datos = {};
     if (respuesta.body.isNotEmpty) {

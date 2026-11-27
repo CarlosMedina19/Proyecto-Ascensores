@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -40,6 +41,8 @@ final _items = [
 ];
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   setUpAll(() => initializeDateFormatting('es'));
 
   group('Planilla (RF-030 a RF-039)', () {

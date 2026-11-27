@@ -71,8 +71,10 @@ class VisitaTecnicaService
         $secciones = $this->diligenciar($datos['resultados']);
         $firmaTecnico = $this->png($datos['firma_tecnico'], 'del técnico');
         $firmaRecibe = $this->png($datos['firma_recibe'], 'de quien recibe');
-        $salida = isset($datos['salida_en']) ? Carbon::parse($datos['salida_en']) : now();
-        $entrada = Carbon::parse($datos['entrada_en']);
+        // La planilla pudo diligenciarse sin conexión y enviarse después: valen las horas del celular,
+        // sin pasar de la hora del servidor.
+        $salida = isset($datos['salida_en']) ? Carbon::parse($datos['salida_en'])->min(now()) : now();
+        $entrada = Carbon::parse($datos['entrada_en'])->min(now());
         if ($entrada->greaterThan($salida)) {
             throw new ReglaNegocioException('La hora de entrada no puede ser posterior a la de salida.');
         }

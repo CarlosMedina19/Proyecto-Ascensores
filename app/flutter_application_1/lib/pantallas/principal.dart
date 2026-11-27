@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../datos/modelos.dart';
+import '../estado/cola_envios.dart';
 import '../estado/sesion.dart';
 import 'asistente.dart';
 import 'edificios.dart';
+import 'envios_pendientes.dart';
 import 'equipos.dart';
 import 'inicio.dart';
 import 'ordenes.dart';
@@ -45,8 +47,26 @@ class PantallaPrincipal extends StatefulWidget {
   State<PantallaPrincipal> createState() => _PantallaPrincipalState();
 }
 
-class _PantallaPrincipalState extends State<PantallaPrincipal> {
+class _PantallaPrincipalState extends State<PantallaPrincipal> with WidgetsBindingObserver {
   int _indice = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Al volver a la app se intenta enviar lo que quedó guardado sin conexión.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState estado) {
+    if (estado == AppLifecycleState.resumed) context.read<ColaEnvios>().sincronizar();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,11 +91,18 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
               child: const Icon(Icons.smart_toy_outlined),
             ),
             floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-            bottomNavigationBar: NavigationBar(
-              selectedIndex: indice,
-              onDestinationSelected: (i) => setState(() => _indice = i),
-              destinations: [
-                for (final p in pestanas) NavigationDestination(icon: Icon(p.icono), selectedIcon: Icon(p.iconoActivo), label: p.titulo),
+            bottomNavigationBar: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Sin conexión o con cambios guardados en el celular por enviar.
+                const AvisoConexion(),
+                NavigationBar(
+                  selectedIndex: indice,
+                  onDestinationSelected: (i) => setState(() => _indice = i),
+                  destinations: [
+                    for (final p in pestanas) NavigationDestination(icon: Icon(p.icono), selectedIcon: Icon(p.iconoActivo), label: p.titulo),
+                  ],
+                ),
               ],
             ),
           ),

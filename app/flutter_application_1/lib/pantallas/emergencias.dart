@@ -248,9 +248,18 @@ class _PantallaDetalleEmergenciaState extends State<PantallaDetalleEmergencia> {
     final mensajero = ScaffoldMessenger.of(context);
     setState(() => _guardando = true);
     try {
-      final emergencia = await context.read<Sesion>().repositorio.cambiarEstadoEmergencia(widget.emergenciaId, estado, solucion: solucion);
-      if (mounted) setState(() => _emergencia = emergencia);
-      mensajero.showSnackBar(SnackBar(content: Text(estado == 'en_sitio' ? 'Llegada registrada.' : 'Emergencia resuelta.')));
+      final guardado = await context.read<Sesion>().repositorio.cambiarEstadoEmergencia(
+        widget.emergenciaId,
+        estado,
+        solucion: solucion,
+        referencia: _emergencia?.numero,
+      );
+      if (mounted) setState(() => _emergencia = guardado.valor);
+      mensajero.showSnackBar(
+        SnackBar(
+          content: Text(guardado.enCola ? textoGuardadoSinConexion : (estado == 'en_sitio' ? 'Llegada registrada.' : 'Emergencia resuelta.')),
+        ),
+      );
     } catch (e) {
       mensajero.showSnackBar(SnackBar(content: Text(mensajeError(e))));
     } finally {
